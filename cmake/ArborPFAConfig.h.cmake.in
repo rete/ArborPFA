@@ -1,0 +1,11 @@
+#ifndef ArborPFAConfig_h
+#define ArborPFAConfig_h 1
+
+// version macros
+#define ArborPFA_MAJOR_VERSION @ArborPFA_VERSION_MAJOR@
+#define ArborPFA_MINOR_VERSION @ArborPFA_VERSION_MINOR@
+#define ArborPFA_PATCH_LEVEL @ArborPFA_VERSION_PATCH@
+
+#define ArborPFA_VERSION_GE( MAJV , MINV , PLEV )  ( (ArborPFA_MAJOR_VERSION > MAJV) || ( (ArborPFA_MAJOR_VERSION == MAJV) && (ArborPFA_MINOR_VERSION > MINV) ) || ( (ArborPFA_MAJOR_VERSION == MAJV) && (ArborPFA_MINOR_VERSION == MINV) && (ArborPFA_PATCH_LEVEL >= PLEV) ) )
+
+#endif // ArborPFAConfig_h
