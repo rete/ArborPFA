@@ -1,0 +1,49 @@
+<!-- Arbor Pandora settings xml file -->
+
+<pandora>
+
+    <!-- HELPER CLASS SETTINGS -->
+    <IsMonitoringEnabled> true </IsMonitoringEnabled>
+    <ShouldDisplayAlgorithmInfo> true </ShouldDisplayAlgorithmInfo>
+
+    <!-- CaloHit helper settings -->
+    <CaloHitHelper>
+        <ShouldCalculateDensityWeight>true</ShouldCalculateDensityWeight>
+        <ShouldCalculateSurroundingEnergy>true</ShouldCalculateSurroundingEnergy>
+    </CaloHitHelper>
+
+    <!-- ARBOR PANDORA ALGORITHM SETTINGS -->
+
+    <!-- Select tracks and hits to use for clustering -->
+    <algorithm type = "EventPreparation"/>
+    
+    <!-- 2D clusters formation -->
+    <algorithm type = "ClusteringParent">
+	    <algorithm type = "IntraLayerClustering" description = "ClusterFormation">
+	      <IntraLayerMaxDistance> 15.0 </IntraLayerMaxDistance>
+	    </algorithm>
+	    <ClusterListName> IntraLayer2DClusters </ClusterListName>
+	    <ReplaceCurrentClusterList>true</ReplaceCurrentClusterList>
+	  </algorithm>
+    
+    <algorithm type = "VisualMonitoring" description = "display all">
+          
+	     <DisplayEvent>true</DisplayEvent>
+	     
+	     <ShowMCParticles>false</ShowMCParticles>
+	     <ShowCurrentCaloHits>true</ShowCurrentCaloHits>
+	     <!--<ClusterListNames> "" </ClusterListNames> -->
+	     <ShowCurrentTracks>true</ShowCurrentTracks> 
+	     <ShowCurrentClusters>true</ShowCurrentClusters> 
+	     <ShowCurrentPfos>false</ShowCurrentPfos>
+	     <HitColors> iterate </HitColors>
+	     <ShowOnlyAvailable>false</ShowOnlyAvailable>
+	     
+	     <TransparencyThresholdE>-1.</TransparencyThresholdE>
+	     <EnergyScaleThresholdE>1.</EnergyScaleThresholdE> 
+	     <BlackBackground>true</BlackBackground>
+	     <ShowDetector>true</ShowDetector>
+          
+    </algorithm>
+    
+</pandora>
