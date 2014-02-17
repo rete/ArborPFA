@@ -1,0 +1,74 @@
+########################################
+# INSTALL file for ArborPFA package
+# @author Eté Rémi
+# @version 1.0.0 17/02/2014
+# @copyright IPNL, CNRS
+########################################
+
+
+//ArborPFA package 
+Copyright (c) 2013
+
+This file is part of ArborPFA libraries.
+
+ArborPFA is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ArborPFA is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with ArborPFA.  If not, see <http://www.gnu.org/licenses/>.
+
+
+
+REQUIREMENTS:
+=============
+   Needs :
+     - 'ilcsoft' . Tested with the following version :
+       * v01-17-03
+   
+   Useful packages :
+     - Doxygen (for code documentation)
+
+
+INSTALL:
+=============
+
+  When all the dependencies are installed, in the ArborPFA root directory type :
+
+    mkdir build (if there's not)
+    cd build
+    cmake -C $ILCSOFT/ILCSoft.cmake [-DBUILD_PROCESSOR=ON to build Marlin processors] ..
+    make install
+     
+  Enjoy !  :)
+  
+  
+  
+HOW TO USE IT:
+================
+
+  To use this package, use CMake using find_package( ArborPFA ). For this, you need copy the file FindArborPFA.cmake
+      in your working directory, and the following line in your CMakeLists.txt :
+      
+        LIST( APPEND CMAKE_MODULE_PATH "path/to/FindArborPFA.cmake" )
+      
+      Usually path/to/ is a directory named cmake/Modules in your working directory
+      
+  
+  An example is provided in the source/marlin directory.
+  
+
+DOCUMENTATION:
+================
+
+  A code documentation is generated using Doxygen software. 
+  
+  See doc/html/index.html
+  
+  
