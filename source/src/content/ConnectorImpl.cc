@@ -109,6 +109,20 @@ float ConnectorImpl::GetDistanceBetweenObjects() const
 
 
 
+Connector::Type ConnectorImpl::GetType() const
+{
+	return m_type;
+}
+
+
+
+pandora::StatusCode ConnectorImpl::SetType(Connector::Type type)
+{
+	m_type = type;
+
+	return STATUS_CODE_SUCCESS;
+}
+
 pandora::StatusCode ConnectorImpl::SwapObjects()
 {
 	ArborObject *pThird = m_objectPair.first;

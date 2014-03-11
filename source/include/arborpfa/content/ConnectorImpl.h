@@ -87,6 +87,16 @@ class ConnectorImpl : public Connector
 			*/
 		virtual float GetDistanceBetweenObjects() const;
 
+		/**
+		 *
+		 */
+		virtual pandora::StatusCode SetType(Connector::Type type);
+
+		/**
+		 *
+		 */
+		virtual Connector::Type GetType() const;
+
  protected:
 
 		/**
@@ -97,11 +107,13 @@ class ConnectorImpl : public Connector
 		//
 		ArborObjectPair         m_objectPair;
 		float                  m_weight;
+		Connector::Type         m_type;
 
 
 		friend class ArborObjectImpl;
 
-}; 
+};
+
 
 } 
 

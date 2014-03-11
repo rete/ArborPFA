@@ -47,6 +47,14 @@ class Connector
 {
 	public:
 
+	enum Type
+	{
+		INITIAL_CONNECTOR,
+		CURRENT_DECISION,
+		FINAL_DECISION,
+		UNDEFINED
+	};
+
 		/**
 			*
 			*/
@@ -81,6 +89,16 @@ class Connector
 		 *
 		 */
 		virtual float GetDistanceBetweenObjects() const = 0;
+
+		/**
+		 *
+		 */
+		virtual pandora::StatusCode SetType(Connector::Type type) = 0;
+
+		/**
+		 *
+		 */
+		virtual Connector::Type GetType() const = 0;
 
 	protected:
 
