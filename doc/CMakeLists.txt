@@ -13,7 +13,7 @@ IF( DOXYGEN_FOUND )
     SET( DOC_BIN_DIR "${PROJECT_BINARY_DIR}/docbuild" )
     
     # directories to search for documentation
-    SET( DOX_INPUT ../source/include ../source/src )
+    SET( DOX_INPUT ../source/include/arborpfa ../source/src )
 
 
     # custom command to build documentation
