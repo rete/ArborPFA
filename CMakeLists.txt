@@ -25,8 +25,9 @@ INCLUDE( ilcsoft_default_settings )
 FIND_PACKAGE( PandoraSDK REQUIRED )
 FIND_PACKAGE( FineGranularityContent REQUIRED )
 FIND_PACKAGE( PandoraMonitoring REQUIRED )
+FIND_PACKAGE( ROOT 5.26.00 REQUIRED COMPONENTS Eve Geom RGL EG ) # minimum required ROOT version
 
-FOREACH( pkg PandoraSDK FineGranularityContent PandoraMonitoring )
+FOREACH( pkg PandoraSDK FineGranularityContent PandoraMonitoring ROOT )
   IF( ${pkg}_FOUND )
     INCLUDE_DIRECTORIES( ${${pkg}_INCLUDE_DIRS} )
     LINK_LIBRARIES( ${${pkg}_LIBRARIES} )
