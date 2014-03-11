@@ -50,6 +50,8 @@ StatusCode IntraLayerClusteringAlgorithm::Run()
 	OrderedCaloHitList orderedCaloHitList;
 	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, orderedCaloHitList.Add(*pCaloHitList));
 
+	unsigned int nbOfCreatedClusters = 0;
+
 	// loop over layers
 	for(OrderedCaloHitList::iterator iter = orderedCaloHitList.begin(), iterEnd = orderedCaloHitList.end(); iter != iterEnd; ++iter)
 	{
@@ -75,9 +77,18 @@ StatusCode IntraLayerClusteringAlgorithm::Run()
 			// ... and build it
 			PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RecursiveClustering(pLayerCaloHitList, pCluster, pCaloHit));
 
+			nbOfCreatedClusters++;
+
+			if(m_shouldSplitClusterInSingleCaloHitClusters && m_maximumSizeForClusterSplitting < pCluster->GetNCaloHits())
+			{
+				PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->SplitClusterInSingleCaloHitClusters(pCluster));
+			}
+
 		}
 
 	}
+
+	std::cout << "== IntraLayerClustering == : Number of created clusters : " << nbOfCreatedClusters << std::endl;
 
 	m_alreadyUsedCaloHitList.clear();
 
@@ -121,11 +132,45 @@ StatusCode IntraLayerClusteringAlgorithm::RecursiveClustering(CaloHitList *pCalo
 
 //----------------------------------------------------------------------------------------------------------------
 
+pandora::StatusCode IntraLayerClusteringAlgorithm::SplitClusterInSingleCaloHitClusters(pandora::Cluster *pCluster)
+{
+
+	CaloHitList caloHitList;
+	pCluster->GetOrderedCaloHitList().GetCaloHitList(caloHitList);
+
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::DeleteCluster(*this, pCluster));
+
+	for(CaloHitList::const_iterator iter = caloHitList.begin() , endIter = caloHitList.end() ; endIter != iter ; ++iter)
+	{
+		CaloHit *pCaloHit = *iter;
+		Cluster *pSingleCaloHitCluster = NULL;
+
+		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::Cluster::Create(*this, pCaloHit, pSingleCaloHitCluster));
+	}
+
+	return STATUS_CODE_SUCCESS;
+}
+
+//----------------------------------------------------------------------------------------------------------------
+
 StatusCode IntraLayerClusteringAlgorithm::ReadSettings(const TiXmlHandle xmlHandle)
 {
 
- PANDORA_RETURN_RESULT_IF_AND_IF(STATUS_CODE_SUCCESS, STATUS_CODE_NOT_FOUND, !=, XmlHelper::ReadValue(xmlHandle,
+ PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, XmlHelper::ReadValue(xmlHandle,
      "IntraLayerMaxDistance", m_intraLayerMaxDistance));
+
+ m_shouldSplitClusterInSingleCaloHitClusters = false;
+ PANDORA_RETURN_RESULT_IF_AND_IF(STATUS_CODE_SUCCESS, STATUS_CODE_NOT_FOUND, !=, XmlHelper::ReadValue(xmlHandle,
+     "ShouldSplitClusterInSingleCaloHitClusters", m_shouldSplitClusterInSingleCaloHitClusters));
+
+ if(m_shouldSplitClusterInSingleCaloHitClusters)
+ {
+  PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, XmlHelper::ReadValue(xmlHandle,
+      "MaximumSizeForClusterSplitting", m_maximumSizeForClusterSplitting));
+
+  if(m_maximumSizeForClusterSplitting == 0)
+  	return STATUS_CODE_INVALID_PARAMETER;
+ }
 
 	return STATUS_CODE_SUCCESS;
 }

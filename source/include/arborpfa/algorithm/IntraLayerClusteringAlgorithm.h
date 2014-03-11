@@ -69,11 +69,16 @@ protected:
   */
  pandora::StatusCode RecursiveClustering(pandora::CaloHitList *pCaloHitList, pandora::Cluster *pCluster, pandora::CaloHit *pCaloHit);
 
+ /**
+  *
+  */
+ pandora::StatusCode SplitClusterInSingleCaloHitClusters(pandora::Cluster *pCluster);
 
  // algorithm parameters
- float        m_intraLayerMaxDistance;   ///< The maximum distance between two calo hit for clustering
+ float                 m_intraLayerMaxDistance;   ///< The maximum distance between two calo hit for clustering
  pandora::CaloHitList   m_alreadyUsedCaloHitList;  ///< A temporary list of calo hit that have been already used during the clustering
-
+ bool                  m_shouldSplitClusterInSingleCaloHitClusters;
+ unsigned int         m_maximumSizeForClusterSplitting;
 
 }; 
 
