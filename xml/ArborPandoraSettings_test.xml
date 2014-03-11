@@ -1,0 +1,110 @@
+<!-- Arbor Pandora settings xml file -->
+
+<pandora>
+
+    <!-- HELPER CLASS SETTINGS -->
+    <IsMonitoringEnabled> true </IsMonitoringEnabled>
+    <ShouldDisplayAlgorithmInfo> false </ShouldDisplayAlgorithmInfo>
+
+    <!-- CaloHit helper settings -->
+    <CaloHitHelper>
+        <ShouldCalculateDensityWeight>true</ShouldCalculateDensityWeight>
+        <ShouldCalculateSurroundingEnergy>true</ShouldCalculateSurroundingEnergy>
+        
+        <IsolationCaloHitMaxSeparation>60</IsolationCaloHitMaxSeparation>
+        <IsolationNLayers>3</IsolationNLayers>
+        <IsolationCutDistanceFine>25.0</IsolationCutDistanceFine>
+        <IsolationCutDistanceCoarse>30.0</IsolationCutDistanceCoarse>
+        <IsolationMaxNearbyHits>2</IsolationMaxNearbyHits>
+    </CaloHitHelper>
+
+    <!-- ARBOR PANDORA ALGORITHM SETTINGS -->
+
+    <!-- Select tracks and hits to use for clustering -->
+    <algorithm type = "EventPreparation"/>
+    
+    <!--
+    <algorithm type = "ClusteringParent">
+      <algorithm type = "IntraLayerClustering" description = "ClusterFormation">
+        <IntraLayerMaxDistance> 12.0 </IntraLayerMaxDistance>
+      </algorithm>
+      <algorithm type = "TopologicalAssociationParent" description = "ClusterAssociation">
+         <associationAlgorithms>
+            <algorithm type = "HoughTransform">
+              <MaximumClusterSizeForHoughCandidate>  7  </MaximumClusterSizeForHoughCandidate>
+			        <MaximumDistanceHoughCandidateCut>  50  </MaximumDistanceHoughCandidateCut>
+			        <NeighborhoodCandidateCut> 10 </NeighborhoodCandidateCut>
+			        <BigClusterNeighborhoodCandidateCut> 10000 </BigClusterNeighborhoodCandidateCut>
+			        <NBinTheta> 200 </NBinTheta>
+			        <MinimumHoughSpaceBinningCut> 5 </MinimumHoughSpaceBinningCut>
+            </algorithm>
+         </associationAlgorithms>
+      </algorithm>
+      <ClusterListName>  IntraLayer2DClusters  </ClusterListName>
+      <ReplaceCurrentClusterList>  true  </ReplaceCurrentClusterList>
+    </algorithm> -->
+    
+    <algorithm type = "ClusteringParent">
+      <algorithm type = "DummyClustering" description = "ClusterFormation">
+      </algorithm>
+      <ClusterListName> IsolatedClusters </ClusterListName>
+      <ReplaceCurrentClusterList>true</ReplaceCurrentClusterList>
+    </algorithm>
+
+    
+    <!-- 2D clusters formation -->
+    <!-- 
+    <algorithm type = "ClusteringParent">
+	    <algorithm type = "IntraLayerClustering" description = "ClusterFormation">
+	      <IntraLayerMaxDistance> 15.0 </IntraLayerMaxDistance>
+	      <ShouldSplitClusterInSingleCaloHitClusters> true </ShouldSplitClusterInSingleCaloHitClusters>
+	      <MaximumSizeForClusterSplitting> 4 </MaximumSizeForClusterSplitting>
+	    </algorithm>   
+	    <ClusterListName> IntraLayer2DClusters </ClusterListName>
+	    <ReplaceCurrentClusterList>true</ReplaceCurrentClusterList>
+	  </algorithm>
+	  -->
+	  
+	  <!-- Arbor algorithm based on 2D clusters and calo mip tracks -->
+	  <!-- 
+    <algorithm type = "ClusteringParent">
+      <algorithm type = "ArborConnectorClustering" description = "ClusterFormation">
+          <InputClusterListName> IntraLayer2DClusters </InputClusterListName>
+          <MaximumForwardDistanceForConnection>      85.0  </MaximumForwardDistanceForConnection>
+          <MaximumTransverseDistanceForConnection>   41.0  </MaximumTransverseDistanceForConnection>
+          <AllowForwardConnectionForIsolatedObjects> false </AllowForwardConnectionForIsolatedObjects>
+          <MaximumNumberOfKeptConnectors>            5     </MaximumNumberOfKeptConnectors>
+          <OrderParameterAnglePower>                 1.0   </OrderParameterAnglePower>
+          <OrderParameterDistancePower>              0.5   </OrderParameterDistancePower>
+          <ShowConnectors> false </ShowConnectors>
+      </algorithm>
+      <ClusterListName> ArborClusters </ClusterListName>
+      <ReplaceCurrentClusterList>true</ReplaceCurrentClusterList>
+    </algorithm> 
+    -->
+    
+    
+    <!-- EVE Monitoring -->
+ 
+    <algorithm type = "VisualMonitoring" description = "display all">
+          
+	     <DisplayEvent>true</DisplayEvent>
+	     
+	     <ShowMCParticles>false</ShowMCParticles>
+	     <ShowCurrentCaloHits>true</ShowCurrentCaloHits>
+	     <ShowCurrentTracks>true</ShowCurrentTracks> 
+	     <ShowCurrentClusters>true</ShowCurrentClusters> 
+	     <ShowCurrentPfos>false</ShowCurrentPfos>
+	     <HitColors> iterate </HitColors>
+	     <ShowOnlyAvailable>false</ShowOnlyAvailable>
+	     
+	     <TransparencyThresholdE>-1.</TransparencyThresholdE>
+	     <EnergyScaleThresholdE>1.</EnergyScaleThresholdE> 
+	     <BlackBackground>true</BlackBackground>
+	     <ShowDetector>true</ShowDetector>
+          
+    </algorithm>
+    
+    
+    
+</pandora>
