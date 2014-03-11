@@ -31,10 +31,14 @@
 #include "arborpfa/arbor/ArborTypes.h"
 
 #include "Pandora/StatusCodes.h"
+#include "Pandora/PandoraInputTypes.h"
+#include "Objects/CartesianVector.h"
 
 namespace pandora
 {
  class CartesianVector;
+ class Cluster;
+ class Algorithm;
 }
 
 namespace arborpfa {
@@ -48,6 +52,14 @@ class Connector;
 class ArborObject
 {
  public:
+
+	 enum Type
+	 {
+	 	SIMPLE_CALO_HIT,
+	 	SMALL_CLUSTER,
+	 	MIP_POINT,
+	 	TRACK
+	 };
 
 		/**
 			* @brief  Check if this object is connected with a given one
@@ -93,7 +105,7 @@ class ArborObject
 		 *
 		 * @return the tag string
 		 */
-		virtual const std::string &GetTag() const = 0;
+		virtual ArborObject::Type GetType() const = 0;
 
 		/**
 		 * @brief Get the position of the object
@@ -102,7 +114,31 @@ class ArborObject
 		 */
 		virtual const pandora::CartesianVector &GetPosition() const = 0;
 
- protected:
+		/**
+		 * @brief Whether the object is connected with other objects
+		 *
+		 * @return boolean
+		 */
+		virtual bool IsConnected() const = 0;
+
+		/**
+		 * @brief Merge the content of the object in the cluster.
+		 *
+		 * @param pCluster the cluster into which the content will be merge
+		 */
+		virtual pandora::StatusCode MergeContentInCluster(const pandora::Algorithm &algorithm, pandora::Cluster *pCluster) = 0;
+
+		/**
+		 *
+		 */
+		virtual pandora::StatusCode CreateCluster(const pandora::Algorithm &algorithm, pandora::Cluster *&pCluster) = 0;
+
+		/**
+		 * @brief Get the number of connections with this object
+		 *
+		 * @return Number of connections
+		 */
+		virtual unsigned int GetNumberOfConnections() const = 0;
 
 		/**
 		 * @brief Connect this object with the given one and put a weight on this connection
@@ -133,6 +169,36 @@ class ArborObject
 		 *
 		 */
 		virtual ConnectorList &GetConnectors() = 0;
+
+		/**
+		 *
+		 */
+		virtual bool IsIsolated() const = 0;
+
+		/**
+		 *
+		 */
+		virtual void SetIsIsolated(bool boolean) = 0;
+
+		/**
+		 *
+		 */
+		virtual pandora::Granularity GetGranularity() const = 0;
+
+		/**
+		 *
+		 */
+		virtual pandora::PseudoLayer GetPseudoLayer() const = 0;
+
+		/**
+		 *
+		 */
+		inline static bool SortByFromInnermostPosition(ArborObject *pObj1, ArborObject *pObj2)
+		{
+			const pandora::CartesianVector differenceVector = pObj2->GetPosition() - pObj1->GetPosition();
+			float openingAngle = pObj1->GetPosition().GetOpeningAngle(differenceVector);
+			return openingAngle < M_PI_2;
+		}
 
 		friend class ArborManager;
 		friend class ArborObjectImpl;

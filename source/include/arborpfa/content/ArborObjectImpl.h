@@ -45,11 +45,6 @@ class ArborObjectImpl : public ArborObject
  public:
 
  /**
-  * @brief Constructor
-  */
- ArborObjectImpl(const std::string &tagName, const pandora::CartesianVector &position);
-
- /**
   * @brief Destructor
   */
  virtual ~ArborObjectImpl();
@@ -98,14 +93,7 @@ class ArborObjectImpl : public ArborObject
 	 *
 	 * @return the tag string
 	 */
-	virtual const std::string &GetTag() const;
-
-//	/**
-//	 * @brief Retrieve the object encapsulated in the arbor object
-//	 *
-//	 * @return the address of the object
-//	 */
-//	virtual void *RetrieveObject() const = 0;
+	virtual ArborObject::Type GetType() const;
 
 	/**
 	 * @brief Get the position of the object
@@ -114,7 +102,29 @@ class ArborObjectImpl : public ArborObject
 	 */
 	virtual const pandora::CartesianVector &GetPosition() const;
 
-protected:
+	/**
+	 * @brief Whether the object is connected with other objects
+	 *
+	 * @return boolean
+	 */
+	virtual bool IsConnected() const;
+
+	/**
+	 * @brief Merge the content of the object in the cluster.
+	 *
+	 * @param pCluster the cluster into which the content will be merge
+	 */
+	virtual pandora::StatusCode MergeContentInCluster(const pandora::Algorithm &algorithm, pandora::Cluster *pCluster) = 0;
+
+	/**
+	 *
+	 */
+	virtual pandora::StatusCode CreateCluster(const pandora::Algorithm &algorithm, pandora::Cluster *&pCluster) = 0;
+
+	/**
+	 *
+	 */
+	virtual unsigned int GetNumberOfConnections() const;
 
 	/**
 	 * @brief Connect this object with the given one and put a weight on this connection
@@ -146,12 +156,47 @@ protected:
 	 */
 	virtual ConnectorList &GetConnectors();
 
+	/**
+	 *
+	 */
+	virtual bool IsIsolated() const;
+
+	/**
+	 *
+	 */
+	virtual void SetIsIsolated(bool boolean);
+
+	/**
+	 *
+	 */
+	virtual pandora::Granularity GetGranularity() const;
+
+	/**
+	 *
+	 */
+	virtual pandora::PseudoLayer GetPseudoLayer() const;
+
+protected:
+
+ /**
+  *
+  */
+ ArborObjectImpl();
+
+
+ /**
+  * @brief Constructor
+  */
+// ArborObjectImpl(ArborObject::Type type, const pandora::CartesianVector &position);
+
 
 	// members
  ConnectorList                m_connectorList;         ///< The connector of this object
- std::string                  m_tagName;               ///< The associated tag of this object
+ ArborObject::Type            m_type;                  ///< The associated tag of this object
  pandora::CartesianVector     m_position;              ///< The position of this object
-
+ bool                        m_isIsolated;
+ pandora::Granularity        m_granularity;
+ pandora::PseudoLayer        m_pseudoLayer;
 
  friend class ConnectorImpl;
 }; 

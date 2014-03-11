@@ -43,9 +43,10 @@ namespace arborpfa
 
 //--------------------------------------------------------------------------------------------------------------------
 
-ArborObjectImpl::ArborObjectImpl(const std::string &tagName, const CartesianVector &position) :
-		m_tagName(tagName),
-		m_position(position)
+ArborObjectImpl::ArborObjectImpl() :
+		m_position(0.f, 0.f, 0.f),
+		m_isIsolated(false),
+  m_granularity(COARSE)
 {
 
 }
@@ -54,7 +55,31 @@ ArborObjectImpl::ArborObjectImpl(const std::string &tagName, const CartesianVect
 
 ArborObjectImpl::~ArborObjectImpl()
 {
- /* nop */
+
+	for(ConnectorList::const_iterator iter = m_connectorList.begin(), endIter = m_connectorList.end() ; endIter != iter ; )
+	{
+		Connector *pConnector = *iter;
+		ArborObject *pOtherArborObject = NULL;
+
+		// Find the other connector
+		if(pConnector->GetFirst() == this)
+		{
+			pOtherArborObject = pConnector->GetSecond();
+		}
+		else
+		{
+			pOtherArborObject = pConnector->GetFirst();
+		}
+
+		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RemoveConnectionWith(pOtherArborObject));
+
+	}
+
+	if(!m_connectorList.empty())
+		throw StatusCodeException(STATUS_CODE_FAILURE);
+
+	m_connectorList.clear();
+
 }
 
 //--------------------------------------------------------------------------------------------------------------------
@@ -134,9 +159,9 @@ pandora::StatusCode ArborObjectImpl::GetConnectorsWithWeightLessThan(float weigh
 
 //--------------------------------------------------------------------------------------------------------------------
 
-const std::string &ArborObjectImpl::GetTag() const
+ArborObject::Type ArborObjectImpl::GetType() const
 {
-	return m_tagName;
+	return m_type;
 }
 
 //--------------------------------------------------------------------------------------------------------------------
@@ -144,6 +169,20 @@ const std::string &ArborObjectImpl::GetTag() const
 const pandora::CartesianVector &ArborObjectImpl::GetPosition() const
 {
 	return m_position;
+}
+
+//--------------------------------------------------------------------------------------------------------------------
+
+unsigned int ArborObjectImpl::GetNumberOfConnections() const
+{
+	return m_connectorList.size();
+}
+
+//--------------------------------------------------------------------------------------------------------------------
+
+bool ArborObjectImpl::IsConnected() const
+{
+	return ! m_connectorList.empty();
 }
 
 //--------------------------------------------------------------------------------------------------------------------
@@ -228,23 +267,27 @@ pandora::StatusCode ArborObjectImpl::ConnectWith(ArborObject *pObject, Connector
 pandora::StatusCode ArborObjectImpl::RemoveConnectionWith(ArborObject *pObject)
 {
 	if(NULL == pObject)
-		return STATUS_CODE_FAILURE;
+		return STATUS_CODE_INVALID_PARAMETER;
+
+	if(this == pObject)
+		return STATUS_CODE_INVALID_PARAMETER;
 
 	for(ConnectorList::const_iterator iter = m_connectorList.begin(), endIter = m_connectorList.end() ; iter != endIter ; ++iter)
 	{
+		Connector *pConnector = *iter;
 
-		if(! (*iter)->Contains(pObject))
+		if(!pConnector->Contains(pObject))
 		{
 			continue;
 		}
 
 		ConnectorList &otherConnectors = pObject->GetConnectors();
-		ConnectorList::iterator it2 = std::find(otherConnectors.begin(), otherConnectors.end(), *iter);
+		ConnectorList::iterator it2 = std::find(otherConnectors.begin(), otherConnectors.end(), pConnector);
 
 		// TODO The manager should do this !!!
-		delete (*iter);
+		delete pConnector;
 
-		// can't do object->GetConnectors().erase( it ) since iterator it is not from the same vector
+		// can't do object->GetConnectors().erase( it ) since iterator 'it' is not from the same vector
 		pObject->GetConnectors().erase( it2 );
 		m_connectorList.erase( iter );
 
@@ -258,6 +301,10 @@ pandora::StatusCode ArborObjectImpl::RemoveConnectionWith(ArborObject *pObject)
 
 pandora::StatusCode ArborObjectImpl::RemoveAllConnectionsExcept(ArborObject *pObject)
 {
+
+	if(NULL == pObject)
+		return STATUS_CODE_INVALID_PARAMETER;
+
 	if(! this->IsConnectedWith(pObject))
 		return STATUS_CODE_FAILURE;
 
@@ -296,6 +343,28 @@ ConnectorList &ArborObjectImpl::GetConnectors()
 	return m_connectorList;
 }
 
+
+bool ArborObjectImpl::IsIsolated() const
+{
+	return m_isIsolated;
+}
+
+void ArborObjectImpl::SetIsIsolated(bool boolean)
+{
+	m_isIsolated = boolean;
+}
+
+
+pandora::Granularity ArborObjectImpl::GetGranularity() const
+{
+	return m_granularity;
+}
+
+
+pandora::PseudoLayer ArborObjectImpl::GetPseudoLayer() const
+{
+	return m_pseudoLayer;
+}
 
 } 
 
