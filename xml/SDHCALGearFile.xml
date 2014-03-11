@@ -1,0 +1,16 @@
+<gear>
+    <global detectorName="SDHCALPrototype" />
+    <!--Gear XML file automatically created with GearXML::createXMLFile ....-->
+    <BField type="ConstantBField" x="0.000000000e+00" y="0.000000000e+00" z="0.01000000e+00" />
+    <detectors>
+        <detector name="HcalEndcap" geartype="CalorimeterParameters">
+            <layout type="Endcap" symmetry="1" phi0="0.000000000e+00" />
+            <dimensions inner_r="0.00000000e+02" outer_r="706.5184683446003" inner_z="4.0000000e+03" />
+            <layer repeat="48" thickness="2.673000000e+01" absorberThickness="2.000000000e+01" cellSize0="1.040800000e+01" cellSize1="1.040800000e+01" />
+            <parameter name="FrameWidth" type="double" value="0.000000000e+00" />
+            <parameter name="Hcal_virtual_cell_size" type="double" value="1.040800000e+01" />
+            <parameter name="NCells0" type="int" value="96" />
+            <parameter name="NCells1" type="int" value="96" />
+        </detector>
+    </detectors>
+</gear>
