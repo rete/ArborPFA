@@ -36,7 +36,16 @@
 
 // content
 #include "arborpfa/content/ArborObject.h"
+#include "arborpfa/content/ArborObjectImpl.h"
+#include "arborpfa/content/SimpleCaloHitObject.h"
+#include "arborpfa/content/SmallClusterObject.h"
+#include "arborpfa/content/MipPointObject.h"
+#include "arborpfa/content/TrackObject.h"
 #include "arborpfa/content/Connector.h"
 
+#include "arborpfa/content/CaloHitHelper.h"
+
+// std
+#include <algorithm>
 
 #endif  //  ALGORITHMHEADERS_H
