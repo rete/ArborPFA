@@ -1,0 +1,69 @@
+<!-- Example steering file for MarlinSDHCALArbor -->
+<marlin>
+<execute>
+  <processor name="MyMarlinSDHCALArbor"/>
+  <processor name="MyLCIOOutputProcessor"/>
+</execute>
+
+<!--   /home/remi/ilcsoft/SDHCAL/data/simulation/pi-/single_calorimeterhit_pi-_20GeV_new.slcio
+  /home/remi/ilcsoft/SDHCAL/MokkaILD/output/Marlin/mokkaILD_REC.slcio
+  /home/remi/ilcsoft/SDHCAL/joli.slcio
+  /home/remi/ilcsoft/SDHCAL/data/ILD_02_v05/uds500_00.stdhep_digitized.slcio -->
+
+<global>
+  <parameter name="LCIOInputFiles">
+  /home/remi/ilcsoft/SDHCAL/data/simulation/overlay/pi-/double_calorimeterhit_pi-_10_neutral_30_charged_GeV_new_I0_1_overlay_10pads.slcio
+  </parameter>
+  <parameter name="GearXMLFile" value="/home/remi/git/ArborPFA/xml/SDHCALGearFile.xml"/>
+  <parameter name="MaxRecordNumber" value="1000"/>
+  <parameter name="SkipNEvents" value="0"/>
+  <parameter name="SupressCheck" value="false"/>
+  <parameter name="Verbosity" options="DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT"> MESSAGE </parameter>
+  <parameter name="RandomSeed" value="1234567890" />
+</global>
+
+<processor name="MyMarlinSDHCALArbor" type="SDHCALArborProcessor">
+
+ <!--  <parameter name="PandoraSettingsXmlFile" type="String">/home/remi/git/ArborPFA/xml/StandardReconstructionPandoraSettings.xml</parameter> -->
+  <parameter name="PandoraSettingsXmlFile" type="String">/home/remi/git/ArborPFA/xml/SDHCALArborPandoraSettings.xml</parameter>
+  
+  <!-- Collection names -->
+  <parameter name="HCalCaloHitCollection" type="String"> HCALBarrel </parameter>
+  <parameter name="GenericObjectTrackInfoCollection" type="String"> SDHCALTrackInfo </parameter>
+  <parameter name="ClusterCollectionName" type="String">SDHCALArborProcessorClusters</parameter>
+  <parameter name="PFOCollectionName" type="String">SDHCALArborProcessorPFOs</parameter>
+  
+  <parameter name="AbsorberRadiationLength" type="float">0.2857</parameter>
+  
+  <parameter name="SDHCALEnergyFactors" type="FloatVec"> 
+    1.0 
+    2.0 
+    3.0 
+  </parameter>
+  
+  <parameter name="SDHCALEnergyConstants" type="FloatVec"> 
+    0.0227148
+    4.77839e-05
+    -4.05221e-08
+    0.112287
+    6.24094e-06
+    2.9642e-08
+    0.156503
+    0.00010774
+    4.97735e-08
+  </parameter>
+  
+  <parameter name="Verbosity" options="DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT"> MESSAGE DEBUG </parameter>
+</processor>
+
+
+ <processor name="MyLCIOOutputProcessor" type="LCIOOutputProcessor">
+  <!--   standard output: full reconstruction keep all collections -->
+  <parameter name="LCIOOutputFile" type="string" >
+  /home/remi/git/ArborPFA/output/Separation/Separation_10_neutral_30_charged_GeV_10_cm.slcio
+  </parameter>
+  <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
+  <!--parameter name="SplitFileSizekB" type="int" value="1992294"/-->
+ </processor>
+
+</marlin>
