@@ -1,0 +1,90 @@
+<!-- Arbor Pandora settings xml file -->
+
+<pandora>
+
+    <!-- HELPER CLASS SETTINGS -->
+    <IsMonitoringEnabled> true </IsMonitoringEnabled>
+    <ShouldDisplayAlgorithmInfo> false </ShouldDisplayAlgorithmInfo>
+
+    <!-- CaloHit helper settings -->
+    <CaloHitHelper>
+        <ShouldCalculateDensityWeight>true</ShouldCalculateDensityWeight>
+        <ShouldCalculateSurroundingEnergy>true</ShouldCalculateSurroundingEnergy>
+    </CaloHitHelper>
+    
+    <HadronicEnergyCorrectionFunctions>
+        SDHCALEnergyCorrection
+    </HadronicEnergyCorrectionFunctions>
+
+    <!-- Select tracks and hits to use for clustering -->
+    <algorithm type = "EventPreparation"/>
+        
+        
+    <algorithm type = "ClusteringParent">
+        <algorithm type = "ConeClustering" description = "ClusterFormation">
+       <!--  <ShouldUseIsolatedHits>true</ShouldUseIsolatedHits> -->
+        </algorithm>
+            <algorithm type = "TopologicalAssociationParent" description = "ClusterAssociation">
+            <associationAlgorithms>
+                <algorithm type = "LoopingTracks"/>
+                <algorithm type = "BrokenTracks"/>
+                <algorithm type = "ShowerMipMerging"/>
+                <algorithm type = "ShowerMipMerging2"/>
+                <algorithm type = "BackscatteredTracks"/>
+                <algorithm type = "BackscatteredTracks2"/>
+                <algorithm type = "ShowerMipMerging3"/>
+                <algorithm type = "ShowerMipMerging4"/>
+                <algorithm type = "ProximityBasedMerging">
+                    <algorithm type = "TrackClusterAssociation"/>
+                </algorithm>
+                <algorithm type = "ConeBasedMerging">
+                    <algorithm type = "TrackClusterAssociation"/>
+                </algorithm>
+                <algorithm type = "MipPhotonSeparation">
+                    <algorithm type = "TrackClusterAssociation"/>
+                </algorithm>
+                <algorithm type = "SoftClusterMerging">
+                    <algorithm type = "TrackClusterAssociation"/>
+                </algorithm>
+                <algorithm type = "IsolatedHitMerging">
+                </algorithm>
+            </associationAlgorithms>
+        </algorithm>
+        <ReplaceCurrentClusterList>true</ReplaceCurrentClusterList>
+        <ClusterListName> PrimaryClusterList </ClusterListName>
+    </algorithm>
+    
+    <!-- PFO Creation -->
+    <algorithm type = "PfoCreation">
+      <OutputPfoListName> PandoraPFOs </OutputPfoListName>
+      <ShouldCreateTrackBasedPfos> true </ShouldCreateTrackBasedPfos>
+      <ShouldCreateNeutralPfos> true </ShouldCreateNeutralPfos>
+      <MinClusterHadronicEnergy> 2.0 </MinClusterHadronicEnergy>
+      <MinClusterElectromagneticEnergy> 0.f </MinClusterElectromagneticEnergy>
+      <MinHitsInCluster> 15 </MinHitsInCluster>
+      <AllowSingleLayerClusters> false </AllowSingleLayerClusters>
+    </algorithm>
+        
+    <!-- EVE Monitoring -->
+    <algorithm type = "VisualMonitoring" description = "display all">
+          
+       <DisplayEvent>true</DisplayEvent>
+       
+       <ShowMCParticles>false</ShowMCParticles>
+       <ShowCurrentCaloHits>true</ShowCurrentCaloHits>
+       <ShowCurrentTracks>false</ShowCurrentTracks> 
+       <ShowCurrentClusters>false</ShowCurrentClusters> 
+       <ShowCurrentPfos>true</ShowCurrentPfos>
+       <HitColors> iterate </HitColors>
+       <ShowOnlyAvailable>false</ShowOnlyAvailable>
+       
+       <TransparencyThresholdE>-1.</TransparencyThresholdE>
+       <EnergyScaleThresholdE>1.</EnergyScaleThresholdE> 
+       <BlackBackground>true</BlackBackground>
+       <ShowDetector>true</ShowDetector>
+          
+    </algorithm>
+    
+    
+    
+</pandora>
