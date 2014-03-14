@@ -26,6 +26,10 @@
 
 // arborpfa
 #include "arborpfa/algorithm/IntraLayerClusteringAlgorithm.h"
+#include "arborpfa/algorithm/ArborConnectorClusteringAlgorithm.h"
+#include "arborpfa/algorithm/DummyClusteringAlgorithm.h"
+#include "arborpfa/algorithm/HoughTransformAlgorithm.h"
+#include "arborpfa/algorithm/SmallClusterMergingAlgorithm.h"
 
 #include "arborpfa/api/ArborApi.h"
 
@@ -196,6 +200,18 @@ pandora::StatusCode ArborPFAProcessor::RegisterUserComponents() const
 
     PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, arborpfa::ArborApi::RegisterAlgorithmFactory(*m_pPandora, *m_pArbor, "IntraLayerClustering",
         new arborpfa::IntraLayerClusteringAlgorithm::Factory));
+
+    PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, arborpfa::ArborApi::RegisterAlgorithmFactory(*m_pPandora, *m_pArbor, "ArborConnectorClustering",
+        new arborpfa::ArborConnectorClusteringAlgorithm::Factory));
+
+    PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, arborpfa::ArborApi::RegisterAlgorithmFactory(*m_pPandora, *m_pArbor, "DummyClustering",
+        new arborpfa::DummyClusteringAlgorithm::Factory));
+
+    PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, arborpfa::ArborApi::RegisterAlgorithmFactory(*m_pPandora, *m_pArbor, "HoughTransform",
+        new arborpfa::HoughTransformAlgorithm::Factory));
+
+    PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, arborpfa::ArborApi::RegisterAlgorithmFactory(*m_pPandora, *m_pArbor, "SmallClusterMerging",
+        new arborpfa::SmallClusterMergingAlgorithm::Factory));
 
     // Example registrations
     //PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::RegisterEnergyCorrectionFunction(*m_pPandora,
