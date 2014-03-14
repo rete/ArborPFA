@@ -9,15 +9,41 @@ separationDistance=$3
 particleType1="neutral"
 particleType2="charged"
 
-algorithm="ArborPFA"
+#algorithm="ArborPFA"
+algorithm="PandoraPFA"
+
 dataType="MC"
+dataType="DATA"
+
 inputCollection="HCALBarrel"
-pandoraSettingsFile="/home/remi/git/ArborPFA/xml/SDHCALArborPandoraSettings.xml"
+#inputCollection="SDHCAL_HIT"
+
+#pandoraSettingsFile="/home/remi/git/ArborPFA/xml/SDHCALArborPandoraSettings.xml"
+pandoraSettingsFile="/home/remi/git/ArborPFA/xml/StandardReconstructionPandoraSettings.xml"
+
 gearFileForOverlay="/home/remi/ilcsoft/SDHCAL/MarlinBaboon/marlinXml/SDHCALgeom.xml"
 gearFileForReconstruction="/home/remi/git/ArborPFA/xml/SDHCALGearFile.xml"
 
+isSingleParticle="true"
 
-cat > Algorithm_OverlayEvent_tmp.cfg << EOF
+
+overlayInputFile1="/home/remi/ilcsoft/SDHCAL/data/simulation/pi-/single_calorimeterhit_pi-_${energy1}GeV_new_I0.slcio"
+overlayInputFile2="/home/remi/ilcsoft/SDHCAL/data/simulation/pi-/single_calorimeterhit_pi-_${energy2}GeV_new_I1.slcio"
+
+#overlayInputFile1="/home/remi/ilcsoft/SDHCAL/data/testBeam/2012/TDHCAL_715693_cut_I0.slcio"
+#overlayInputFile2="/home/remi/ilcsoft/SDHCAL/data/testBeam/2012/TDHCAL_715693_cut_I1.slcio"
+
+specifier="${energy1}_GeV_${particleType1}_${energy2}_GeV_${particleType2}_${separationDistance}_cm_${algorithm}_${dataType}"
+rootOutputFile="Separation_${specifier}.root"
+
+if [ "$#" -ne "3" ]
+then
+	echo "Incorrect number of argument. Expected 3 (energy 1, energy 2, separation distance)"
+	exit 1
+fi
+
+
+cat > Algorithm_OverlayEvent_${specifier}.cfg << EOF
 
 [OverlayEventAlgorithm]
 
@@ -26,8 +52,8 @@ useTrackInfo = true
 separationDistance = ${separationDistance}
 particleType1 = ${particleType1}
 particleType2 = ${particleType2}
-inputEnergy1 = ${inputEnergy1}
-inputEnergy2 = ${inputEnergy2}
+inputEnergy1 = ${energy1}
+inputEnergy2 = ${energy2}
 
 [TrackFinderAlgorithm]
 
@@ -41,34 +67,30 @@ drawConnectors = false
 
 EOF
 
-cat > OverlayEvent_tmp.cfg << EOF
-
-######################
-# OverlayEventSimu.cfg #
-######################
+cat > OverlayEvent_${specifier}.cfg << EOF
 
 [general]
 
 gearFile = ${gearFileForOverlay}
-algorithmConfigFile = Algorithm_OverlayEvent_tmp.cfg
+algorithmConfigFile = Algorithm_OverlayEvent_${specifier}.cfg
 
 [input1]
 
-slciofile = /home/remi/ilcsoft/SDHCAL/data/simulation/pi-/single_calorimeterhit_pi-_${energy1}GeV_new_I0.slcio
+slciofile = ${overlayInputFile1}
 collectionName = ${inputCollection}
 codingPattern = M:3,S-1:3,I:9,J:9,K-1:6
 
 [input2]
 
-slciofile = /home/remi/ilcsoft/SDHCAL/data/simulation/pi-/single_calorimeterhit_pi-_${energy2}GeV_new_I1.slcio
+slciofile = ${overlayInputFile2}
 collectionName = ${inputCollection}
 codingPattern = M:3,S-1:3,I:9,J:9,K-1:6
 
 [output]
 
-slcioFile = /home/remi/git/ArborPFA/output/Separation/OverlayEvent_${energy1}_${energy2}GeV_overlay_${separationDistance}_cm_${algorithm}_${dataType}.slcio
+slcioFile = /home/remi/git/ArborPFA/output/Separation/OverlayEvent_${specifier}.slcio
 collectionName = ${inputCollection}
-nbOfEventsToOverlay = 10000
+nbOfEventsToOverlay = 100000
 separationDistance = ${separationDistance}   # in number of pads
 codingPattern = M:3,S-1:3,I:9,J:9,K-1:6
 
@@ -77,21 +99,21 @@ EOF
 
 
 
-cat > MarlinXML_${algorithm}_${dataType}.xml << EOF
+cat > MarlinXML_${specifier}.xml << EOF
 
 
 <marlin>
 <execute>
   <processor name="MyMarlinSDHCALArbor"/>
-  <processor name="MyLCIOOutputProcessor"/>
+  <!-- <processor name="MyLCIOOutputProcessor"/> -->
 </execute>
 
 <global>
   <parameter name="LCIOInputFiles">
-  /home/remi/git/ArborPFA/output/Separation/OverlayEvent_${energy1}_${energy2}GeV_overlay_${separationDistance}_cm_${algorithm}_${dataType}.slcio
+  /home/remi/git/ArborPFA/output/Separation/OverlayEvent_${specifier}.slcio
   </parameter>
   <parameter name="GearXMLFile" value="${gearFileForReconstruction}"/>
-  <parameter name="MaxRecordNumber" value="10"/>
+  <parameter name="MaxRecordNumber" value="1000"/>
   <parameter name="SkipNEvents" value="0"/>
   <parameter name="SupressCheck" value="false"/>
   <parameter name="Verbosity" options="DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT"> MESSAGE </parameter>
@@ -128,6 +150,8 @@ cat > MarlinXML_${algorithm}_${dataType}.xml << EOF
     4.97735e-08
   </parameter>
   
+  <parameter name="RootOuputFileName" type ="string"> ${rootOutputFile} </parameter>
+  <parameter name="RootTreeName" type ="string"> PFOAnalysis </parameter>
   <parameter name="Verbosity" options="DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT"> MESSAGE DEBUG </parameter>
 </processor>
 
@@ -135,7 +159,7 @@ cat > MarlinXML_${algorithm}_${dataType}.xml << EOF
  <processor name="MyLCIOOutputProcessor" type="LCIOOutputProcessor">
   <!--   standard output: full reconstruction keep all collections -->
   <parameter name="LCIOOutputFile" type="string" >
-  /home/remi/git/ArborPFA/output/Separation/Separation_${energy1}_${energy2}GeV_overlay_${separationDistance}_cm_${algorithm}_${dataType}.slcio
+  /home/remi/git/ArborPFA/output/Separation/Separation_${specifier}.slcio
   </parameter>
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--parameter name="SplitFileSizekB" type="int" value="1992294"/-->
@@ -147,16 +171,15 @@ cat > MarlinXML_${algorithm}_${dataType}.xml << EOF
 EOF
 
 
-OverlayEvent -f OverlayEvent_tmp.cfg -g
+OverlayEvent -f OverlayEvent_${specifier}.cfg -g
 
-rm OverlayEvent_tmp.cfg Algorithm_OverlayEvent_tmp.cfg
-
-if [ $? -eq 0 ]
+if [ "$?" -eq "0" ]
 then
-        Marlin MarlinXML_${algorithm}_${dataType}.xml
+        Marlin MarlinXML_${specifier}.xml
 else
-        echo "----------- OverlayEvent -f OverlayEventSimu.cfg failed -----------"
+        echo "----------- OverlayEvent -f OverlayEvent_${specifier}.cfg -g failed -----------"
         exit 1
 fi
 
-rm MarlinXML_${algorithm}_${dataType}.xml
+rm OverlayEvent_${specifier}.cfg Algorithm_OverlayEvent_${specifier}.cfg
+rm MarlinXML_${specifier}.xml
