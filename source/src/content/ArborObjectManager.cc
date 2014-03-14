@@ -59,7 +59,7 @@ Manager<arborpfa::ArborObject>::~Manager()
 template<>
 StatusCode Manager<arborpfa::ArborObject>::GetList(const std::string &listName, const ObjectList *&pObjectList) const
 {
-    typename NameToListMap::const_iterator iter = m_nameToListMap.find(listName);
+    NameToListMap::const_iterator iter = m_nameToListMap.find(listName);
 
     if (m_nameToListMap.end() == iter)
         return STATUS_CODE_NOT_INITIALIZED;
@@ -94,7 +94,7 @@ inline StatusCode Manager<arborpfa::ArborObject>::GetCurrentListName(std::string
 template<>
 StatusCode Manager<arborpfa::ArborObject>::GetAlgorithmInputList(const Algorithm *const pAlgorithm, const ObjectList *&pObjectList, std::string &listName) const
 {
-    typename AlgorithmInfoMap::const_iterator iter = m_algorithmInfoMap.find(pAlgorithm);
+    AlgorithmInfoMap::const_iterator iter = m_algorithmInfoMap.find(pAlgorithm);
 
     if (m_algorithmInfoMap.end() != iter)
     {
@@ -113,7 +113,7 @@ StatusCode Manager<arborpfa::ArborObject>::GetAlgorithmInputList(const Algorithm
 template<>
 inline StatusCode Manager<arborpfa::ArborObject>::GetAlgorithmInputListName(const Algorithm *const pAlgorithm, std::string &listName) const
 {
-    typename AlgorithmInfoMap::const_iterator iter = m_algorithmInfoMap.find(pAlgorithm);
+    AlgorithmInfoMap::const_iterator iter = m_algorithmInfoMap.find(pAlgorithm);
 
     if (m_algorithmInfoMap.end() == iter)
         return this->GetCurrentListName(listName);
@@ -146,7 +146,7 @@ StatusCode Manager<arborpfa::ArborObject>::ReplaceCurrentAndAlgorithmInputLists(
 
     m_currentListName = listName;
 
-    for (typename AlgorithmInfoMap::iterator iter = m_algorithmInfoMap.begin(), iterEnd = m_algorithmInfoMap.end(); iter != iterEnd; ++iter)
+    for (AlgorithmInfoMap::iterator iter = m_algorithmInfoMap.begin(), iterEnd = m_algorithmInfoMap.end(); iter != iterEnd; ++iter)
     {
         iter->second.m_parentListName = listName;
     }
@@ -160,7 +160,7 @@ template <>
 StatusCode Manager<arborpfa::ArborObject>::CreateTemporaryListAndSetCurrent(const Algorithm *const pAlgorithm, std::string &temporaryListName)
 {
 
- typename AlgorithmInfoMap::iterator iter = m_algorithmInfoMap.find(pAlgorithm);
+ AlgorithmInfoMap::iterator iter = m_algorithmInfoMap.find(pAlgorithm);
 
  if (m_algorithmInfoMap.end() == iter)
      return STATUS_CODE_NOT_FOUND;
@@ -189,7 +189,7 @@ StatusCode Manager<arborpfa::ArborObject>::RegisterAlgorithm(const Algorithm *co
     algorithmInfo.m_parentListName = m_currentListName;
     algorithmInfo.m_numberOfListsCreated = 0;
 
-    if (!m_algorithmInfoMap.insert(typename AlgorithmInfoMap::value_type(pAlgorithm, algorithmInfo)).second)
+    if (!m_algorithmInfoMap.insert(AlgorithmInfoMap::value_type(pAlgorithm, algorithmInfo)).second)
         return STATUS_CODE_ALREADY_PRESENT;
 
     return STATUS_CODE_SUCCESS;
@@ -200,7 +200,7 @@ StatusCode Manager<arborpfa::ArborObject>::RegisterAlgorithm(const Algorithm *co
 template<>
 StatusCode Manager<arborpfa::ArborObject>::ResetAlgorithmInfo(const Algorithm *const pAlgorithm, bool isAlgorithmFinished)
 {
-    typename AlgorithmInfoMap::iterator algorithmListIter = m_algorithmInfoMap.find(pAlgorithm);
+    AlgorithmInfoMap::iterator algorithmListIter = m_algorithmInfoMap.find(pAlgorithm);
 
     if (m_algorithmInfoMap.end() == algorithmListIter)
         return STATUS_CODE_NOT_FOUND;
@@ -208,7 +208,7 @@ StatusCode Manager<arborpfa::ArborObject>::ResetAlgorithmInfo(const Algorithm *c
     for (StringSet::const_iterator listNameIter = algorithmListIter->second.m_temporaryListNames.begin(),
         listNameIterEnd = algorithmListIter->second.m_temporaryListNames.end(); listNameIter != listNameIterEnd; ++listNameIter)
     {
-        typename NameToListMap::iterator iter = m_nameToListMap.find(*listNameIter);
+        NameToListMap::iterator iter = m_nameToListMap.find(*listNameIter);
 
         if (m_nameToListMap.end() == iter)
             return STATUS_CODE_FAILURE;
@@ -231,7 +231,7 @@ StatusCode Manager<arborpfa::ArborObject>::ResetAlgorithmInfo(const Algorithm *c
 template<>
 StatusCode Manager<arborpfa::ArborObject>::EraseAllContent()
 {
-    for (typename NameToListMap::iterator iter = m_nameToListMap.begin(); iter != m_nameToListMap.end();)
+    for (NameToListMap::iterator iter = m_nameToListMap.begin(); iter != m_nameToListMap.end();)
     {
         delete iter->second;
         m_nameToListMap.erase(iter++);
@@ -315,7 +315,7 @@ template<>
 StatusCode AlgorithmObjectManager<arborpfa::ArborObject>::MoveObjectsBetweenLists(const std::string &targetListName, const std::string &sourceListName,
     const ObjectList *pObjectSubset)
 {
-    typename Manager<arborpfa::ArborObject>::NameToListMap::iterator sourceListIter = Manager<arborpfa::ArborObject>::m_nameToListMap.find(sourceListName);
+    Manager<arborpfa::ArborObject>::NameToListMap::iterator sourceListIter = Manager<arborpfa::ArborObject>::m_nameToListMap.find(sourceListName);
 
     if (Manager<arborpfa::ArborObject>::m_nameToListMap.end() == sourceListIter)
         return STATUS_CODE_NOT_FOUND;
@@ -323,14 +323,14 @@ StatusCode AlgorithmObjectManager<arborpfa::ArborObject>::MoveObjectsBetweenList
     if (sourceListIter->second->empty())
         return STATUS_CODE_NOT_INITIALIZED;
 
-    typename Manager<arborpfa::ArborObject>::NameToListMap::iterator targetListIter = Manager<arborpfa::ArborObject>::m_nameToListMap.find(targetListName);
+    Manager<arborpfa::ArborObject>::NameToListMap::iterator targetListIter = Manager<arborpfa::ArborObject>::m_nameToListMap.find(targetListName);
 
     if (Manager<arborpfa::ArborObject>::m_nameToListMap.end() == targetListIter)
         return STATUS_CODE_FAILURE;
 
     if (NULL == pObjectSubset)
     {
-        for (typename ObjectList::iterator iter = sourceListIter->second->begin(), iterEnd = sourceListIter->second->end();
+        for (ObjectList::iterator iter = sourceListIter->second->begin(), iterEnd = sourceListIter->second->end();
             iter != iterEnd; ++iter)
         {
             if (!targetListIter->second->insert(*iter).second)
@@ -344,9 +344,9 @@ StatusCode AlgorithmObjectManager<arborpfa::ArborObject>::MoveObjectsBetweenList
         if ((sourceListIter->second == pObjectSubset) || (targetListIter->second == pObjectSubset))
             return STATUS_CODE_INVALID_PARAMETER;
 
-        for (typename ObjectList::const_iterator iter = pObjectSubset->begin(), iterEnd = pObjectSubset->end(); iter != iterEnd; ++iter)
+        for (ObjectList::const_iterator iter = pObjectSubset->begin(), iterEnd = pObjectSubset->end(); iter != iterEnd; ++iter)
         {
-            typename ObjectList::iterator objectIter = sourceListIter->second->find(*iter);
+            ObjectList::iterator objectIter = sourceListIter->second->find(*iter);
 
             if (sourceListIter->second->end() == objectIter)
                 return STATUS_CODE_NOT_FOUND;
@@ -382,7 +382,7 @@ StatusCode AlgorithmObjectManager<arborpfa::ArborObject>::MoveObjectsToTemporary
 template<>
 StatusCode AlgorithmObjectManager<arborpfa::ArborObject>::SaveObjects(const std::string &targetListName, const std::string &sourceListName)
 {
-    typename Manager<arborpfa::ArborObject>::NameToListMap::iterator targetObjectListIter = Manager<arborpfa::ArborObject>::m_nameToListMap.find(targetListName);
+    Manager<arborpfa::ArborObject>::NameToListMap::iterator targetObjectListIter = Manager<arborpfa::ArborObject>::m_nameToListMap.find(targetListName);
 
     if (Manager<arborpfa::ArborObject>::m_nameToListMap.end() == targetObjectListIter)
     {
@@ -401,7 +401,7 @@ StatusCode AlgorithmObjectManager<arborpfa::ArborObject>::SaveObjects(const std:
     if (objectsToSave.empty())
         return STATUS_CODE_NOT_INITIALIZED;
 
-    typename Manager<arborpfa::ArborObject>::NameToListMap::iterator targetObjectListIter = Manager<arborpfa::ArborObject>::m_nameToListMap.find(targetListName);
+    Manager<arborpfa::ArborObject>::NameToListMap::iterator targetObjectListIter = Manager<arborpfa::ArborObject>::m_nameToListMap.find(targetListName);
 
     if (Manager<arborpfa::ArborObject>::m_nameToListMap.end() == targetObjectListIter)
     {
@@ -430,12 +430,12 @@ StatusCode AlgorithmObjectManager<arborpfa::ArborObject>::TemporarilyReplaceCurr
 template<>
 StatusCode AlgorithmObjectManager<arborpfa::ArborObject>::DeleteObject(arborpfa::ArborObject *pT, const std::string &listName)
 {
-    typename Manager<arborpfa::ArborObject>::NameToListMap::iterator listIter = Manager<arborpfa::ArborObject>::m_nameToListMap.find(listName);
+    Manager<arborpfa::ArborObject>::NameToListMap::iterator listIter = Manager<arborpfa::ArborObject>::m_nameToListMap.find(listName);
 
     if (Manager<arborpfa::ArborObject>::m_nameToListMap.end() == listIter)
         return STATUS_CODE_NOT_FOUND;
 
-    typename ObjectList::iterator deletionIter = listIter->second->find(pT);
+    ObjectList::iterator deletionIter = listIter->second->find(pT);
 
     if (listIter->second->end() == deletionIter)
         return STATUS_CODE_NOT_FOUND;
@@ -451,7 +451,7 @@ StatusCode AlgorithmObjectManager<arborpfa::ArborObject>::DeleteObject(arborpfa:
 template<>
 StatusCode AlgorithmObjectManager<arborpfa::ArborObject>::DeleteObjects(const ObjectList &objectList, const std::string &listName)
 {
-    typename Manager<arborpfa::ArborObject>::NameToListMap::iterator listIter = Manager<arborpfa::ArborObject>::m_nameToListMap.find(listName);
+    Manager<arborpfa::ArborObject>::NameToListMap::iterator listIter = Manager<arborpfa::ArborObject>::m_nameToListMap.find(listName);
 
     if (Manager<arborpfa::ArborObject>::m_nameToListMap.end() == listIter)
         return STATUS_CODE_NOT_FOUND;
@@ -459,9 +459,9 @@ StatusCode AlgorithmObjectManager<arborpfa::ArborObject>::DeleteObjects(const Ob
     if (listIter->second == &objectList)
         return STATUS_CODE_INVALID_PARAMETER;
 
-    for (typename ObjectList::const_iterator objectIter = objectList.begin(), objectIterEnd = objectList.end(); objectIter != objectIterEnd; ++objectIter)
+    for (ObjectList::const_iterator objectIter = objectList.begin(), objectIterEnd = objectList.end(); objectIter != objectIterEnd; ++objectIter)
     {
-        typename ObjectList::iterator deletionIter = listIter->second->find(*objectIter);
+        ObjectList::iterator deletionIter = listIter->second->find(*objectIter);
 
         if (listIter->second->end() == deletionIter)
             return STATUS_CODE_NOT_FOUND;
@@ -481,7 +481,7 @@ StatusCode AlgorithmObjectManager<arborpfa::ArborObject>::DeleteTemporaryObjects
     if (Manager<arborpfa::ArborObject>::m_savedLists.end() != Manager<arborpfa::ArborObject>::m_savedLists.find(temporaryListName))
         return STATUS_CODE_NOT_ALLOWED;
 
-    typename Manager<arborpfa::ArborObject>::AlgorithmInfoMap::const_iterator algorithmIter = Manager<arborpfa::ArborObject>::m_algorithmInfoMap.find(pAlgorithm);
+    Manager<arborpfa::ArborObject>::AlgorithmInfoMap::const_iterator algorithmIter = Manager<arborpfa::ArborObject>::m_algorithmInfoMap.find(pAlgorithm);
 
     if (Manager<arborpfa::ArborObject>::m_algorithmInfoMap.end() == algorithmIter)
         return STATUS_CODE_NOT_FOUND;
@@ -489,12 +489,12 @@ StatusCode AlgorithmObjectManager<arborpfa::ArborObject>::DeleteTemporaryObjects
     if (algorithmIter->second.m_temporaryListNames.end() == algorithmIter->second.m_temporaryListNames.find(temporaryListName))
         return STATUS_CODE_NOT_ALLOWED;
 
-    typename Manager<arborpfa::ArborObject>::NameToListMap::iterator listIter = Manager<arborpfa::ArborObject>::m_nameToListMap.find(temporaryListName);
+    Manager<arborpfa::ArborObject>::NameToListMap::iterator listIter = Manager<arborpfa::ArborObject>::m_nameToListMap.find(temporaryListName);
 
     if (Manager<arborpfa::ArborObject>::m_nameToListMap.end() == listIter)
         return STATUS_CODE_FAILURE;
 
-    for (typename ObjectList::iterator iter = listIter->second->begin(), iterEnd = listIter->second->end(); iter != iterEnd; ++iter)
+    for (ObjectList::iterator iter = listIter->second->begin(), iterEnd = listIter->second->end(); iter != iterEnd; ++iter)
         delete *iter;
 
     listIter->second->clear();
@@ -506,7 +506,7 @@ StatusCode AlgorithmObjectManager<arborpfa::ArborObject>::DeleteTemporaryObjects
 template<>
 StatusCode AlgorithmObjectManager<arborpfa::ArborObject>::GetResetDeletionObjects(const Algorithm *const pAlgorithm, ObjectList &objectList) const
 {
-    typename Manager<arborpfa::ArborObject>::AlgorithmInfoMap::const_iterator algorithmIter = Manager<arborpfa::ArborObject>::m_algorithmInfoMap.find(pAlgorithm);
+    Manager<arborpfa::ArborObject>::AlgorithmInfoMap::const_iterator algorithmIter = Manager<arborpfa::ArborObject>::m_algorithmInfoMap.find(pAlgorithm);
 
     if (Manager<arborpfa::ArborObject>::m_algorithmInfoMap.end() == algorithmIter)
         return STATUS_CODE_NOT_FOUND;
@@ -514,7 +514,7 @@ StatusCode AlgorithmObjectManager<arborpfa::ArborObject>::GetResetDeletionObject
     for (StringSet::const_iterator listNameIter = algorithmIter->second.m_temporaryListNames.begin(),
         listNameIterEnd = algorithmIter->second.m_temporaryListNames.end(); listNameIter != listNameIterEnd; ++listNameIter)
     {
-        typename Manager<arborpfa::ArborObject>::NameToListMap::const_iterator listIter = Manager<arborpfa::ArborObject>::m_nameToListMap.find(*listNameIter);
+        Manager<arborpfa::ArborObject>::NameToListMap::const_iterator listIter = Manager<arborpfa::ArborObject>::m_nameToListMap.find(*listNameIter);
 
         if (Manager<arborpfa::ArborObject>::m_nameToListMap.end() == listIter)
             return STATUS_CODE_FAILURE;
@@ -551,7 +551,7 @@ StatusCode AlgorithmObjectManager<arborpfa::ArborObject>::ResetAlgorithmInfo(con
     ObjectList objectList;
     PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->GetResetDeletionObjects(pAlgorithm, objectList));
 
-    for (typename ObjectList::const_iterator iter = objectList.begin(), iterEnd = objectList.end(); iter != iterEnd; ++iter)
+    for (ObjectList::const_iterator iter = objectList.begin(), iterEnd = objectList.end(); iter != iterEnd; ++iter)
         delete *iter;
 
     m_canMakeNewObjects = false;
@@ -563,10 +563,10 @@ StatusCode AlgorithmObjectManager<arborpfa::ArborObject>::ResetAlgorithmInfo(con
 template<>
 StatusCode AlgorithmObjectManager<arborpfa::ArborObject>::EraseAllContent()
 {
-    for (typename Manager<arborpfa::ArborObject>::NameToListMap::iterator listIter = Manager<arborpfa::ArborObject>::m_nameToListMap.begin(), listIterEnd = Manager<arborpfa::ArborObject>::m_nameToListMap.end();
+    for (Manager<arborpfa::ArborObject>::NameToListMap::iterator listIter = Manager<arborpfa::ArborObject>::m_nameToListMap.begin(), listIterEnd = Manager<arborpfa::ArborObject>::m_nameToListMap.end();
         listIter != listIterEnd; ++listIter)
     {
-        for (typename ObjectList::iterator iter = listIter->second->begin(), iterEnd = listIter->second->end(); iter != iterEnd; ++iter)
+        for (ObjectList::iterator iter = listIter->second->begin(), iterEnd = listIter->second->end(); iter != iterEnd; ++iter)
             delete (*iter);
     }
 
