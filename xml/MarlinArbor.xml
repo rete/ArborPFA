@@ -4,15 +4,27 @@
   <processor name="MyMarlinArbor"/>
 </execute>
 
-<global>
-  <parameter name="LCIOInputFiles">
+<!--
+
+  /home/remi/ilcsoft/SDHCAL/data/simulation/pi-/single_calorimeterhit_pi-_20GeV_new.slcio
+  /home/remi/ilcsoft/SDHCAL/MokkaILD/output/Marlin/mokkaILD_50GeV_muon_DIGIT.slcio
+  /home/remi/ilcsoft/SDHCAL/data/simulation/mu-/single_calorimeterhit_mu-_30GeV.slcio
+      /home/remi/ilcsoft/SDHCAL/MokkaILD/output/Marlin/mokkaILD_50GeV_muon_DIGIT.slcio
+  /home/remi/ilcsoft/SDHCAL/data/simulation/pi-/single_calorimeterhit_pi-_20GeV_new.slcio
   /home/remi/ilcsoft/SDHCAL/MokkaILD/output/Marlin/mokkaILD_REC.slcio
   /home/remi/ilcsoft/SDHCAL/joli.slcio
-  /home/remi/ilcsoft/SDHCAL/data/ILD_02_v05/uds500_00.stdhep_digitized.slcio
-  /home/remi/ilcsoft/SDHCAL/data/simulation/pi-/single_calorimeterhit_pi-_20GeV_new.slcio
+  /home/remi/ilcsoft/SDHCAL/data/ILD_02_v05/uds500_00.stdhep_digitized.slcio 
+  /home/remi/ilcsoft/SDHCAL/MokkaILD/output/lyoserv/mokkaILD_10GeV_DIGIT.slcio
+  /home/remi/ilcsoft/SDHCAL/data/simulation/overlay/pi-/double_calorimeterhit_pi-_10_20GeV_new_I0_1_overlay_5pads.slcio
+  
+  -->
+
+<global>
+  <parameter name="LCIOInputFiles">
+   /home/remi/ilcsoft/SDHCAL/data/simulation/overlay/pi-/double_calorimeterhit_pi-_10_20GeV_new_I0_1_overlay_10pads.slcio
   </parameter>
   <parameter name="GearXMLFile" value="/home/remi/git/ArborPFA/xml/GearOutput.xml"/>
-  <parameter name="MaxRecordNumber" value="-1"/>
+  <parameter name="MaxRecordNumber" value="20"/>
   <parameter name="SkipNEvents" value="0"/>
   <parameter name="SupressCheck" value="false"/>
   <parameter name="Verbosity" options="DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT"> MESSAGE </parameter>
@@ -22,7 +34,7 @@
 <processor name="MyMarlinArbor" type="ArborPFAProcessor">
 
   <parameter name="PandoraSettingsXmlFile" type="String">/home/remi/git/ArborPFA/xml/ArborPandoraSettings.xml</parameter>
-  
+ <!--  <parameter name="PandoraSettingsXmlFile" type="String">/home/remi/git/ArborPFA/xml/StandardReconstructionPandoraSettings.xml</parameter> -->
   <!-- Collection names -->
   <parameter name="TrackCollections" type="StringVec">MarlinTrkTracks</parameter>
   <parameter name="ECalCaloHitCollections" type="StringVec">ECALBarrel ECALEndcap ECALOther</parameter>
