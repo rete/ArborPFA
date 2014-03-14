@@ -51,8 +51,8 @@
           <AllowForwardConnectionForIsolatedObjects>false</AllowForwardConnectionForIsolatedObjects>
           <ShouldUseIsolatedObjects>true</ShouldUseIsolatedObjects>
           <MaximumNumberOfKeptConnectors>            5     </MaximumNumberOfKeptConnectors>
-          <OrderParameterAnglePower>                 5   </OrderParameterAnglePower>
-          <OrderParameterDistancePower>              0.5   </OrderParameterDistancePower>
+          <OrderParameterAnglePower>                 1   </OrderParameterAnglePower>
+          <OrderParameterDistancePower>              5   </OrderParameterDistancePower>
           <ShowConnectors> false </ShowConnectors>
       </algorithm>
       <algorithm type = "TopologicalAssociationParent" description = "ClusterAssociation">
@@ -86,9 +86,9 @@
        
        <ShowMCParticles>false</ShowMCParticles>
        <ShowCurrentCaloHits>true</ShowCurrentCaloHits>
-       <ShowCurrentTracks>true</ShowCurrentTracks> 
-       <ShowCurrentClusters>true</ShowCurrentClusters> 
-       <ShowCurrentPfos>false</ShowCurrentPfos>
+       <ShowCurrentTracks>false</ShowCurrentTracks> 
+       <ShowCurrentClusters>false</ShowCurrentClusters> 
+       <ShowCurrentPfos>true</ShowCurrentPfos>
        <HitColors> iterate </HitColors>
        <ShowOnlyAvailable>false</ShowOnlyAvailable>
        
