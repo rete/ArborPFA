@@ -3,8 +3,9 @@
 <pandora>
 
     <!-- HELPER CLASS SETTINGS -->
-    <IsMonitoringEnabled> true </IsMonitoringEnabled>
+    <IsMonitoringEnabled> false </IsMonitoringEnabled>
     <ShouldDisplayAlgorithmInfo> false </ShouldDisplayAlgorithmInfo>
+    <HadronicEnergyResolution> 0.5 </HadronicEnergyResolution>
 
     <!-- CaloHit helper settings -->
     <CaloHitHelper>
@@ -68,7 +69,7 @@
     <!-- EVE Monitoring -->
     <algorithm type = "VisualMonitoring" description = "display all">
           
-       <DisplayEvent>true</DisplayEvent>
+       <DisplayEvent>false</DisplayEvent>
        
        <ShowMCParticles>false</ShowMCParticles>
        <ShowCurrentCaloHits>true</ShowCurrentCaloHits>
