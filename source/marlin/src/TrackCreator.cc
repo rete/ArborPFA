@@ -431,17 +431,21 @@ pandora::StatusCode TrackCreator::CreateTracks(EVENT::LCEvent *pLCEvent) const
     LCCollectionVec *pTracksPassBothCanFormPfoFlags = newTrkCol("TracksPassBothCanFormPfoFlags", pLCEvent, true);
     LCCollectionVec *pTracksFailBothCanFormPfoFlags = newTrkCol("TracksFailBothCanFormPfoFlags", pLCEvent, true);
 
+    std::cout << "Creating tracks from lcio input collections" << std::endl;
     for (StringVector::const_iterator iter = m_settings.m_trackCollections.begin(), iterEnd = m_settings.m_trackCollections.end();
         iter != iterEnd; ++iter)
     {
         try
         {
             const EVENT::LCCollection *pTrackCollection = pLCEvent->getCollection(*iter);
+            std::cout << "Track Collection name : " << *iter << std::endl;
+            std::cout << "Track collection size : " << pTrackCollection->getNumberOfElements() << std::endl;
 
             for (int i = 0, iMax = pTrackCollection->getNumberOfElements(); i < iMax; ++i)
             {
                 try
                 {
+                	   std::cout << "Extracting track no " << i << std::endl;
                     EVENT::Track *pTrack = dynamic_cast<Track*>(pTrackCollection->getElementAt(i));
 
                     if (NULL == pTrack)
@@ -470,6 +474,7 @@ pandora::StatusCode TrackCreator::CreateTracks(EVENT::LCEvent *pLCEvent) const
 
                     if ((nTrackHits < minTrackHits) || (nTrackHits > m_settings.m_maxTrackHits))
                     {
+                    	   std::cout << "Track doesn't passed the cut" << std::endl;
                         pTracksNotPassedToPFA->addElement(pTrack);
                         continue;
                     }
@@ -516,6 +521,7 @@ pandora::StatusCode TrackCreator::CreateTracks(EVENT::LCEvent *pLCEvent) const
                     if (!trackParameters.m_canFormPfo.Get() && !trackParameters.m_canFormClusterlessPfo.Get())
                         pTracksFailBothCanFormPfoFlags->addElement(pTrack);
 
+                    std::cout << "Creating a pandora track" << std::endl;
                     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::Track::Create(*m_pPandora, trackParameters));
                     m_trackVector.push_back(pTrack);
                 }
