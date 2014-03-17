@@ -544,10 +544,20 @@ pandora::StatusCode SDHCALArborProcessor::CreateCaloHits(EVENT::LCEvent *pLCEven
 										        break;
 										    }
 
-										    caloHitParameters.m_inputEnergy = pCaloHit->getEnergy();
-														caloHitParameters.m_mipEquivalentEnergy = 1.0;
-														caloHitParameters.m_hadronicEnergy = pCaloHit->getEnergy();
-														caloHitParameters.m_electromagneticEnergy = 0.f;
+//										    std::cout << "pCaloHit->getEnergy() : " << pCaloHit->getEnergy() << std::endl;
+
+										    if(pCaloHit->getEnergy() - 1.f < std::numeric_limits<float>::epsilon())
+										     caloHitParameters.m_inputEnergy = 0.0406459;
+										    else if(pCaloHit->getEnergy() - 2.f < std::numeric_limits<float>::epsilon())
+										    	caloHitParameters.m_inputEnergy = 0.101952;
+										    else if(pCaloHit->getEnergy() - 3.f < std::numeric_limits<float>::epsilon())
+										    	caloHitParameters.m_inputEnergy = 0.258078;
+										    else
+										    	throw pandora::StatusCodeException(pandora::STATUS_CODE_FAILURE);
+
+														caloHitParameters.m_mipEquivalentEnergy = 0.0406459;
+														caloHitParameters.m_hadronicEnergy = caloHitParameters.m_inputEnergy.Get();
+														caloHitParameters.m_electromagneticEnergy = caloHitParameters.m_inputEnergy.Get();
 
 														if(pCaloHit->getType() == 1 || pCaloHit->getType() == 3)
 														{
@@ -1015,7 +1025,7 @@ pandora::StatusCode SDHCALArborProcessor::FillRootTree()
 
   pfoID++;
  }
-
+ std::cout << "m_rootFile : " << m_rootFile << std::endl;
  m_nPfos = pPfoList->size();
 // m_algorithmEfficiency = (m_nPfos == 2) ? 1 : 0;
 
@@ -1026,6 +1036,8 @@ pandora::StatusCode SDHCALArborProcessor::FillRootTree()
  float energyMC2 = 0.f;
  SDHCALArborProcessor::SDHCALEnergyCorrectionFunctionLCCaloHitVec(m_caloHitTypeParticle1, energyMC1);
  SDHCALArborProcessor::SDHCALEnergyCorrectionFunctionLCCaloHitVec(m_caloHitTypeParticle2, energyMC2);
+
+// std::cout << << << std::endl;
 
  m_rootFile->cd();
 
@@ -1154,12 +1166,11 @@ void SDHCALArborProcessor::SDHCALEnergyCorrectionFunctionLCCaloHitVec(const std:
 	for(std::vector<CalorimeterHit*>::const_iterator iter = caloHitVec.begin() , endIter = caloHitVec.end() ; endIter != iter ; ++iter)
 	{
 		const CalorimeterHit *pCaloHit = *iter;
-
-		if( (pCaloHit->getEnergy() - m_sdhcalEnergyFactors.at(0)) < std::numeric_limits<float>::epsilon() )
+		if( (pCaloHit->getEnergy() - 1.f) < std::numeric_limits<float>::epsilon() )
 			N1++;
-		else if((pCaloHit->getEnergy() - m_sdhcalEnergyFactors.at(1)) < std::numeric_limits<float>::epsilon())
+		else if((pCaloHit->getEnergy() - 2.f) < std::numeric_limits<float>::epsilon())
 			N2++;
-		else if((pCaloHit->getEnergy() - m_sdhcalEnergyFactors.at(2)) < std::numeric_limits<float>::epsilon())
+		else if((pCaloHit->getEnergy() - 3.f) < std::numeric_limits<float>::epsilon())
 			N3++;
 		else
 			throw pandora::StatusCodeException(pandora::STATUS_CODE_FAILURE);
