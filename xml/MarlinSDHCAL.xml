@@ -15,10 +15,10 @@
 
 <global>
   <parameter name="LCIOInputFiles">
-  /home/remi/ilcsoft/SDHCAL/data/simulation/pi-/single_calorimeterhit_pi-_20GeV_new.slcio
+  /home/remi/ilcsoft/SDHCAL/data/simulation/pi-/single_calorimeterhit_pi-_30GeV_new.slcio
   </parameter>
   <parameter name="GearXMLFile" value="/home/remi/git/ArborPFA/xml/SDHCALGearFile.xml"/>
-  <parameter name="MaxRecordNumber" value="500"/>
+  <parameter name="MaxRecordNumber" value="1000"/>
   <parameter name="SkipNEvents" value="0"/>
   <parameter name="SupressCheck" value="false"/>
   <parameter name="Verbosity" options="DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT"> MESSAGE </parameter>
@@ -27,7 +27,7 @@
 
 <processor name="MyMarlinSDHCALArbor" type="SDHCALArborProcessor">
 
-<parameter name="PandoraSettingsXmlFile" type="String">/home/remi/git/ArborPFA/xml/StandardReconstructionPandoraSettings.xml</parameter> 
+<parameter name="PandoraSettingsXmlFile" type="String">/home/remi/git/ArborPFA/xml/PandoraSettingsDefault.xml</parameter> 
 <!--   <parameter name="PandoraSettingsXmlFile" type="String">/home/remi/git/ArborPFA/xml/SDHCALArborPandoraSettings.xml</parameter> -->
   
   <!-- Collection names -->
@@ -37,10 +37,15 @@
   <parameter name="PFOCollectionName" type="String">SDHCALArborProcessorPFOs</parameter>
   
   <parameter name="AbsorberRadiationLength" type="float">0.2857</parameter>
-  <parameter name="SDHCALEnergyFactors" type="FloatVec"> 
+<!--   <parameter name="SDHCALEnergyFactors" type="FloatVec"> 
     1.0 
     2.0 
     3.0 
+  </parameter> -->
+    <parameter name="SDHCALEnergyFactors" type="FloatVec"> 
+    0.0406459 
+    0.101952
+    0.258078
   </parameter>
   <parameter name="SDHCALEnergyConstants" type="FloatVec"> 
     0.0227148
@@ -54,7 +59,7 @@
     4.97735e-08
   </parameter>
   <parameter name="IsSingleParticleStudy" type="bool"> true </parameter>
-  <parameter name="SingleParticleMomentum" type="float"> 20.0 </parameter>
+  <parameter name="SingleParticleMomentum" type="float"> 30.0 </parameter>
   <parameter name="RootOuputFileName" type ="string"> testPandora.root </parameter>
   <parameter name="RootTreeName" type ="string"> PFOAnalysis </parameter>
   <parameter name="Verbosity" options="DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT"> MESSAGE DEBUG </parameter>
