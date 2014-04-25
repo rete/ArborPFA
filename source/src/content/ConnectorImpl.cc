@@ -27,15 +27,13 @@
 
 // arborpfa
 #include "arborpfa/content/ConnectorImpl.h"
-#include "arborpfa/content/ArborObject.h"
-
-// pandora
-#include "Objects/CartesianVector.h"
 
 using namespace pandora;
 
 namespace arborpfa
 {
+
+//--------------------------------------------------------------------------------------------------------------------
 
 ConnectorImpl::ConnectorImpl(ArborObject *pObject1, ArborObject *pObject2, const float weight)
 {
@@ -49,90 +47,14 @@ ConnectorImpl::ConnectorImpl(ArborObject *pObject1, ArborObject *pObject2, const
 	m_weight = weight;
 }
 
+//--------------------------------------------------------------------------------------------------------------------
+
 ConnectorImpl::~ConnectorImpl() 
 {
 	m_objectPair.first  = NULL;
 	m_objectPair.second = NULL;
 	m_weight = 0.0;
 }
-
-
-
-ArborObject *ConnectorImpl::GetFirst() const
-{
-	return m_objectPair.first;
-}
-
-
-
-ArborObject *ConnectorImpl::GetSecond() const
-{
-	return m_objectPair.second;
-}
-
-
-
-pandora::StatusCode ConnectorImpl::SetWeight(float weight)
-{
-	m_weight = weight;
-
-	return STATUS_CODE_SUCCESS;
-}
-
-
-
-float ConnectorImpl::GetWeight() const
-{
-	return m_weight;
-}
-
-
-
-const ArborObjectPair &ConnectorImpl::GetObjects() const
-{
-	return m_objectPair;
-}
-
-
-
-bool ConnectorImpl::Contains(ArborObject *pObject) const
-{
-	return ( m_objectPair.first == pObject || m_objectPair.second == pObject ) ? true : false;
-}
-
-
-
-float ConnectorImpl::GetDistanceBetweenObjects() const
-{
-	return (m_objectPair.first->GetPosition() - m_objectPair.second->GetPosition()).GetMagnitude();
-}
-
-
-
-Connector::Type ConnectorImpl::GetType() const
-{
-	return m_type;
-}
-
-
-
-pandora::StatusCode ConnectorImpl::SetType(Connector::Type type)
-{
-	m_type = type;
-
-	return STATUS_CODE_SUCCESS;
-}
-
-pandora::StatusCode ConnectorImpl::SwapObjects()
-{
-	ArborObject *pThird = m_objectPair.first;
-	m_objectPair.first = m_objectPair.second;
-	m_objectPair.second = pThird;
-	pThird = NULL;
-
-	return STATUS_CODE_SUCCESS;
-}
-
 
 } 
 

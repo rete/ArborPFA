@@ -30,20 +30,29 @@
 
 #include "arborpfa/content/Connector.h"
 #include "arborpfa/arbor/ArborTypes.h"
+#include "arborpfa/content/ArborObject.h"
+
+// pandora
+#include "Objects/CartesianVector.h"
 
 namespace arborpfa {
 
 class ArborObject;
 
 /** 
- * @brief ConnectorImpl class
+ * @brief ConnectorImpl class. </br>
+ * Basic implementation of the Connector class
  */ 
 class ConnectorImpl : public Connector 
 {
  public:
 
 		/**
-			* @brief Ctor
+			* @brief Ctor with the two object to connect and the connection weight
+			*
+			* @param pObject1 the first object to connect
+			* @param pObject2 the second object to connect
+			* @param weight the connection weight
 			*/
 		ConnectorImpl(ArborObject *pObject1, ArborObject *pObject2, const float weight = 1.0);
 
@@ -53,66 +62,134 @@ class ConnectorImpl : public Connector
 		virtual ~ConnectorImpl();
 
 		/**
-			*
+			* @brief Return the first connected object
 			*/
 		virtual ArborObject *GetFirst() const;
 
 		/**
-			*
+			* @brief Return the second connected object
 			*/
 		virtual ArborObject *GetSecond() const;
 
 		/**
+			* @brief Set the weight of the connection
 			*
+			* @param weight the weight of the connection
 			*/
 		virtual pandora::StatusCode SetWeight(float weight);
 
 		/**
-			*
+			* @brief Return the connection weight
 			*/
 		virtual float GetWeight() const;
 
 		/**
-			*
+			* @brief Return the connected objects in a pair
 			*/
 		virtual const ArborObjectPair &GetObjects() const;
 
 		/**
-			*
-			*/
+		 * @brief Whether the object is the first or second object of this connector
+		 *
+		 * @param pObject the object to compare
+		 */
 		virtual bool Contains(ArborObject *pObject) const;
 
 		/**
-			*
-			*/
+		 * @brief Return the distance between the two connected objects
+		 */
 		virtual float GetDistanceBetweenObjects() const;
 
 		/**
+		 * @brief Set the type of connection. Often represents a step in </br>
+		 * the Arbor algorithm
 		 *
+		 * @param type the connector type. See enum in ArborTypes.h
 		 */
-		virtual pandora::StatusCode SetType(Connector::Type type);
+		virtual pandora::StatusCode SetType(ConnectorType type);
 
 		/**
-		 *
+		 * @brief Return the connector type
 		 */
-		virtual Connector::Type GetType() const;
+		virtual ConnectorType GetType() const;
 
  protected:
 
-		/**
-			*
-			*/
-		virtual pandora::StatusCode SwapObjects();
+		// members
+		ArborObjectPair         m_objectPair;     ///< The objects that are connected
+		float                  m_weight;          ///< The connection weight
+		ConnectorType           m_type;            ///< The connector type
 
-		//
-		ArborObjectPair         m_objectPair;
-		float                  m_weight;
-		Connector::Type         m_type;
-
-
+		// friendship
 		friend class ArborObjectImpl;
-
 };
+
+//--------------------------------------------------------------------------------------------------------------------
+
+inline ArborObject *ConnectorImpl::GetFirst() const
+{
+	return m_objectPair.first;
+}
+
+//--------------------------------------------------------------------------------------------------------------------
+
+inline ArborObject *ConnectorImpl::GetSecond() const
+{
+	return m_objectPair.second;
+}
+
+//--------------------------------------------------------------------------------------------------------------------
+
+inline pandora::StatusCode ConnectorImpl::SetWeight(float weight)
+{
+	m_weight = weight;
+
+	return pandora::STATUS_CODE_SUCCESS;
+}
+
+//--------------------------------------------------------------------------------------------------------------------
+
+inline float ConnectorImpl::GetWeight() const
+{
+	return m_weight;
+}
+
+
+
+inline const ArborObjectPair &ConnectorImpl::GetObjects() const
+{
+	return m_objectPair;
+}
+
+//--------------------------------------------------------------------------------------------------------------------
+
+inline bool ConnectorImpl::Contains(ArborObject *pObject) const
+{
+	return ( m_objectPair.first == pObject || m_objectPair.second == pObject ) ? true : false;
+}
+
+//--------------------------------------------------------------------------------------------------------------------
+
+inline float ConnectorImpl::GetDistanceBetweenObjects() const
+{
+	return (m_objectPair.first->GetPosition() - m_objectPair.second->GetPosition()).GetMagnitude();
+}
+
+//--------------------------------------------------------------------------------------------------------------------
+
+inline ConnectorType ConnectorImpl::GetType() const
+{
+	return m_type;
+}
+
+//--------------------------------------------------------------------------------------------------------------------
+
+inline pandora::StatusCode ConnectorImpl::SetType(ConnectorType type)
+{
+	m_type = type;
+
+	return pandora::STATUS_CODE_SUCCESS;
+}
 
 
 } 
