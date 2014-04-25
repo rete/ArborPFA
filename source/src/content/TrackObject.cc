@@ -39,11 +39,10 @@ namespace arborpfa
 TrackObject::TrackObject(pandora::Track *pTrack) :
 		m_pTrack(pTrack)
 {
-
-	m_type = ArborObject::TRACK;
 	m_position = m_pTrack->GetTrackStateAtCalorimeter().GetPosition();
 	m_granularity = GeometryHelper::GetHitTypeGranularity(INNER_DETECTOR);
 	m_pseudoLayer = 0;
+	m_type = TRACK;
 }
 
 TrackObject::~TrackObject() 
