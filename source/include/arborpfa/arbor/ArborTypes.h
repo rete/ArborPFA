@@ -44,8 +44,39 @@ namespace arborpfa
 	typedef std::set<ArborObject*>       ArborObjectList;
 	typedef std::vector<ArborObject*>    ArborObjectVector;
 
-
 	typedef std::pair<ArborObject*,ArborObject*> ArborObjectPair;
+
+	/**
+	 * @brief ConnectorDirection enum
+	 */
+	enum ConnectorDirection
+	{
+		BACKWARD,
+		FORWARD
+	};
+
+	/**
+	 * @brief ArborObjectType enum
+	 */
+	enum ArborObjectType
+	{
+		CALO_HIT,
+		CLUSTER,
+		TRACK,
+		UNDEFINED_OBJECT
+	};
+
+	/**
+	 * @brief ConnectorType enum
+	 */
+	enum ConnectorType
+	{
+		INITIAL_CONNECTOR,
+		FIRST_CLEANING,
+		SECOND_CLEANING,
+		FINAL_DECISION,
+		UNDEFINED_CONNECTOR
+	};
 
 } 
 
