@@ -46,7 +46,8 @@ namespace arborpfa
 ArborObjectImpl::ArborObjectImpl() :
 		m_position(0.f, 0.f, 0.f),
 		m_isIsolated(false),
-  m_granularity(COARSE)
+  m_granularity(COARSE),
+  m_pCurrentBackwardConnector(NULL)
 {
 
 }
@@ -75,10 +76,13 @@ ArborObjectImpl::~ArborObjectImpl()
 
 	}
 
+	// consistency check ...
 	if(!m_connectorList.empty())
 		throw StatusCodeException(STATUS_CODE_FAILURE);
 
 	m_connectorList.clear();
+	m_backwardConnectorList.clear();
+	m_forwardConnectorList.clear();
 
 }
 
@@ -103,9 +107,18 @@ bool ArborObjectImpl::IsConnectedWith(ArborObject *pObject) const
 
 //--------------------------------------------------------------------------------------------------------------------
 
-const ConnectorList &ArborObjectImpl::GetConnectors() const
+bool ArborObjectImpl::IsBackwardConnector(const Connector *pConnector) const
 {
-	return m_connectorList;
+	ConnectorList::const_iterator findIter = std::find(m_backwardConnectorList.begin(), m_backwardConnectorList.end(), pConnector);
+	return (m_backwardConnectorList.end() != findIter);
+}
+
+//--------------------------------------------------------------------------------------------------------------------
+
+bool ArborObjectImpl::IsForwardConnector(const Connector *pConnector) const
+{
+	ConnectorList::const_iterator findIter = std::find(m_forwardConnectorList.begin(), m_forwardConnectorList.end(), pConnector);
+	return (m_forwardConnectorList.end() != findIter);
 }
 
 //--------------------------------------------------------------------------------------------------------------------
@@ -129,73 +142,16 @@ pandora::StatusCode ArborObjectImpl::FindConnector(ArborObject *pObject, Connect
 
 //--------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode ArborObjectImpl::GetConnectorsWithWeightGreaterThan(float weight, ConnectorList &connectorList)
-{
-	for(ConnectorList::const_iterator iter = m_connectorList.begin(), endIter = m_connectorList.end() ; iter != endIter ; ++iter)
-	{
-		if((*iter)->GetWeight() > weight)
-		{
-			connectorList.insert(*iter);
-		}
-	}
-
-	return STATUS_CODE_SUCCESS;
-}
-
-//--------------------------------------------------------------------------------------------------------------------
-
-pandora::StatusCode ArborObjectImpl::GetConnectorsWithWeightLessThan(float weight, ConnectorList &connectorList)
-{
-	for(ConnectorList::const_iterator iter = m_connectorList.begin(), endIter = m_connectorList.end() ; iter != endIter ; ++iter)
-	{
-		if((*iter)->GetWeight() < weight)
-		{
-			connectorList.insert(*iter);
-		}
-	}
-
-	return STATUS_CODE_SUCCESS;
-}
-
-//--------------------------------------------------------------------------------------------------------------------
-
-ArborObject::Type ArborObjectImpl::GetType() const
-{
-	return m_type;
-}
-
-//--------------------------------------------------------------------------------------------------------------------
-
-const pandora::CartesianVector &ArborObjectImpl::GetPosition() const
-{
-	return m_position;
-}
-
-//--------------------------------------------------------------------------------------------------------------------
-
-unsigned int ArborObjectImpl::GetNumberOfConnections() const
-{
-	return m_connectorList.size();
-}
-
-//--------------------------------------------------------------------------------------------------------------------
-
-bool ArborObjectImpl::IsConnected() const
-{
-	return ! m_connectorList.empty();
-}
-
-//--------------------------------------------------------------------------------------------------------------------
-
-pandora::StatusCode ArborObjectImpl::ConnectWith(ArborObject *pObject, float weight)
+pandora::StatusCode ArborObjectImpl::ConnectWith(ArborObject *pObject, ConnectorDirection direction, float weight)
 {
 
 	if(pObject == this)
 		return STATUS_CODE_FAILURE;
 
 	// Case where a the other object has already created a connection with this object
-	if( pObject->IsConnectedWith(this) ) {
-
+	// This is the call back case
+	if( pObject->IsConnectedWith(this) )
+	{
 		// find the connector
 		Connector *pConnector = NULL;
 		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, pObject->FindConnector(this, pConnector));
@@ -206,35 +162,53 @@ pandora::StatusCode ArborObjectImpl::ConnectWith(ArborObject *pObject, float wei
 		// and add it to the list
 		m_connectorList.insert(pConnector);
 
-		return STATUS_CODE_SUCCESS;
-
+		if(BACKWARD == direction)
+		{
+			m_backwardConnectorList.insert(pConnector);
+		}
+		else
+		{
+			m_forwardConnectorList.insert(pConnector);
+		}
 	}
-	else {
-
-		// create a new one
+	else
+	{
+		// create a new connector
 		Connector *pConnector = new ConnectorImpl(this, pObject, weight);
 
 		// add it to the list
 		m_connectorList.insert(pConnector);
 
-		// connect the other one
-		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, pObject->ConnectWith(this, weight));
+		ConnectorDirection retroDirection;
 
-		return STATUS_CODE_SUCCESS;
+		if(BACKWARD == direction)
+		{
+			m_backwardConnectorList.insert(pConnector);
+			retroDirection = FORWARD;
+		}
+		else
+		{
+			m_forwardConnectorList.insert(pConnector);
+			retroDirection = BACKWARD;
+		}
+
+		// connect the other one in the other direction
+		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, pObject->ConnectWith(this, retroDirection, weight));
 	}
 
+	return STATUS_CODE_SUCCESS;
 }
 
 //--------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode ArborObjectImpl::ConnectWith(ArborObject *pObject, Connector *&pConnector, float weight)
+pandora::StatusCode ArborObjectImpl::ConnectWith(ArborObject *pObject, ConnectorDirection direction, Connector *&pConnector, float weight)
 {
 	if(pObject == this)
 		return STATUS_CODE_FAILURE;
 
 	// Case where a the other object has already created a connection with this object
-	if( pObject->IsConnectedWith(this) ) {
-
+	if( pObject->IsConnectedWith(this) )
+	{
 		// find the connector
 		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, pObject->FindConnector(this, pConnector));
 
@@ -244,10 +218,17 @@ pandora::StatusCode ArborObjectImpl::ConnectWith(ArborObject *pObject, Connector
 		// and add it to the list
 		m_connectorList.insert(pConnector);
 
-		return STATUS_CODE_SUCCESS;
-
+		if(BACKWARD == direction)
+		{
+			m_backwardConnectorList.insert(pConnector);
+		}
+		else
+		{
+			m_forwardConnectorList.insert(pConnector);
+		}
 	}
-	else {
+	else
+	{
 
 		// create a new one
 		pConnector = new ConnectorImpl(this, pObject, weight);
@@ -255,11 +236,24 @@ pandora::StatusCode ArborObjectImpl::ConnectWith(ArborObject *pObject, Connector
 		// add it to the list
 		m_connectorList.insert(pConnector);
 
-		// connect the other one
-		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, pObject->ConnectWith(this, weight));
+		ConnectorDirection retroDirection;
 
-		return STATUS_CODE_SUCCESS;
+		if(BACKWARD == direction)
+		{
+			m_backwardConnectorList.insert(pConnector);
+			retroDirection = FORWARD;
+		}
+		else
+		{
+			m_forwardConnectorList.insert(pConnector);
+			retroDirection = BACKWARD;
+		}
+
+		// connect the other one
+		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, pObject->ConnectWith(this, retroDirection, weight));
 	}
+
+	return STATUS_CODE_SUCCESS;
 }
 
 //--------------------------------------------------------------------------------------------------------------------
@@ -281,10 +275,34 @@ pandora::StatusCode ArborObjectImpl::RemoveConnectionWith(ArborObject *pObject)
 			continue;
 		}
 
+		if(this->IsBackwardConnector(pConnector))
+		{
+			size_t nErase = m_backwardConnectorList.erase(pConnector);
+
+			if(1 != nErase)
+				return STATUS_CODE_FAILURE;
+
+			nErase = pObject->GetForwardConnectorList().erase(pConnector);
+
+			if(1 != nErase)
+				return STATUS_CODE_FAILURE;
+		}
+		else
+		{
+			size_t nErase = m_forwardConnectorList.erase(pConnector);
+
+			if(1 != nErase)
+				return STATUS_CODE_FAILURE;
+
+			nErase = pObject->GetBackwardConnectorList().erase(pConnector);
+
+			if(1 != nErase)
+				return STATUS_CODE_FAILURE;
+		}
+
 		ConnectorList &otherConnectors = pObject->GetConnectors();
 		ConnectorList::iterator it2 = std::find(otherConnectors.begin(), otherConnectors.end(), pConnector);
 
-		// TODO The manager should do this !!!
 		delete pConnector;
 
 		// can't do object->GetConnectors().erase( it ) since iterator 'it' is not from the same vector
@@ -297,74 +315,6 @@ pandora::StatusCode ArborObjectImpl::RemoveConnectionWith(ArborObject *pObject)
 	return STATUS_CODE_SUCCESS;
 }
 
-//--------------------------------------------------------------------------------------------------------------------
-
-pandora::StatusCode ArborObjectImpl::RemoveAllConnectionsExcept(ArborObject *pObject)
-{
-
-	if(NULL == pObject)
-		return STATUS_CODE_INVALID_PARAMETER;
-
-	if(! this->IsConnectedWith(pObject))
-		return STATUS_CODE_FAILURE;
-
-	for(ConnectorList::const_iterator iter = m_connectorList.begin(), endIter = m_connectorList.end() ; iter != endIter ; ++iter)
-	{
-		ArborObject *pOther = NULL;
-
-		if((*iter)->GetFirst() == this)
-		{
-			pOther = (*iter)->GetSecond();
-		}
-		else if((*iter)->GetSecond() == this)
-		{
-			pOther = (*iter)->GetFirst();
-		}
-		else
-		{
-			continue;
-		}
-
-		if(pOther != pObject)
-		{
-			PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RemoveConnectionWith(pOther));
-			iter--;
-		}
-
-	}
-
-	return STATUS_CODE_SUCCESS;
-}
-
-//--------------------------------------------------------------------------------------------------------------------
-
-ConnectorList &ArborObjectImpl::GetConnectors()
-{
-	return m_connectorList;
-}
-
-
-bool ArborObjectImpl::IsIsolated() const
-{
-	return m_isIsolated;
-}
-
-void ArborObjectImpl::SetIsIsolated(bool boolean)
-{
-	m_isIsolated = boolean;
-}
-
-
-pandora::Granularity ArborObjectImpl::GetGranularity() const
-{
-	return m_granularity;
-}
-
-
-pandora::PseudoLayer ArborObjectImpl::GetPseudoLayer() const
-{
-	return m_pseudoLayer;
-}
 
 } 
 

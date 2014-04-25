@@ -38,7 +38,10 @@ namespace arborpfa
 {
 
 /** 
- * @brief ArborObjectImpl class
+ * @brief ArborObjectImpl class. </br>
+ * Basic implementation of the arbor object but still not a final one since </br>
+ * the type, pseudo-layer, granularity and the position have to be determined </br>
+ * by daughter classes. Thus, ctor is private and this class can't be instantiated.
  */ 
 class ArborObjectImpl : public ArborObject
 {
@@ -65,6 +68,32 @@ class ArborObjectImpl : public ArborObject
 	virtual const ConnectorList &GetConnectors() const;
 
 	/**
+	 * @brief Return the list of backward connectors
+	 */
+	virtual const ConnectorList &GetBackwardConnectorList() const;
+
+	/**
+	 * @brief Return the list of forward connectors
+	 */
+	virtual const ConnectorList &GetForwardConnectorList() const;
+
+	/**
+	 * @brief Whether the connector is a backward one for this object.
+	 * Return also false if the connector is neither backward nor forward
+	 *
+	 * @param pConnector the connector to test
+	 */
+	virtual bool IsBackwardConnector(const Connector *pConnector) const;
+
+	/**
+	 * @brief Whether the connector is a forward one for this object.
+	 * Return also false if the connector is neither backward nor forward
+	 *
+	 * @param pConnector the connector to test
+	 */
+	virtual bool IsForwardConnector(const Connector *pConnector) const;
+
+	/**
 	 * @brief Find a specific connection with an other arbor object
 	 *
 	 * @param pObject the arbor object to check the connection with
@@ -73,27 +102,11 @@ class ArborObjectImpl : public ArborObject
 	virtual pandora::StatusCode FindConnector(ArborObject *pObject, Connector *&pConnector) const;
 
 	/**
-	 * @brief Get a connector list with a connection weight greater than a given weight. The connector list is appended to given list
-	 *
-	 * @param weight the minimum weight for the connectors
-	 * @param connectorList the connector list to which the connectors will be appended
-	 */
-	virtual pandora::StatusCode GetConnectorsWithWeightGreaterThan(float weight, ConnectorList &connectorList);
-
-	/**
-	 * @brief Get a connector list with a connection weight lesser than a given weight. The connector list is appended to given list
-	 *
-	 * @param weight the maximum weight for the connectors
-	 * @param connectorList the connector list to which the connectors will be appended
-	 */
-	virtual pandora::StatusCode GetConnectorsWithWeightLessThan(float weight, ConnectorList &connectorList);
-
-	/**
 	 * @brief Get the tag on this object
 	 *
 	 * @return the tag string
 	 */
-	virtual ArborObject::Type GetType() const;
+	virtual ArborObjectType GetType() const;
 
 	/**
 	 * @brief Get the position of the object
@@ -110,96 +123,220 @@ class ArborObjectImpl : public ArborObject
 	virtual bool IsConnected() const;
 
 	/**
-	 * @brief Merge the content of the object in the cluster.
-	 *
-	 * @param pCluster the cluster into which the content will be merge
-	 */
-	virtual pandora::StatusCode MergeContentInCluster(const pandora::Algorithm &algorithm, pandora::Cluster *pCluster) = 0;
-
-	/**
-	 *
-	 */
-	virtual pandora::StatusCode CreateCluster(const pandora::Algorithm &algorithm, pandora::Cluster *&pCluster) = 0;
-
-	/**
-	 *
-	 */
-	virtual unsigned int GetNumberOfConnections() const;
-
-	/**
 	 * @brief Connect this object with the given one and put a weight on this connection
 	 *
 	 * @param pObject the arbor object to connect with
-	 * @param
+	 * @param direction BACKWARD or FORWARD
+	 * @param weight the weight for this new connection
 	 */
-	virtual pandora::StatusCode ConnectWith(ArborObject *pObject, float weight = 1.0);
+	virtual pandora::StatusCode ConnectWith(ArborObject *pObject, ConnectorDirection direction, float weight = 1.0);
 
 	/**
 	 * @brief Connect this object with the given one, put a weight on this connection and retrieve the connector
 	 *
-	 * @param
+	 * @param pObject the arbor object to connect with
+	 * @param direction BACKWARD or FORWARD
+	 * @param pConnector the connector address to receive
+	 * @param weight the weight for this new connection
 	 */
-	virtual pandora::StatusCode ConnectWith(ArborObject *pObject, Connector *&pConnector, float weight = 1.0);
+	virtual pandora::StatusCode ConnectWith(ArborObject *pObject, ConnectorDirection direction, Connector *&pConnector, float weight = 1.0);
 
 	/**
+	 * @brief Remove a connection with this object
 	 *
+	 * @param pObject the object to remove the connection with
 	 */
 	virtual pandora::StatusCode RemoveConnectionWith(ArborObject *pObject);
 
 	/**
-	 *
-	 */
-	virtual pandora::StatusCode RemoveAllConnectionsExcept(ArborObject *pObject);
-
-	/**
-	 *
+	 * @brief Return the connector list
 	 */
 	virtual ConnectorList &GetConnectors();
 
 	/**
-	 *
+	 * @brief Return the list of backward connectors
+	 */
+	virtual ConnectorList &GetBackwardConnectorList();
+
+	/**
+	 * @brief Return the list of forward connectors
+	 */
+	virtual ConnectorList &GetForwardConnectorList();
+
+	/**
+	 * @brief Whether the object is isolated
 	 */
 	virtual bool IsIsolated() const;
 
 	/**
+	 * @brief Set the object as isolated.
 	 *
+	 * @param boolean the isolation flag
 	 */
 	virtual void SetIsIsolated(bool boolean);
 
 	/**
-	 *
+	 * @brief Return the granularity of the object
 	 */
 	virtual pandora::Granularity GetGranularity() const;
 
 	/**
-	 *
+	 * @brief Return the pseudo-layer associated to this object
 	 */
 	virtual pandora::PseudoLayer GetPseudoLayer() const;
+
+	/**
+	 * @brief Set the current backward connector. This connector should
+	 * be unique in the arbor algorithm in order to build a tree.
+	 *
+	 * @param pConnector the current backward connector to set
+	 */
+	virtual pandora::StatusCode SetCurrentBackwardConnector(Connector *pConnector);
+
+	/**
+	 * @brief Return the current backward connector
+	 */
+	virtual pandora::StatusCode GetCurrentBackwardConnector(Connector *&pConnector) const;
 
 protected:
 
  /**
-  *
+  * @brief Private ctor
   */
  ArborObjectImpl();
 
-
- /**
-  * @brief Constructor
-  */
-// ArborObjectImpl(ArborObject::Type type, const pandora::CartesianVector &position);
-
-
 	// members
- ConnectorList                m_connectorList;         ///< The connector of this object
- ArborObject::Type            m_type;                  ///< The associated tag of this object
- pandora::CartesianVector     m_position;              ///< The position of this object
- bool                        m_isIsolated;
- pandora::Granularity        m_granularity;
- pandora::PseudoLayer        m_pseudoLayer;
+ ConnectorList                m_connectorList;                    ///< All the connector list
 
+ ConnectorList                m_backwardConnectorList;           ///< The backward connector list
+ ConnectorList                m_forwardConnectorList;            ///< The forward connector list
+ Connector                   *m_pCurrentBackwardConnector;      ///< The backward connector
+
+ ArborObjectType              m_type;                              ///< The associated tag of this object
+ pandora::CartesianVector     m_position;            											   ///< The position of this object
+ bool                         m_isIsolated;                       ///< Whether the object is isolated
+ pandora::Granularity         m_granularity;                      ///< the granularity of the object
+ pandora::PseudoLayer         m_pseudoLayer;                      ///< The associated pseudo layer
+
+
+ // friendship
  friend class ConnectorImpl;
-}; 
+};
+
+//--------------------------------------------------------------------------------------------------------------------
+
+inline pandora::StatusCode ArborObjectImpl::SetCurrentBackwardConnector(Connector *pConnector)
+{
+	m_pCurrentBackwardConnector = pConnector;
+
+	return pandora::STATUS_CODE_SUCCESS;
+}
+
+//--------------------------------------------------------------------------------------------------------------------
+
+inline pandora::StatusCode ArborObjectImpl::GetCurrentBackwardConnector(Connector *&pConnector) const
+{
+	if(NULL == m_pCurrentBackwardConnector)
+	{
+		pConnector = NULL;
+		return pandora::STATUS_CODE_NOT_INITIALIZED;
+	}
+
+	pConnector = m_pCurrentBackwardConnector;
+
+	return pandora::STATUS_CODE_SUCCESS;
+}
+
+//--------------------------------------------------------------------------------------------------------------------
+
+inline const ConnectorList &ArborObjectImpl::GetConnectors() const
+{
+	return m_connectorList;
+}
+
+//--------------------------------------------------------------------------------------------------------------------
+
+inline const ConnectorList &ArborObjectImpl::GetBackwardConnectorList() const
+{
+	return m_backwardConnectorList;
+}
+
+//--------------------------------------------------------------------------------------------------------------------
+
+inline const ConnectorList &ArborObjectImpl::GetForwardConnectorList() const
+{
+	return m_forwardConnectorList;
+}
+
+//--------------------------------------------------------------------------------------------------------------------
+
+inline ArborObjectType ArborObjectImpl::GetType() const
+{
+	return m_type;
+}
+
+//--------------------------------------------------------------------------------------------------------------------
+
+inline const pandora::CartesianVector &ArborObjectImpl::GetPosition() const
+{
+	return m_position;
+}
+
+//--------------------------------------------------------------------------------------------------------------------
+
+inline bool ArborObjectImpl::IsConnected() const
+{
+	return !m_connectorList.empty();
+}
+
+//--------------------------------------------------------------------------------------------------------------------
+
+inline ConnectorList &ArborObjectImpl::GetConnectors()
+{
+	return m_connectorList;
+}
+
+//--------------------------------------------------------------------------------------------------------------------
+
+inline ConnectorList &ArborObjectImpl::GetBackwardConnectorList()
+{
+	return m_backwardConnectorList;
+}
+
+//--------------------------------------------------------------------------------------------------------------------
+
+inline ConnectorList &ArborObjectImpl::GetForwardConnectorList()
+{
+	return m_forwardConnectorList;
+}
+
+//--------------------------------------------------------------------------------------------------------------------
+
+inline bool ArborObjectImpl::IsIsolated() const
+{
+	return m_isIsolated;
+}
+
+//--------------------------------------------------------------------------------------------------------------------
+
+inline void ArborObjectImpl::SetIsIsolated(bool boolean)
+{
+	m_isIsolated = boolean;
+}
+
+//--------------------------------------------------------------------------------------------------------------------
+
+inline pandora::Granularity ArborObjectImpl::GetGranularity() const
+{
+	return m_granularity;
+}
+
+//--------------------------------------------------------------------------------------------------------------------
+
+inline pandora::PseudoLayer ArborObjectImpl::GetPseudoLayer() const
+{
+	return m_pseudoLayer;
+}
 
 } 
 
