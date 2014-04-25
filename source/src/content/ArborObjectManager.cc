@@ -595,8 +595,8 @@ template class pandora::AlgorithmObjectManager<arborpfa::ArborObject>;
 
 #include "arborpfa/algorithm/ArborAlgorithm.h"
 
-#include "arborpfa/content/SimpleCaloHitObject.h"
-#include "arborpfa/content/SmallClusterObject.h"
+#include "arborpfa/content/CaloHitObject.h"
+#include "arborpfa/content/ClusterObject.h"
 
 using namespace pandora;
 
@@ -629,7 +629,7 @@ pandora::StatusCode	ArborObjectManager::ReplaceCurrentAndAlgorithmInputLists(con
 
 
 
-pandora::StatusCode ArborObjectManager::CreateArborObject(ArborObject *&pArborObject, ArborObject::Type objectType, void *pInputObject)
+pandora::StatusCode ArborObjectManager::CreateArborObject(ArborObject *&pArborObject, ArborObjectType objectType, void *pInputObject)
 {
 	pArborObject = NULL;
 
@@ -644,23 +644,11 @@ pandora::StatusCode ArborObjectManager::CreateArborObject(ArborObject *&pArborOb
 			throw StatusCodeException(STATUS_CODE_NOT_INITIALIZED);
 
 		// factory role
-		if(ArborObject::SIMPLE_CALO_HIT == objectType)
-			pArborObject = new SimpleCaloHitObject((CaloHit *)pInputObject);
+		if(CALO_HIT == objectType)
+			pArborObject = new CaloHitObject((CaloHit *)pInputObject);
 
-		else if(ArborObject::SMALL_CLUSTER == objectType)
-			pArborObject = new SmallClusterObject((Cluster *)pInputObject);
-//
-//		else if(ArborObject::CALO_TRACK_POINT == objectType)
-//			pArborObject = new CaloTrackPointObject(pInputObject);
-//
-//		else if(ArborObject::CALO_TRACK_START_POINT == objectType)
-//			pArborObject = new CaloTrackStartPointObject(pInputObject);
-//
-//		else if(ArborObject::CALO_TRACK_END_POINT == objectType)
-//			pArborObject = new CaloTrackStartPointObject(pInputObject);
-//
-//		else if(ArborObject::TRACK_ENTERING_POINT == objectType)
-//			pArborObject = new TrackEnteringPointObject(pInputObject);
+		else if(CLUSTER == objectType)
+			pArborObject = new ClusterObject((Cluster *)pInputObject);
 
 		if (NULL == pArborObject)
 			throw StatusCodeException(STATUS_CODE_FAILURE);

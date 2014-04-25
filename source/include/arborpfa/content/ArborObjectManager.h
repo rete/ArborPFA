@@ -71,7 +71,7 @@ protected:
  /**
   *
   */
- pandora::StatusCode CreateArborObject(ArborObject *&pArborObject, ArborObject::Type objectType, void *pObject);
+ pandora::StatusCode CreateArborObject(ArborObject *&pArborObject, ArborObjectType objectType, void *pObject);
 
  // members
  bool m_canCreateConnectors;
