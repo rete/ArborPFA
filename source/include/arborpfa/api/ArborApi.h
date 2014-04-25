@@ -33,7 +33,7 @@
 #include "Pandora/PandoraInputTypes.h"
 
 #include "arborpfa/arbor/ArborTypes.h"
-
+#include "arborpfa/content/EnergyResolutionHelper.h"
 
 namespace pandora
 {
@@ -65,12 +65,12 @@ class ArborApi
 			* @param pConnectorList the connector to receive
 			* @param listName the connector list name
 			*/
-	 static pandora::StatusCode GetCurrentConnectorList(const Arbor &arbor, const ConnectorList *&pConnectorList);
-
-	 /**
-	  *
-	  */
-	 static pandora::StatusCode GetConnectorList(const Arbor &arbor, const std::string &listName, const ConnectorList *&pConnectorList);
+//	 static pandora::StatusCode GetCurrentConnectorList(const Arbor &arbor, const ConnectorList *&pConnectorList);
+//
+//	 /**
+//	  *
+//	  */
+//	 static pandora::StatusCode GetConnectorList(const Arbor &arbor, const std::string &listName, const ConnectorList *&pConnectorList);
 
 		/**
 			* @brief Register the reset function of Arbor framework
@@ -86,6 +86,12 @@ class ArborApi
 		 *
 		 */
 		static pandora::StatusCode RegisterAlgorithmFactory(const pandora::Pandora &pPandora, Arbor &pArbor, const std::string &factoryName, ArborAlgorithmFactory *pFactory);
+
+		/**
+		 *
+		 */
+		static pandora::StatusCode RegisterEnergyResolutionFunction(Arbor &arbor, const std::string &energyResolutionFunctionName, EnergyResolutionFunction *pEnergyResolutionFunction);
+
 
 		// TODO Think about a a function like SetConnectorRelation(void *, ..., ...) to link LCRelation with LCObject
 

@@ -32,6 +32,7 @@
 #include "Pandora/PandoraInternal.h"
 
 #include "arborpfa/arbor/ArborTypes.h"
+#include "arborpfa/content/EnergyResolutionHelper.h"
 
 namespace pandora
 {
@@ -63,17 +64,23 @@ class ArborApiImpl
 		/**
 			*
 			*/
-	 pandora::StatusCode GetCurrentConnectorList(const ConnectorList *&pConnectorList, std::string &listName) const;
+//	 pandora::StatusCode GetCurrentConnectorList(const ConnectorList *&pConnectorList, std::string &listName) const;
+//
+//	 /**
+//	  *
+//	  */
+//	 pandora::StatusCode GetConnectorList(const std::string &listName, const ConnectorList *&pConnectorList) const;
 
 	 /**
 	  *
 	  */
-	 pandora::StatusCode GetConnectorList(const std::string &listName, const ConnectorList *&pConnectorList) const;
+	 static pandora::StatusCode RegisterEnergyResolutionFunction(const std::string &energyResolutionFunctionName, EnergyResolutionFunction *pEnergyResolutionFunction);
 
 	 /**
 	  *
 	  */
 	 pandora::StatusCode ResetEvent() const;
+
 
  protected:
 

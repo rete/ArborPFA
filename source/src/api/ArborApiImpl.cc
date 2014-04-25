@@ -65,19 +65,26 @@ pandora::StatusCode ArborApiImpl::RegisterAlgorithmFactory(const pandora::Pandor
 		return STATUS_CODE_SUCCESS;
 }
 
-//---------------------------------------------------------------------------------------------------------------
-
-pandora::StatusCode ArborApiImpl::GetCurrentConnectorList(const ConnectorList *&pConnectorList, std::string &listName) const
+pandora::StatusCode ArborApiImpl::RegisterEnergyResolutionFunction(const std::string &energyResolutionFunctionName, EnergyResolutionFunction *pEnergyResolutionFunction)
 {
-	return m_pArbor->m_pConnectorManager->GetCurrentList(pConnectorList, listName);
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, EnergyResolutionHelper::RegisterEnergyResolutionFunction(energyResolutionFunctionName, pEnergyResolutionFunction));
+
+	return STATUS_CODE_SUCCESS;
 }
 
 //---------------------------------------------------------------------------------------------------------------
-
-pandora::StatusCode ArborApiImpl::GetConnectorList(const std::string &listName, const ConnectorList *&pConnectorList) const
-{
-	return m_pArbor->m_pConnectorManager->GetList(listName, pConnectorList);
-}
+//
+//pandora::StatusCode ArborApiImpl::GetCurrentConnectorList(const ConnectorList *&pConnectorList, std::string &listName) const
+//{
+//	return m_pArbor->m_pConnectorManager->GetCurrentList(pConnectorList, listName);
+//}
+//
+////---------------------------------------------------------------------------------------------------------------
+//
+//pandora::StatusCode ArborApiImpl::GetConnectorList(const std::string &listName, const ConnectorList *&pConnectorList) const
+//{
+//	return m_pArbor->m_pConnectorManager->GetList(listName, pConnectorList);
+//}
 
 //---------------------------------------------------------------------------------------------------------------
 
