@@ -115,7 +115,11 @@ pandora::StatusCode SmallClusterMergingAlgorithm::Run()
 		Cluster *pSmallCluster = iter->first;
 		Cluster *pBigCluster = iter->second;
 
+		if(NULL == pSmallCluster || NULL == pBigCluster)
+			continue;
+
 		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::MergeAndDeleteClusters(*this, pBigCluster, pSmallCluster));
+
 	}
 
 	smallToBigClusterMap.clear();
