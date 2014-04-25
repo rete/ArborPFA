@@ -28,7 +28,13 @@
 #ifndef ARBORHELPER_H
 #define ARBORHELPER_H
 
+// pandora
 #include "Pandora/StatusCodes.h"
+#include "Objects/CartesianVector.h"
+
+// std
+#include <utility>
+#include <cstddef>
 
 namespace pandora
 {
@@ -62,7 +68,7 @@ class ArborHelper
 	 static pandora::StatusCode GetClosestDistanceApproach(const pandora::Cluster *pCluster1, const pandora::Cluster *pCluster2, float &centroidDifference);
 
 
-}; 
+};
 
 } 
 
