@@ -41,72 +41,66 @@ namespace arborpfa
 class ArborObject;
 
 /** 
- * @brief Connector class
+ * @brief Connector class. </br>
+ * Base class for all connection type.
  */ 
 class Connector 
 {
 	public:
 
-	enum Type
-	{
-		INITIAL_CONNECTOR,
-		CURRENT_DECISION,
-		FINAL_DECISION,
-		UNDEFINED
-	};
-
 		/**
-			*
+			* @brief Return the first connected object
 			*/
 		virtual ArborObject *GetFirst() const = 0;
 
 		/**
-			*
+			* @brief Return the second connected object
 			*/
 		virtual ArborObject *GetSecond() const = 0;
 
 		/**
+			* @brief Set the weight of the connection
 			*
+			* @param weight the weight of the connection
 			*/
 		virtual pandora::StatusCode SetWeight(float weight) = 0;
 
 		/**
-			*
+			* @brief Return the connection weight
 			*/
 		virtual float GetWeight() const = 0;
 
 		/**
-			*
+			* @brief Return the connected objects in a pair
 			*/
 		virtual const ArborObjectPair &GetObjects() const = 0;
 
 		/**
+		 * @brief Whether the object is the first or second object of this connector
 		 *
+		 * @param pObject the object to compare
 		 */
 		virtual bool Contains(ArborObject *pObject) const = 0;
 
 		/**
-		 *
+		 * @brief Return the distance between the two connected objects
 		 */
 		virtual float GetDistanceBetweenObjects() const = 0;
 
 		/**
+		 * @brief Set the type of connection. Often represents a step in </br>
+		 * the Arbor algorithm
 		 *
+		 * @param type the connector type. See enum in ArborTypes.h
 		 */
-		virtual pandora::StatusCode SetType(Connector::Type type) = 0;
+		virtual pandora::StatusCode SetType(ConnectorType type) = 0;
 
 		/**
-		 *
+		 * @brief Return the connector type
 		 */
-		virtual Connector::Type GetType() const = 0;
+		virtual ConnectorType GetType() const = 0;
 
-	protected:
-
-		/**
-		 *
-		 */
-		virtual pandora::StatusCode SwapObjects() = 0;
-
+		// friendship
 		friend class ArborManager;
 }; 
 
