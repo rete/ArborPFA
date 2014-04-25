@@ -59,7 +59,7 @@ StatusCode IsolatedHitMergingAlgorithm::Run()
 
 		CaloHit *pCaloHit = *iter;
 
-		if(!pCaloHit->IsIsolated())
+		if(!pCaloHit->IsIsolated() && !PandoraContentApi::IsCaloHitAvailable(*this, pCaloHit))
 			continue;
 
 		float minDistance = std::numeric_limits<float>::max();
