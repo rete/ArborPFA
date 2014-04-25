@@ -23,6 +23,7 @@
 // pandora sdk
 #include "Api/PandoraApi.h"
 #include "Objects/CartesianVector.h"
+#include "Helpers/XmlHelper.h"
 
 // pandora content
 #include "FineGranularityContent.h"
@@ -41,6 +42,7 @@
 #include "arborpfa/api/ArborApi.h"
 #include "arborpfa/content/ArborHelper.h"
 #include "arborpfa/content/CaloHitHelper.h"
+#include "arborpfa/content/EnergyResolutionHelper.h"
 
 // lcio
 #include "UTIL/CellIDDecoder.h"
@@ -86,7 +88,7 @@ float               SDHCALPseudoLayerCalculator::m_hCalEndCapLayerThickness = 0.
 
 pandora::PseudoLayer SDHCALPseudoLayerCalculator::GetPseudoLayer(const pandora::CartesianVector &positionVector) const
 {
-	return pandora::PseudoLayer( (positionVector.GetZ() - m_hCalEndCapInnerZ - 22.0 ) / m_hCalEndCapLayerThickness );
+	return pandora::PseudoLayer( round((positionVector.GetZ() - m_hCalEndCapInnerZ - 22.0 ) / m_hCalEndCapLayerThickness)) + 1;
 }
 
 pandora::PseudoLayer SDHCALPseudoLayerCalculator::GetPseudoLayerAtIp() const
@@ -94,6 +96,25 @@ pandora::PseudoLayer SDHCALPseudoLayerCalculator::GetPseudoLayerAtIp() const
 	return this->GetPseudoLayer(pandora::CartesianVector(0,0,0));
 }
 
+pandora::StatusCode SDHCALEnergyResolutionFunction::GetEnergyResolution(float energy, float &energyResolution) const
+{
+	energyResolution = std::sqrt(m_energyFactor*m_energyFactor/energy + m_constantFactor*m_constantFactor + m_energySquareFactor*m_energySquareFactor/(energy*energy));
+	return pandora::STATUS_CODE_SUCCESS;
+}
+
+pandora::StatusCode SDHCALEnergyResolutionFunction::ReadSettings(const pandora::TiXmlHandle xmlHandle)
+{
+ PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, pandora::XmlHelper::ReadValue(xmlHandle,
+     "EnergyFactor", m_energyFactor));
+
+ PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, pandora::XmlHelper::ReadValue(xmlHandle,
+     "ConstantFactor", m_constantFactor));
+
+ PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, pandora::XmlHelper::ReadValue(xmlHandle,
+     "EnergySquareFactor", m_energySquareFactor));
+
+	return pandora::STATUS_CODE_SUCCESS;
+}
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -279,6 +300,12 @@ pandora::StatusCode SDHCALArborProcessor::RegisterUserComponents() const
 
     PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::RegisterEnergyCorrectionFunction(*m_pPandora,
         "SDHCALEnergyCorrection", pandora::HADRONIC, &SDHCALArborProcessor::SDHCALEnergyCorrectionFunction));
+
+    PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, arborpfa::ArborApi::RegisterEnergyResolutionFunction(*m_pArbor, "SDHCALEnergyResolution",
+    		  new SDHCALEnergyResolutionFunction()));
+
+    PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::RegisterSettingsFunction(*m_pPandora, "EnergyResolutionHelper",
+    		&arborpfa::EnergyResolutionHelper::ReadSettings));
 
     //PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::RegisterParticleIdFunction(*m_pPandora, "MyParticleId",
     //    &SDHCALArborProcessor::MyParticleId));
@@ -608,7 +635,7 @@ pandora::StatusCode SDHCALArborProcessor::CreateTracks(EVENT::LCEvent *pLCEvent)
    float enteringPointZ = m_hCalEndCapInnerZ;
 
    pandora::CartesianVector trackPositionAtEnd(enteringPointX, enteringPointY, enteringPointZ);
-   std::cout << "trackPositionAtEnd : " << trackPositionAtEnd << std::endl;
+//   std::cout << "trackPositionAtEnd : " << trackPositionAtEnd << std::endl;
 
    pandora::CartesianVector trackMomemtumAtEnd(0.0001, 0.0001, m_singleParticleMomentum);
    float trackMomentum = trackMomemtumAtEnd.GetMagnitude();
@@ -684,7 +711,7 @@ pandora::StatusCode SDHCALArborProcessor::CreateTracks(EVENT::LCEvent *pLCEvent)
     unsigned int entryPointCell0 = static_cast<unsigned int>(pTrackInfoGO->getFloatVal(0));
     unsigned int entryPointCell1 = static_cast<unsigned int>(pTrackInfoGO->getFloatVal(1));
 
-    std::cout << "Entering point cell : (" << entryPointCell0 << "," << entryPointCell1 << ")" << std::endl;
+//    std::cout << "Entering point cell : (" << entryPointCell0 << "," << entryPointCell1 << ")" << std::endl;
 
     float trackAtEndX = - m_NCells0 / 2.0 * cellSize0 + entryPointCell0 * cellSize0;
     float trackAtEndY = - m_NCells1 / 2.0 * cellSize1 + entryPointCell1 * cellSize1;
@@ -695,7 +722,7 @@ pandora::StatusCode SDHCALArborProcessor::CreateTracks(EVENT::LCEvent *pLCEvent)
     float momentumZ = pTrackInfoGO->getFloatVal(5);
 
     pandora::CartesianVector trackPositionAtEnd(trackAtEndX, trackAtEndY, trackAtEndZ);
-    std::cout << "Track end position (from LCGO) : " << trackPositionAtEnd << std::endl;
+//    std::cout << "Track end position (from LCGO) : " << trackPositionAtEnd << std::endl;
     pandora::CartesianVector trackMomemtumAtEnd(0.0001, 0.0001, momentumZ);
     float trackMomentum = trackMomemtumAtEnd.GetMagnitude();
 
@@ -1098,7 +1125,7 @@ void SDHCALArborProcessor::Reset()
 void SDHCALArborProcessor::SDHCALEnergyCorrectionFunction(const pandora::Cluster *const pCluster, float &energyCorrection)
 {
 
-	std::cout << "Energy correction function called" << std::endl;
+//	std::cout << "Energy correction function called" << std::endl;
 
 	if(NULL == pCluster)
 		throw pandora::StatusCodeException(pandora::STATUS_CODE_INVALID_PARAMETER);

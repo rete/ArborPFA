@@ -9,14 +9,19 @@
 #ifndef SDHCAL_ARBOR_PROCESSOR_H
 #define SDHCAL_ARBOR_PROCESSOR_H 1
 
+// marlin
 #include "marlin/Processor.h"
 
+// pandora
 #include "Utilities/BFieldCalculator.h"
 #include "Utilities/PseudoLayerCalculator.h"
 //#include "PfoCreator.h"
 
 // lcio
 #include "EVENT/CalorimeterHit.h"
+
+// arborpfa
+#include "arborpfa/content/EnergyResolutionHelper.h"
 
 namespace pandora
 {
@@ -57,6 +62,7 @@ private:
     }
 };
 
+//------------------------------------------------------------------------------------------------------------------------------------------
 
 /**
  *  @brief  SimpleBFieldCalculator class
@@ -77,6 +83,25 @@ private:
     virtual pandora::PseudoLayer GetPseudoLayerAtIp() const;
 };
 
+//------------------------------------------------------------------------------------------------------------------------------------------
+
+class SDHCALEnergyResolutionFunction : public arborpfa::EnergyResolutionFunction
+{
+	public:
+
+	pandora::StatusCode GetEnergyResolution(float, float &) const;
+
+	pandora::StatusCode ReadSettings(const pandora::TiXmlHandle xmlHandle);
+
+	protected:
+
+	float       m_energyFactor;
+	float       m_constantFactor;
+	float       m_energySquareFactor;
+
+};
+
+//------------------------------------------------------------------------------------------------------------------------------------------
 
 /**
  *  @brief  PandoraPFANewProcessor class
