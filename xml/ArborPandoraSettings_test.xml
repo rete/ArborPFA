@@ -4,18 +4,18 @@
 
     <!-- HELPER CLASS SETTINGS -->
     <IsMonitoringEnabled> true </IsMonitoringEnabled>
-    <ShouldDisplayAlgorithmInfo> false </ShouldDisplayAlgorithmInfo>
+    <ShouldDisplayAlgorithmInfo> true </ShouldDisplayAlgorithmInfo>
 
     <!-- CaloHit helper settings -->
     <CaloHitHelper>
         <ShouldCalculateDensityWeight>true</ShouldCalculateDensityWeight>
         <ShouldCalculateSurroundingEnergy>true</ShouldCalculateSurroundingEnergy>
         
-        <IsolationCaloHitMaxSeparation>60</IsolationCaloHitMaxSeparation>
-        <IsolationNLayers>3</IsolationNLayers>
-        <IsolationCutDistanceFine>25.0</IsolationCutDistanceFine>
-        <IsolationCutDistanceCoarse>30.0</IsolationCutDistanceCoarse>
-        <IsolationMaxNearbyHits>2</IsolationMaxNearbyHits>
+        <IsolationCaloHitMaxSeparation>     60    </IsolationCaloHitMaxSeparation>
+        <IsolationNLayers>                   2    </IsolationNLayers>
+        <IsolationCutDistanceFine>          25.0  </IsolationCutDistanceFine>
+        <IsolationCutDistanceCoarse>        30.0  </IsolationCutDistanceCoarse>
+        <IsolationMaxNearbyHits>             1    </IsolationMaxNearbyHits>
     </CaloHitHelper>
 
     <!-- ARBOR PANDORA ALGORITHM SETTINGS -->
@@ -101,7 +101,7 @@
 	     <TransparencyThresholdE>-1.</TransparencyThresholdE>
 	     <EnergyScaleThresholdE>1.</EnergyScaleThresholdE> 
 	     <BlackBackground>true</BlackBackground>
-	     <ShowDetector>true</ShowDetector>
+	     <ShowDetector>false</ShowDetector>
           
     </algorithm>
     
