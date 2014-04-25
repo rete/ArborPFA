@@ -14,8 +14,8 @@
 
     <!-- CaloHit helper settings -->
     <CaloHitHelper>
-        <ShouldCalculateDensityWeight>false</ShouldCalculateDensityWeight>
-        <ShouldCalculateSurroundingEnergy>false</ShouldCalculateSurroundingEnergy>
+        <ShouldCalculateDensityWeight>true</ShouldCalculateDensityWeight>
+        <ShouldCalculateSurroundingEnergy>true</ShouldCalculateSurroundingEnergy>
     </CaloHitHelper>
 
     <!-- PANDORA ALGORITHM SETTINGS -->
@@ -409,10 +409,40 @@
 
     <!-- Create particle flow objects -->
     <algorithm type = "ForceSplitTrackAssociations"/>
-    <algorithm type = "PfoCreation"/>
+    <!-- <algorithm type = "PfoCreation"/> -->
+    <algorithm type = "PfoCreation">
+<!--       <OutputPfoListName> ArborPFOs </OutputPfoListName> -->
+      <ShouldCreateTrackBasedPfos> true </ShouldCreateTrackBasedPfos>
+      <ShouldCreateNeutralPfos> true </ShouldCreateNeutralPfos>
+      <MinClusterHadronicEnergy> 0.1 </MinClusterHadronicEnergy>
+      <MinClusterElectromagneticEnergy> 0.f </MinClusterElectromagneticEnergy>
+      <MinHitsInCluster> 5 </MinHitsInCluster>
+      <AllowSingleLayerClusters> false </AllowSingleLayerClusters>
+    </algorithm> 
 
     <!-- Particle flow object modification algorithms -->
     <algorithm type = "FinalParticleId"/>
     <algorithm type = "V0PfoCreation"/>
     <!--algorithm type = "DumpPfosMonitoring"/-->
+    
+        <!-- EVE Monitoring -->
+    <algorithm type = "VisualMonitoring" description = "display all">
+          
+       <DisplayEvent>true</DisplayEvent>
+       
+       <ShowMCParticles>false</ShowMCParticles>
+       <ShowCurrentCaloHits>true</ShowCurrentCaloHits>
+       <ShowCurrentTracks>true</ShowCurrentTracks> 
+       <ShowCurrentClusters>false</ShowCurrentClusters> 
+       <ShowCurrentPfos>true</ShowCurrentPfos>
+       <HitColors> iterate </HitColors>
+       <ShowOnlyAvailable>false</ShowOnlyAvailable>
+       
+       <TransparencyThresholdE>-1</TransparencyThresholdE>
+       <EnergyScaleThresholdE>1.0</EnergyScaleThresholdE> 
+       <BlackBackground>true</BlackBackground>
+       <ShowDetector>false</ShowDetector>
+          
+    </algorithm>
+    
 </pandora>
