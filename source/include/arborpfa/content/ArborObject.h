@@ -47,19 +47,12 @@ class ArborManager;
 class Connector;
 
 /** 
- * @brief ArborObject class
+ * @brief ArborObject class. </br>
+ * Base class for all arbor object to be connected.
  */
 class ArborObject
 {
  public:
-
-	 enum Type
-	 {
-	 	SIMPLE_CALO_HIT,
-	 	SMALL_CLUSTER,
-	 	MIP_POINT,
-	 	TRACK
-	 };
 
 		/**
 			* @brief  Check if this object is connected with a given one
@@ -77,6 +70,32 @@ class ArborObject
 		virtual const ConnectorList &GetConnectors() const = 0;
 
 		/**
+		 * @brief Return the list of backward connectors
+		 */
+		virtual const ConnectorList &GetBackwardConnectorList() const = 0;
+
+		/**
+		 * @brief Return the list of forward connectors
+		 */
+		virtual const ConnectorList &GetForwardConnectorList() const = 0;
+
+		/**
+		 * @brief Whether the connector is a backward one for this object. </br>
+		 * Return also false if the connector is neither backward nor forward
+		 *
+		 * @param pConnector the connector to test
+		 */
+		virtual bool IsBackwardConnector(const Connector *pConnector) const = 0;
+
+		/**
+		 * @brief Whether the connector is a forward one for this object. </br>
+		 * Return also false if the connector is neither backward nor forward
+		 *
+		 * @param pConnector the connector to test
+		 */
+		virtual bool IsForwardConnector(const Connector *pConnector) const = 0;
+
+		/**
 		 * @brief Find a specific connection with an other arbor object
 		 *
 		 * @param pObject the arbor object to check the connection with
@@ -85,27 +104,11 @@ class ArborObject
 		virtual pandora::StatusCode FindConnector(ArborObject *pObject, Connector *&pConnector) const = 0;
 
 		/**
-		 * @brief Get a connector list with a connection weight greater than a given weight. The connector list is appended to given list
-		 *
-		 * @param weight the minimum weight for the connectors
-		 * @param connectorList the connector list to which the connectors will be appended
-		 */
-		virtual pandora::StatusCode GetConnectorsWithWeightGreaterThan(float weight, ConnectorList &connectorList) = 0;
-
-		/**
-		 * @brief Get a connector list with a connection weight lesser than a given weight. The connector list is appended to given list
-		 *
-		 * @param weight the maximum weight for the connectors
-		 * @param connectorList the connector list to which the connectors will be appended
-		 */
-		virtual pandora::StatusCode GetConnectorsWithWeightLessThan(float weight, ConnectorList &connectorList) = 0;
-
-		/**
 		 * @brief Get the tag on this object
 		 *
 		 * @return the tag string
 		 */
-		virtual ArborObject::Type GetType() const = 0;
+		virtual ArborObjectType GetType() const = 0;
 
 		/**
 		 * @brief Get the position of the object
@@ -122,89 +125,99 @@ class ArborObject
 		virtual bool IsConnected() const = 0;
 
 		/**
-		 * @brief Merge the content of the object in the cluster.
-		 *
-		 * @param pCluster the cluster into which the content will be merge
-		 */
-		virtual pandora::StatusCode MergeContentInCluster(const pandora::Algorithm &algorithm, pandora::Cluster *pCluster) = 0;
-
-		/**
-		 *
-		 */
-		virtual pandora::StatusCode CreateCluster(const pandora::Algorithm &algorithm, pandora::Cluster *&pCluster) = 0;
-
-		/**
-		 * @brief Get the number of connections with this object
-		 *
-		 * @return Number of connections
-		 */
-		virtual unsigned int GetNumberOfConnections() const = 0;
-
-		/**
 		 * @brief Connect this object with the given one and put a weight on this connection
 		 *
 		 * @param pObject the arbor object to connect with
-		 * @param
+		 * @param direction BACKWARD or FORWARD
+		 * @param weight the weight for this new connection
 		 */
-		virtual pandora::StatusCode ConnectWith(ArborObject *pObject, float weight = 1.0) = 0;
+		virtual pandora::StatusCode ConnectWith(ArborObject *pObject, ConnectorDirection direction, float weight = 1.0) = 0;
 
 		/**
 		 * @brief Connect this object with the given one, put a weight on this connection and retrieve the connector
 		 *
-		 * @param
+		 * @param pObject the arbor object to connect with
+		 * @param direction BACKWARD or FORWARD
+		 * @param pConnector the connector address to receive
+		 * @param weight the weight for this new connection
 		 */
-		virtual pandora::StatusCode ConnectWith(ArborObject *pObject, Connector *&pConnector, float weight = 1.0) = 0;
+		virtual pandora::StatusCode ConnectWith(ArborObject *pObject, ConnectorDirection direction, Connector *&pConnector, float weight = 1.0) = 0;
 
 		/**
+		 * @brief Remove a connection with this object
 		 *
+		 * @param pObject the object to remove the connection with
 		 */
 		virtual pandora::StatusCode RemoveConnectionWith(ArborObject *pObject) = 0;
 
 		/**
-		 *
-		 */
-		virtual pandora::StatusCode RemoveAllConnectionsExcept(ArborObject *pObject) = 0;
-
-		/**
-		 *
+		 * @brief Return the connector list
 		 */
 		virtual ConnectorList &GetConnectors() = 0;
 
 		/**
-		 *
+		 * @brief Return the list of backward connectors
+		 */
+		virtual ConnectorList &GetBackwardConnectorList() = 0;
+
+		/**
+		 * @brief Return the list of forward connectors
+		 */
+		virtual ConnectorList &GetForwardConnectorList() = 0;
+
+		/**
+		 * @brief Whether the object is isolated
 		 */
 		virtual bool IsIsolated() const = 0;
 
 		/**
+		 * @brief Set the object as isolated.
 		 *
+		 * @param boolean the isolation flag
 		 */
 		virtual void SetIsIsolated(bool boolean) = 0;
 
 		/**
-		 *
+		 * @brief Return the granularity of the object
 		 */
 		virtual pandora::Granularity GetGranularity() const = 0;
 
 		/**
-		 *
+		 * @brief Return the pseudo-layer associated to this object
 		 */
 		virtual pandora::PseudoLayer GetPseudoLayer() const = 0;
 
 		/**
+		 * @brief Set the current backward connector. This connector should </br>
+		 * be unique in the arbor algorithm in order to build a tree.
 		 *
+		 * @param pConnector the current backward connector to set
 		 */
-		inline static bool SortByFromInnermostPosition(ArborObject *pObj1, ArborObject *pObj2)
-		{
-			const pandora::CartesianVector differenceVector = pObj2->GetPosition() - pObj1->GetPosition();
-			float openingAngle = pObj1->GetPosition().GetOpeningAngle(differenceVector);
-			return openingAngle < M_PI_2;
-		}
+		virtual pandora::StatusCode SetCurrentBackwardConnector(Connector *pConnector) = 0;
 
+		/**
+		 * @brief Return the current backward connector
+		 */
+		virtual pandora::StatusCode GetCurrentBackwardConnector(Connector *&pConnector) const = 0;
+
+		/**
+		 * @brief Sort the object by increasing position. Used for std::sort
+		 */
+		static bool SortByFromInnermostPosition(ArborObject *pObj1, ArborObject *pObj2);
+
+		// friendship
 		friend class ArborManager;
 		friend class ArborObjectImpl;
-}; 
+};
 
-typedef ArborObject AO;
+//--------------------------------------------------------------------------------------------------------------------
+
+inline static bool SortByFromInnermostPosition(ArborObject *pObj1, ArborObject *pObj2)
+{
+	const pandora::CartesianVector differenceVector = pObj2->GetPosition() - pObj1->GetPosition();
+	float openingAngle = pObj1->GetPosition().GetOpeningAngle(differenceVector);
+	return openingAngle < M_PI_2;
+}
 
 } 
 
