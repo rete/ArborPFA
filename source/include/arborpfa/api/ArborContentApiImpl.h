@@ -33,8 +33,10 @@
 #include "Pandora/StatusCodes.h"
 
 #include "arborpfa/arbor/ArborTypes.h"
+#include "arborpfa/content/ArborObject.h"
 
-namespace arborpfa {
+namespace arborpfa
+{
 
 class ArborAlgorithm;
 class Arbor;
@@ -46,127 +48,137 @@ class ArborContentApiImpl
 {
  public:
 
-		/**
-			*
-			*/
-  pandora::StatusCode CreateConnector(ArborObjectPair *pPair, arborpfa::Connector *&pConnector, float weight = 1.f) const;
-
-		/**
-			*
-			*/
-		pandora::StatusCode CreateConnector(ArborObject *pObj1, ArborObject *pObj2, arborpfa::Connector *&pConnector, float weight = 1.f) const;
-
-		/**
-		 *
-		 */
-	 pandora::StatusCode GetCurrentConnectorList(const ConnectorList *&pConnectorList, std::string &listName) const;
-
-		/**
-		 *
-		 */
-	 pandora::StatusCode GetCurrentConnectorListName(std::string &listName) const;
-
-		/**
-		 *
-		 */
-	 pandora::StatusCode GetConnectorList(const std::string &listName, const ConnectorList *&pConnectorList) const;
-
-		/**
-		 *
-		 */
-  pandora::StatusCode CreateTemporaryConnectorListAndSetCurrent(const ArborAlgorithm &algorithm, const ConnectorList *&pConnectorList, std::string &temporaryListName) const;
-
-		/**
-		 *
-		 */
-	 pandora::StatusCode SaveConnectorList(const std::string &newListName) const;
-
-		/**
-		 *
-		 */
-	 pandora::StatusCode SaveConnectorList(const std::string &newConnectorListName, const ConnectorList &connectorsToSave) const;
-
-		/**
-		 *
-		 */
-	 pandora::StatusCode SaveConnectorList(const std::string &oldConnectorListName, const std::string &newConnectorListName) const;
-
-		/**
-		 *
-		 */
-  pandora::StatusCode SaveConnectorList(const std::string &oldConnectorListName, const std::string &newConnectorListName, const ConnectorList &connectorsToSave) const;
-
-		/**
-		 *
-		 */
-	 pandora::StatusCode ReplaceCurrentConnectorList(const ArborAlgorithm &algorithm, const std::string &newListName) const;
-
-		/**
-		 *
-		 */
-  pandora::StatusCode TemporarilyReplaceCurrentConnectorList(const std::string &newConnectorListName) const;
-
-  /**
-   *
-   */
-  pandora::StatusCode DropCurrentConnectorList() const;
+//		/**
+//			*
+//			*/
+//  pandora::StatusCode CreateConnector(ArborObjectPair *pPair, arborpfa::Connector *&pConnector, float weight = 1.f) const;
+//
+//		/**
+//			*
+//			*/
+//		pandora::StatusCode CreateConnector(ArborObject *pObj1, ArborObject *pObj2, arborpfa::Connector *&pConnector, float weight = 1.f) const;
+//
+//		/**
+//		 *
+//		 */
+//		pandora::StatusCode CreateArborObject(ArborObject *&pArborObject, ArborObject::Type type, void *pInputObject) const;
+//
+//		/**
+//		 *
+//		 */
+//	 pandora::StatusCode GetCurrentConnectorList(const ConnectorList *&pConnectorList, std::string &listName) const;
+//
+//		/**
+//		 *
+//		 */
+//	 pandora::StatusCode GetCurrentConnectorListName(std::string &listName) const;
+//
+//		/**
+//		 *
+//		 */
+//	 pandora::StatusCode GetConnectorList(const std::string &listName, const ConnectorList *&pConnectorList) const;
+//
+//		/**
+//		 *
+//		 */
+//  pandora::StatusCode CreateTemporaryConnectorListAndSetCurrent(const ArborAlgorithm &algorithm, const ConnectorList *&pConnectorList, std::string &temporaryListName) const;
+//
+//		/**
+//		 *
+//		 */
+//	 pandora::StatusCode SaveConnectorList(const std::string &newListName) const;
+//
+//		/**
+//		 *
+//		 */
+//	 pandora::StatusCode SaveConnectorList(const std::string &newConnectorListName, const ConnectorList &connectorsToSave) const;
+//
+//		/**
+//		 *
+//		 */
+//	 pandora::StatusCode SaveConnectorList(const std::string &oldConnectorListName, const std::string &newConnectorListName) const;
+//
+//		/**
+//		 *
+//		 */
+//  pandora::StatusCode SaveConnectorList(const std::string &oldConnectorListName, const std::string &newConnectorListName, const ConnectorList &connectorsToSave) const;
+//
+//		/**
+//		 *
+//		 */
+//	 pandora::StatusCode ReplaceCurrentConnectorList(const ArborAlgorithm &algorithm, const std::string &newListName) const;
+//
+//		/**
+//		 *
+//		 */
+//  pandora::StatusCode TemporarilyReplaceCurrentConnectorList(const std::string &newConnectorListName) const;
+//
+//  /**
+//   *
+//   */
+//  pandora::StatusCode DropCurrentConnectorList() const;
 
   //-----------------------------------------------------------------------------------------------------------------------
 
-		/**
-		 *
-		 */
-	 pandora::StatusCode GetCurrentArborObjectList(const ArborObjectList *&pArborObjectList, std::string &listName) const;
-
-		/**
-		 *
-		 */
-	 pandora::StatusCode GetCurrentArborObjectListName(std::string &listName) const;
-
-		/**
-		 *
-		 */
-	 pandora::StatusCode GetArborObjectList(const std::string &listName, const ArborObjectList *&pArborObjectList) const;
-
-		/**
-		 *
-		 */
-  pandora::StatusCode CreateTemporaryArborObjectListAndSetCurrent(const ArborAlgorithm &algorithm, const ArborObjectList *&pArborObjectList, std::string &temporaryListName) const;
-
-		/**
-		 *
-		 */
-	 pandora::StatusCode SaveArborObjectList(const std::string &newListName) const;
-
-		/**
-		 *
-		 */
-	 pandora::StatusCode SaveArborObjectList(const std::string &newArborObjectListName, const ArborObjectList &connectorsToSave) const;
-
-		/**
-		 *
-		 */
-	 pandora::StatusCode SaveArborObjectList(const std::string &oldArborObjectListName, const std::string &newArborObjectListName) const;
-
-		/**
-		 *
-		 */
-  pandora::StatusCode SaveArborObjectList(const std::string &oldArborObjectListName, const std::string &newArborObjectListName, const ArborObjectList &objectsToSave) const;
-
-		/**
-		 *
-		 */
-	 pandora::StatusCode ReplaceCurrentArborObjectList(const ArborAlgorithm &algorithm, const std::string &newListName) const;
-
-		/**
-		 *
-		 */
-  pandora::StatusCode TemporarilyReplaceCurrentArborObjectList(const std::string &newArborObjectListName) const;
-
-  /**
-   *
-   */
-  pandora::StatusCode DropCurrentArborObjectList() const;
+//		/**
+//		 *
+//		 */
+//	 pandora::StatusCode GetCurrentArborObjectList(const ArborObjectList *&pArborObjectList, std::string &listName) const;
+//
+//		/**
+//		 *
+//		 */
+//	 pandora::StatusCode GetCurrentArborObjectListName(std::string &listName) const;
+//
+//		/**
+//		 *
+//		 */
+//	 pandora::StatusCode GetArborObjectList(const std::string &listName, const ArborObjectList *&pArborObjectList) const;
+//
+//		/**
+//		 *
+//		 */
+//  pandora::StatusCode CreateTemporaryArborObjectListAndSetCurrent(const ArborAlgorithm &algorithm, const ArborObjectList *&pArborObjectList, std::string &temporaryListName) const;
+//
+//		/**
+//		 *
+//		 */
+//	 pandora::StatusCode SaveArborObjectList(const std::string &newListName) const;
+//
+//		/**
+//		 *
+//		 */
+//	 pandora::StatusCode SaveArborObjectList(const std::string &newArborObjectListName, const ArborObjectList &connectorsToSave) const;
+//
+//		/**
+//		 *
+//		 */
+//	 pandora::StatusCode SaveArborObjectList(const std::string &oldArborObjectListName, const std::string &newArborObjectListName) const;
+//
+//		/**
+//		 *
+//		 */
+//  pandora::StatusCode SaveArborObjectList(const std::string &oldArborObjectListName, const std::string &newArborObjectListName, const ArborObjectList &objectsToSave) const;
+//
+//		/**
+//		 *
+//		 */
+//	 pandora::StatusCode ReplaceCurrentArborObjectList(const ArborAlgorithm &algorithm, const std::string &newListName) const;
+//
+//		/**
+//		 *
+//		 */
+//  pandora::StatusCode TemporarilyReplaceCurrentArborObjectList(const std::string &newArborObjectListName) const;
+//
+//  /**
+//   *
+//   */
+//  pandora::StatusCode DropCurrentArborObjectList() const;
+//
+//  /**
+//   *
+//   */
+//  pandora::StatusCode RunArborObjectAlgorithm(const ArborAlgorithm *pAlgorithm, const std::string algorithmName, const ArborObjectList *&pArborObjectList, std::string &listName) const;
 
  private:
 

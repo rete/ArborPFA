@@ -32,6 +32,9 @@
 #include "arborpfa/content/ConnectorManager.h"
 #include "arborpfa/content/ArborObjectManager.h"
 
+// pandora
+#include "Api/PandoraContentApi.h"
+
 using namespace pandora;
 
 namespace arborpfa
@@ -43,7 +46,7 @@ ArborContentApiImpl::ArborContentApiImpl(Arbor *pArbor) :
 
 }
 
-
+/*
 
 pandora::StatusCode ArborContentApiImpl::CreateConnector(ArborObjectPair *pPair, arborpfa::Connector *&pConnector, float weight) const
 {
@@ -53,6 +56,11 @@ pandora::StatusCode ArborContentApiImpl::CreateConnector(ArborObjectPair *pPair,
 pandora::StatusCode ArborContentApiImpl::CreateConnector(ArborObject *pObj1, ArborObject *pObj2, arborpfa::Connector *&pConnector, float weight) const
 {
 	return m_pArbor->m_pConnectorManager->CreateConnector(pObj1, pObj2, pConnector, weight);
+}
+
+pandora::StatusCode ArborContentApiImpl::CreateArborObject(ArborObject *&pArborObject, ArborObject::Type type, void *pInputObject) const
+{
+	return m_pArbor->m_pArborObjectManager->CreateArborObject(pArborObject, type, pInputObject);
 }
 
 
@@ -246,6 +254,24 @@ pandora::StatusCode ArborContentApiImpl::DropCurrentArborObjectList() const
 	return m_pArbor->m_pArborObjectManager->DropCurrentList();
 }
 
+
+
+
+
+pandora::StatusCode ArborContentApiImpl::RunArborObjectAlgorithm(const ArborAlgorithm *pAlgorithm, const std::string algorithmName, const ArborObjectList *&pArborObjectList, std::string &listName) const
+{
+	const pandora::Algorithm *pPandoraAlgorithm = (const pandora::Algorithm *) pAlgorithm;
+//	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborObjectManager->RegisterAlgorithm((const pandora::Algorithm *)pAlgorithm));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborObjectManager->CreateTemporaryListAndSetCurrent(pAlgorithm, listName));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::RunDaughterAlgorithm(*pPandoraAlgorithm, algorithmName));
+//	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborObjectManager->ResetAlgorithmInfo((const pandora::Algorithm *)pAlgorithm, true));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborObjectManager->GetCurrentList(pArborObjectList, listName));
+	pPandoraAlgorithm = 0;
+
+	return STATUS_CODE_SUCCESS;
+}
+
+*/
 
 } 
 
