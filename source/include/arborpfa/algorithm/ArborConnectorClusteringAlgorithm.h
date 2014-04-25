@@ -33,13 +33,14 @@
 
 #include "arborpfa/arbor/AlgorithmHeaders.h"
 
+#include "TEveElement.h"
 
 namespace arborpfa {
 
 /** 
  * @brief ArborConnectorClusteringAlgorithm class
  */ 
-class ArborConnectorClusteringAlgorithm : public ArborAlgorithm 
+class ArborConnectorClusteringAlgorithm : public ArborAlgorithm
 {
  public:
 
@@ -63,14 +64,14 @@ class ArborConnectorClusteringAlgorithm : public ArborAlgorithm
 		pandora::StatusCode ReadSettings(const pandora::TiXmlHandle xmlHandle);
 
 		/**
-		 * @brief Create all th arbor objects. </br>
+		 * @brief Create all the arbor objects. </br>
 		 * These objects are used as points to connect together. </br>
 		 * Objects can be, for example, an entry point of a track, a simple calo hit or a small cluster
 		 *
-		 * @param pClusterList the cluster list. </br>
+		 * @param pCaloHitList the calo hit list. </br>
 		 * @param pTrackList the track list. Entry points in the Ecal are identified as arbor objects
 		 */
-		pandora::StatusCode CreateArborObjects(const pandora::ClusterList *pClusterList,
+		pandora::StatusCode CreateArborObjects(const pandora::CaloHitList *pCaloHitList,
                                            const pandora::TrackList *pTrackList);
 
 		/**
@@ -89,22 +90,32 @@ class ArborConnectorClusteringAlgorithm : public ArborAlgorithm
 		pandora::StatusCode CleanConnectors();
 
 		/**
+		 *
+		 */
+		pandora::StatusCode FirstConnectorCleaning();
+
+		/**
+		 *
+		 */
+		pandora::StatusCode SecondConnectorCleaning();
+
+		/**
 		 * @brief Cluster all the connected arbor objects. </br>
 		 * Called after connector cleaning
 		 */
 		pandora::StatusCode DoClustering();
 
+		/**
+		 *
+		 */
+		pandora::StatusCode MergeClustersWithCloseBySeeds();
+
+		/**
+		 * @brief Clear all content, all the objects allocated on the heap.
+		 */
+		pandora::StatusCode ClearContent();
+
 //-----------------------------------------------------------------------------------------------------------------
-
-		/**
-		 *
-		 */
-//		pandora::StatusCode ComputeIsolatedFlag(ArborObject *pArborObject);
-
-		/**
-		 *
-		 */
-		pandora::StatusCode CleanMipConnectors(MipPointObject *pMipPointObject);
 
 		/**
 		 *
@@ -119,7 +130,7 @@ class ArborConnectorClusteringAlgorithm : public ArborAlgorithm
 		/**
 		 *
 		 */
-		pandora::StatusCode IsBackwardConnector(const ArborObject *const pArborObject, const Connector *pConnector, bool &isBackwardConnector) const;
+//		pandora::StatusCode IsBackwardConnector(const ArborObject *const pArborObject, const Connector *pConnector, bool &isBackwardConnector) const;
 
 		/**
 		 *
@@ -134,12 +145,7 @@ class ArborConnectorClusteringAlgorithm : public ArborAlgorithm
 		/**
 		 *
 		 */
-		pandora::StatusCode DrawEveArrow(const pandora::CartesianVector &from, const pandora::CartesianVector &to, int color) const;
-
-		/**
-		 * @brief Clear all content, all the objects allocated on the heap.
-		 */
-		pandora::StatusCode ClearContent();
+		pandora::StatusCode DrawEveArrow(TEveElement *pParentCollection, const pandora::CartesianVector &from, const pandora::CartesianVector &to, int color) const;
 
 		/**
 		 *
@@ -151,33 +157,60 @@ class ArborConnectorClusteringAlgorithm : public ArborAlgorithm
 		 */
 		pandora::StatusCode MergeObjectContentInCluster(ArborObject *pArborObject, pandora::Cluster *pCluster);
 
+		/**
+		 *
+		 */
+		pandora::StatusCode CreateReadoutLayerMap(const pandora::CaloHitList *pCaloHitList, pandora::OrderedCaloHitList &readoutLayerToCaloHitListMap);
+
+		/**
+		 *
+		 */
+		pandora::StatusCode RecursiveClustering(pandora::CaloHitList *pCaloHitList, pandora::Cluster *pCluster, pandora::CaloHit *pCaloHit);
+
+		/**
+		 *
+		 */
+		pandora::StatusCode SplitClusterInSingleCaloHitClusters(pandora::Cluster *pCluster, pandora::ClusterList &newClusterList);
+
 
  protected:
 
-		// list names
-		std::string        m_inputClusterListName;
+		// list and function names
+		std::string        m_inputCaloHitListName;
 		std::string        m_trackListName;
+		std::string        m_hcalEnergyResolutionFunctionName;
 
 		// algorithm tools
 		ArborObjectList                                    m_arborObjectList;
 		ArborObjectList                                    m_alreadyUsedObjectsForClustering;
-		TrackObjectList                                    m_trackObjectList;
-		unsigned int                                     m_iteration;
 		ArborObjectList                                    m_currentClusterObjectList;
+		TrackObjectList                                    m_trackObjectList;
+		ConnectorList                                      m_inputSecondCleaningConnectorList;
+		pandora::ClusterList                               m_finalClusterList;
 
 		// algorithm parameters
-		unsigned int       m_maximumClusterSizeForObjects;
-		float               m_maximumForwardDistanceForConnectionCoarse;
-		float               m_maximumForwardDistanceForConnectionFine;
-		float               m_maximumTransverseDistanceForConnectionCoarse;
-		float               m_maximumTransverseDistanceForConnectionFine;
+		unsigned int       m_maximumSizeForClusterSplitting;
+
+		float               m_maximumDistanceForConnectionCoarse;
+		float               m_maximumDistanceForConnectionFine;
+		float               m_maximumDistanceForConnectionCoarse2;
+		float               m_maximumDistanceForConnectionFine2;
+		float               m_angleForSecondCleaningCoarse;
+		float               m_angleForSecondCleaningFine;
 		float               m_orderParameterAnglePower;
 		float               m_orderParameterDistancePower;
+		float               m_forwardConnectorWeight;
+		float               m_backwardConnectorWeight;
+		float               m_closeBySeedDistance;
+		float               m_intraLayerMaxDistance;
+
 		bool                m_allowForwardConnectionForIsolatedObjects;
 		bool                m_showConnectors;
 		bool                m_shouldUseIsolatedObjects;
-		unsigned int       m_maximumNumberOfKeptConnectors;
-
+		bool                m_shouldRunSecondCleaning;
+		bool                m_shouldRunSeedMerging;
+		bool                m_shouldUseReadoutLayer;
+		bool                m_shouldSplitClusterInSingleCaloHitClusters;
 }; 
 
 inline ArborAlgorithm *ArborConnectorClusteringAlgorithm::Factory::CreateArborAlgorithm() const
