@@ -56,6 +56,8 @@ pandora::StatusCode ArborHelper::GetCentroid(const pandora::Cluster *pCluster, p
 	return STATUS_CODE_SUCCESS;
 }
 
+//--------------------------------------------------------------------------------------------------------------------
+
 pandora::StatusCode ArborHelper::GetCentroidDifference(const pandora::Cluster *pCluster1, const pandora::Cluster *pCluster2, float &centroidDifference)
 {
 
@@ -69,6 +71,8 @@ pandora::StatusCode ArborHelper::GetCentroidDifference(const pandora::Cluster *p
 
 	return STATUS_CODE_SUCCESS;
 }
+
+//--------------------------------------------------------------------------------------------------------------------
 
 pandora::StatusCode ArborHelper::GetClosestDistanceApproach(const pandora::Cluster *pCluster1, const pandora::Cluster *pCluster2, float &closestDistance)
 {
@@ -104,7 +108,6 @@ pandora::StatusCode ArborHelper::GetClosestDistanceApproach(const pandora::Clust
 
 	return STATUS_CODE_SUCCESS;
 }
-
 
 } 
 

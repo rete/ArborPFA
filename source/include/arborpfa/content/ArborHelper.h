@@ -46,27 +46,39 @@ namespace arborpfa
 {
 
 /** 
- * @brief ArborHelper class
+ * @brief ArborHelper class. </br>
+ * Provide helpful tools for the arbor algorithm
  */ 
 class ArborHelper 
 {
  public:
 
 		/**
+			* @brief Compute the centroid (barycenter) of the cluster.
 			*
+			* @param pCluster the cluster for centroid computation
+			* @param centroid the centroid position to receive (by reference)
 			*/
 	 static pandora::StatusCode GetCentroid(const pandora::Cluster *pCluster, pandora::CartesianVector &centroid);
 
 	 /**
+	  * @brief Compute the distance wrt the cluster centroids. See ArborHelper::GetCentroid() method
 	  *
+	  * @param pCluster1 the first cluster
+	  * @param pCluster2 the second cluster
+	  * @param the distance between centroid to receive (by reference)
 	  */
 	 static pandora::StatusCode GetCentroidDifference(const pandora::Cluster *pCluster1, const pandora::Cluster *pCluster2, float &centroidDifference);
 
 	 /**
+	  * @brief Return the distance of closest approach of the two clusters, i.e, the </br>
+	  * minimum distance between their calo hits
 	  *
+	  * @param pCluster1 the first cluster
+	  * @param pCluster2 the second cluster
+	  * @param distance the distance of closest approach to receive (by reference)
 	  */
-	 static pandora::StatusCode GetClosestDistanceApproach(const pandora::Cluster *pCluster1, const pandora::Cluster *pCluster2, float &centroidDifference);
-
+	 static pandora::StatusCode GetClosestDistanceApproach(const pandora::Cluster *pCluster1, const pandora::Cluster *pCluster2, float &distance);
 
 };
 
