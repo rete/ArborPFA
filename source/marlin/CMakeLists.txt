@@ -45,9 +45,16 @@ SET (
 ADD_SHARED_LIBRARY( SDHCALArborProcessor ${SDHCAL_ARBOR_PROCESSOR_SRC_FILES} )
 TARGET_LINK_LIBRARIES( SDHCALArborProcessor ArborPFA )
 
+SET(
+  ARBOR_PRE_CLUSTERING_PROCESSOR_SRC_FILES
+  src/ArborPreClusteringProcessor.cc
+)
+
+ADD_SHARED_LIBRARY( ArborPreClusteringProcessor ${ARBOR_PRE_CLUSTERING_PROCESSOR_SRC_FILES} )
+
 INSTALL(
-  TARGETS ArborPFAProcessor SDHCALArborProcessor
-  LIBRARY DESTINATION lib 
+  TARGETS ArborPFAProcessor SDHCALArborProcessor ArborPreClusteringProcessor
+  LIBRARY DESTINATION lib  
 )
 
 
