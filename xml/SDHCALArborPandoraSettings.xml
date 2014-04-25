@@ -3,62 +3,79 @@
 <pandora>
 
     <!-- HELPER CLASS SETTINGS -->
-    <IsMonitoringEnabled> false </IsMonitoringEnabled>
-    <ShouldDisplayAlgorithmInfo> false </ShouldDisplayAlgorithmInfo>
+    <IsMonitoringEnabled> true </IsMonitoringEnabled>
+    <ShouldDisplayAlgorithmInfo> true </ShouldDisplayAlgorithmInfo>
 
     <!-- CaloHit helper settings -->
     <CaloHitHelper>
-        <ShouldCalculateDensityWeight>true</ShouldCalculateDensityWeight>
-        <ShouldCalculateSurroundingEnergy>true</ShouldCalculateSurroundingEnergy>
-        
-        <IsolationCaloHitMaxSeparation>60</IsolationCaloHitMaxSeparation>
-        <IsolationNLayers>3</IsolationNLayers>
-        <IsolationCutDistanceFine>25.0</IsolationCutDistanceFine>
-        <IsolationCutDistanceCoarse>30.0</IsolationCutDistanceCoarse>
-        <IsolationMaxNearbyHits>2</IsolationMaxNearbyHits>
+        <ShouldCalculateDensityWeight>      true  </ShouldCalculateDensityWeight>
+        <ShouldCalculateSurroundingEnergy>  true  </ShouldCalculateSurroundingEnergy>
+        <IsolationCaloHitMaxSeparation>     60    </IsolationCaloHitMaxSeparation>
+        <IsolationNLayers>                   2    </IsolationNLayers>
+        <IsolationCutDistanceFine>          25.0  </IsolationCutDistanceFine>
+        <IsolationCutDistanceCoarse>        30.0  </IsolationCutDistanceCoarse>
+        <IsolationMaxNearbyHits>             1    </IsolationMaxNearbyHits>
     </CaloHitHelper>
     
     <HadronicEnergyCorrectionFunctions>
         SDHCALEnergyCorrection
     </HadronicEnergyCorrectionFunctions>
+    
+    <EnergyResolutionHelper>
+      <SDHCALEnergyResolution>
+        <EnergyFactor>        0.55    </EnergyFactor>
+        <ConstantFactor>      0.081   </ConstantFactor>
+        <EnergySquareFactor>  0.6     </EnergySquareFactor>
+      </SDHCALEnergyResolution>
+    </EnergyResolutionHelper>
 
     <!-- ARBOR PANDORA ALGORITHM SETTINGS -->
 
     <!-- Select tracks and hits to use for clustering -->
     <algorithm type = "EventPreparation"/>
-        
-        
-    <!-- 2D clusters formation -->
-    <algorithm type = "ClusteringParent">
-      <algorithm type = "IntraLayerClustering" description = "ClusterFormation">
-        <IntraLayerMaxDistance> 15.0 </IntraLayerMaxDistance>
-        <ShouldSplitClusterInSingleCaloHitClusters> true </ShouldSplitClusterInSingleCaloHitClusters>
-        <MaximumSizeForClusterSplitting> 4 </MaximumSizeForClusterSplitting>
-      </algorithm>   
-      <ClusterListName> ConnectorClusteringInput </ClusterListName>
-      <ReplaceCurrentClusterList>true</ReplaceCurrentClusterList>
-    </algorithm>
-
     
-    <!-- Arbor algorithm based on 2D clusters and calo mip tracks -->
+    <!-- Arbor algorithm -->
     <algorithm type = "ClusteringParent">
       <algorithm type = "ArborConnectorClustering" description = "ClusterFormation">
-          <InputClusterListName> ConnectorClusteringInput </InputClusterListName>
-          <MaximumForwardDistanceForConnectionFine>      50.0  </MaximumForwardDistanceForConnectionFine>
-          <MaximumForwardDistanceForConnectionCoarse> 85.0 </MaximumForwardDistanceForConnectionCoarse>
-          <MaximumTransverseDistanceForConnectionFine>   21.0  </MaximumTransverseDistanceForConnectionFine>
-          <MaximumTransverseDistanceForConnectionCoarse>   41.0  </MaximumTransverseDistanceForConnectionCoarse>
-          <AllowForwardConnectionForIsolatedObjects>false</AllowForwardConnectionForIsolatedObjects>
-          <ShouldUseIsolatedObjects>true</ShouldUseIsolatedObjects>
-          <MaximumNumberOfKeptConnectors>            5     </MaximumNumberOfKeptConnectors>
-          <OrderParameterAnglePower>                 1   </OrderParameterAnglePower>
-          <OrderParameterDistancePower>              5   </OrderParameterDistancePower>
-          <ShowConnectors> false </ShowConnectors>
+          
+          <HcalEnergyResolutionFunctionName>  SDHCALEnergyResolution   </HcalEnergyResolutionFunctionName>
+          
+          <!-- Parameters for initial 2D clustering -->
+          <IntraLayerMaxDistance>                     11.0    </IntraLayerMaxDistance>
+          <ShouldSplitClusterInSingleCaloHitClusters> true    </ShouldSplitClusterInSingleCaloHitClusters>
+          <MaximumSizeForClusterSplitting>             4      </MaximumSizeForClusterSplitting>
+          <ShouldUseReadoutLayer>                     true    </ShouldUseReadoutLayer>
+          
+          <!-- Parameters for initial connection and second loop connection -->
+          <MaximumDistanceForConnectionFine>          10.0    </MaximumDistanceForConnectionFine>
+          <MaximumDistanceForConnectionCoarse>        40.5    </MaximumDistanceForConnectionCoarse>
+          <MaximumDistanceForConnectionFine2>         25.0    </MaximumDistanceForConnectionFine2>
+          <MaximumDistanceForConnectionCoarse2>       90.0    </MaximumDistanceForConnectionCoarse2>
+          
+          <!-- Parameters for connector decision -->
+          <AngleForSecondCleaningFine>                0.6     </AngleForSecondCleaningFine>
+          <AngleForSecondCleaningCoarse>              0.3     </AngleForSecondCleaningCoarse>
+          <ForwardConnectorWeight>                    3.0     </ForwardConnectorWeight>
+          <BackwardConnectorWeight>                   2.0    </BackwardConnectorWeight>
+          <OrderParameterAnglePower>                  1       </OrderParameterAnglePower>
+          <OrderParameterDistancePower>               5       </OrderParameterDistancePower>
+          
+          <AllowForwardConnectionForIsolatedObjects>  false   </AllowForwardConnectionForIsolatedObjects>
+          <ShouldUseIsolatedObjects>                  true    </ShouldUseIsolatedObjects>
+          
+          <ShouldRunSecondCleaning>                   true    </ShouldRunSecondCleaning>
+          
+          <ShouldRunSeedMerging>                      false   </ShouldRunSeedMerging>
+          <CloseBySeedDistance>                       12.0    </CloseBySeedDistance>
+          
+          <!-- Display or not the connectors -->
+          <ShowConnectors>                            true    </ShowConnectors>
+          
       </algorithm>
       <algorithm type = "TopologicalAssociationParent" description = "ClusterAssociation">
         <associationAlgorithms>
           <algorithm type = "SmallClusterMerging" description = "TopologicalAssociation">
-            <MinimumClusterSizeForMerging> 15 </MinimumClusterSizeForMerging>
+            <MinimumClusterSizeForMerging> 10 </MinimumClusterSizeForMerging>
             <LargeDistanceClusterCut> 1000 </LargeDistanceClusterCut>
             <ShouldUseCentroidForClusterDistance> false </ShouldUseCentroidForClusterDistance>
           </algorithm>
@@ -67,35 +84,44 @@
       <ClusterListName> ArborClusters </ClusterListName>
       <ReplaceCurrentClusterList>true</ReplaceCurrentClusterList>
     </algorithm> 
+    
+    
+    <algorithm type = "TrackPreparation">
+      <ShouldMakeAssociations>  false  </ShouldMakeAssociations>
+    </algorithm>
+    
+    <algorithm type = "ClusterPreparation">
+        <CandidateListNames>  ArborClusters  </CandidateListNames>
+    </algorithm>
 
-    <!-- PFO Creation -->
+    PFO Creation
     <algorithm type = "PfoCreation">
       <OutputPfoListName> ArborPFOs </OutputPfoListName>
       <ShouldCreateTrackBasedPfos> true </ShouldCreateTrackBasedPfos>
       <ShouldCreateNeutralPfos> true </ShouldCreateNeutralPfos>
-      <MinClusterHadronicEnergy> 2.0 </MinClusterHadronicEnergy>
+      <MinClusterHadronicEnergy> 0.f </MinClusterHadronicEnergy>
       <MinClusterElectromagneticEnergy> 0.f </MinClusterElectromagneticEnergy>
-      <MinHitsInCluster> 15 </MinHitsInCluster>
-      <AllowSingleLayerClusters> false </AllowSingleLayerClusters>
+      <MinHitsInCluster> 1 </MinHitsInCluster>
+      <AllowSingleLayerClusters> true </AllowSingleLayerClusters>
     </algorithm> 
     
     <!-- EVE Monitoring -->
     <algorithm type = "VisualMonitoring" description = "display all">
           
-       <DisplayEvent>false</DisplayEvent>
+       <DisplayEvent>true</DisplayEvent>
        
-       <ShowMCParticles>false</ShowMCParticles>
-       <ShowCurrentCaloHits>true</ShowCurrentCaloHits>
-       <ShowCurrentTracks>false</ShowCurrentTracks> 
-       <ShowCurrentClusters>false</ShowCurrentClusters> 
-       <ShowCurrentPfos>true</ShowCurrentPfos>
-       <HitColors> iterate </HitColors>
-       <ShowOnlyAvailable>false</ShowOnlyAvailable>
+       <ShowMCParticles>            false    </ShowMCParticles>
+       <ShowCurrentCaloHits>        true     </ShowCurrentCaloHits>
+       <ShowCurrentTracks>          true     </ShowCurrentTracks> 
+       <ShowCurrentClusters>        false     </ShowCurrentClusters> 
+       <ShowCurrentPfos>            true     </ShowCurrentPfos>
+       <HitColors>                  iterate  </HitColors>
+       <ShowOnlyAvailable>          false    </ShowOnlyAvailable>
        
-       <TransparencyThresholdE>-1.</TransparencyThresholdE>
-       <EnergyScaleThresholdE>1.</EnergyScaleThresholdE> 
-       <BlackBackground>true</BlackBackground>
-       <ShowDetector>true</ShowDetector>
+       <TransparencyThresholdE>   -1   </TransparencyThresholdE>
+       <EnergyScaleThresholdE>    1.0  </EnergyScaleThresholdE>
+       <BlackBackground>        true  </BlackBackground>
+       <ShowDetector>           false  </ShowDetector>
           
     </algorithm>
     
