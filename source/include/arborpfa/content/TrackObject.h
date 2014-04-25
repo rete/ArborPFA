@@ -39,7 +39,7 @@ namespace arborpfa
 /** 
  * @brief TrackObject class
  */ 
-class TrackObject : public ArborObjectImpl 
+class TrackObject : public ArborObjectImpl
 {
  public:
 
