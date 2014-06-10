@@ -33,7 +33,7 @@
 
 using namespace pandora;
 
-namespace arborpfa
+namespace arbor
 {
 
 pandora::StatusCode CaloHitHelper::GetCentroid(const pandora::CaloHitList *pCaloHitList, pandora::CartesianVector &centroid, bool weightWithEnergy)

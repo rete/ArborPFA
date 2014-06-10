@@ -32,7 +32,8 @@
 #include "Pandora/PandoraInternal.h"
 #include "Pandora/PandoraInputTypes.h"
 
-namespace arborpfa {
+namespace arbor
+{
 
 /** 
  * @brief CaloHitHelper class
