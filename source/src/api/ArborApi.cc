@@ -35,7 +35,7 @@
 
 using namespace pandora;
 
-namespace arborpfa
+namespace arbor
 {
 
 
@@ -48,21 +48,6 @@ pandora::StatusCode ArborApi::PrepareEvent(const Arbor &arbor)
 
 //---------------------------------------------------------------------------------------------------------------
 
-//pandora::StatusCode ArborApi::GetCurrentConnectorList(const Arbor &arbor, const ConnectorList *&pConnectorList)
-//{
-//	std::string listName;
-//	return arbor.GetArborApiImpl()->GetCurrentConnectorList(pConnectorList, listName);
-//}
-//
-////---------------------------------------------------------------------------------------------------------------
-//
-//pandora::StatusCode ArborApi::GetConnectorList(const Arbor &arbor, const std::string &listName, const ConnectorList *&pConnectorList)
-//{
-//	return arbor.GetArborApiImpl()->GetConnectorList(listName, pConnectorList);
-//}
-
-//---------------------------------------------------------------------------------------------------------------
-
 pandora::StatusCode ArborApi::Reset(const Arbor &arbor)
 {
 	return arbor.GetArborApiImpl()->ResetEvent();
@@ -70,14 +55,21 @@ pandora::StatusCode ArborApi::Reset(const Arbor &arbor)
 
 //---------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode ArborApi::RegisterAlgorithmFactory(const pandora::Pandora &pandora, Arbor &arbor, const std::string &algorithmType, ArborAlgorithmFactory *pFactory)
+pandora::StatusCode ArborApi::RegisterArborAlgorithms(Arbor &arbor)
 {
-	return arbor.GetArborApiImpl()->RegisterAlgorithmFactory(pandora, arbor, algorithmType, pFactory);
+	return arbor.GetArborApiImpl()->RegisterArborAlgorithms(arbor);
 }
 
 //---------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode ArborApi::RegisterEnergyResolutionFunction(Arbor &arbor, const std::string &energyResolutionFunctionName, EnergyResolutionFunction *pEnergyResolutionFunction)
+pandora::StatusCode ArborApi::RegisterAlgorithmFactory(Arbor &arbor, const std::string &algorithmType, ArborAlgorithmFactory *pFactory)
+{
+	return arbor.GetArborApiImpl()->RegisterAlgorithmFactory(arbor, algorithmType, pFactory);
+}
+
+//---------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborApi::RegisterEnergyResolutionFunction(const Arbor &arbor, const std::string &energyResolutionFunctionName, EnergyResolutionFunction *pEnergyResolutionFunction)
 {
 	return arbor.GetArborApiImpl()->RegisterEnergyResolutionFunction(energyResolutionFunctionName, pEnergyResolutionFunction);
 }

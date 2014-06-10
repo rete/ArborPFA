@@ -39,7 +39,8 @@ namespace pandora
 	class Pandora;
 }
 
-namespace arborpfa {
+namespace arbor
+{
 
 class Arbor;
 class ArborAlgorithmFactory;
@@ -56,20 +57,13 @@ class ArborApiImpl
 		 */
 		pandora::StatusCode PrepareEvent() const;
 
-		/**
-			*
-			*/
-		pandora::StatusCode RegisterAlgorithmFactory(const pandora::Pandora &pPandora, Arbor &pArbor, const std::string &factoryName, ArborAlgorithmFactory *pFactory) const;
+
+		pandora::StatusCode RegisterArborAlgorithms(Arbor &arbor) const;
 
 		/**
 			*
 			*/
-//	 pandora::StatusCode GetCurrentConnectorList(const ConnectorList *&pConnectorList, std::string &listName) const;
-//
-//	 /**
-//	  *
-//	  */
-//	 pandora::StatusCode GetConnectorList(const std::string &listName, const ConnectorList *&pConnectorList) const;
+		pandora::StatusCode RegisterAlgorithmFactory(Arbor &pArbor, const std::string &factoryName, ArborAlgorithmFactory *pFactory) const;
 
 	 /**
 	  *
@@ -89,11 +83,9 @@ class ArborApiImpl
   */
   ArborApiImpl(Arbor *pArbor);
 
-
   Arbor      *m_pArbor;
 
   friend class Arbor;
-
 }; 
 
 } 

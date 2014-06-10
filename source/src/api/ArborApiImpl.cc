@@ -29,8 +29,19 @@
 #include "arborpfa/api/ArborApiImpl.h"
 #include "arborpfa/algorithm/ArborAlgorithmFactory.h"
 #include "arborpfa/arbor/Arbor.h"
-#include "arborpfa/content/ArborObjectManager.h"
-#include "arborpfa/content/ConnectorManager.h"
+#include "arborpfa/content/ObjectManager.h"
+
+#include "arborpfa/algorithm/IntraLayerClusteringAlgorithm.h"
+#include "arborpfa/algorithm/ArborConnectorClusteringAlgorithm.h"
+#include "arborpfa/algorithm/DummyClusteringAlgorithm.h"
+#include "arborpfa/algorithm/SmallClusterMergingAlgorithm.h"
+#include "arborpfa/algorithm/ArborParentAlgorithm.h"
+#include "arborpfa/algorithm/SimpleObjectCreationAlgorithm.h"
+#include "arborpfa/algorithm/NeutralTreeMergingAlgorithm.h"
+#include "arborpfa/algorithm/ArborClusterConverterAlgorithm.h"
+#include "arborpfa/algorithm/TopologicalTrackAssociationAlgorithm.h"
+#include "arborpfa/algorithm/SmallNeutralFragmentMergingAlgorithm.h"
+#include "arborpfa/algorithm/ArborOutputAlgorithm.h"
 
 // pandora
 #include "Pandora/Pandora.h"
@@ -38,9 +49,8 @@
 
 using namespace pandora;
 
-namespace arborpfa
+namespace arbor
 {
-
 
 ArborApiImpl::ArborApiImpl(Arbor *pArbor) :
 		m_pArbor(pArbor)
@@ -48,7 +58,7 @@ ArborApiImpl::ArborApiImpl(Arbor *pArbor) :
 
 }
 
-//
+//---------------------------------------------------------------------------------------------------------------
 
 pandora::StatusCode ArborApiImpl::PrepareEvent() const
 {
@@ -57,13 +67,44 @@ pandora::StatusCode ArborApiImpl::PrepareEvent() const
 
 //---------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode ArborApiImpl::RegisterAlgorithmFactory(const pandora::Pandora &pandora, Arbor &arbor, const std::string &algorithmType, ArborAlgorithmFactory *pFactory) const
+pandora::StatusCode ArborApiImpl::RegisterAlgorithmFactory(Arbor &arbor, const std::string &algorithmType, ArborAlgorithmFactory *pFactory) const
 {
-	 PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraApi::RegisterAlgorithmFactory(pandora, algorithmType, pFactory));
+	 PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraApi::RegisterAlgorithmFactory(*arbor.GetPandora(), algorithmType, pFactory));
 		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, pFactory->RegisterArbor(&arbor));
 
 		return STATUS_CODE_SUCCESS;
 }
+
+
+pandora::StatusCode ArborApiImpl::RegisterArborAlgorithms(Arbor &arbor) const
+{
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "IntraLayerClustering",
+			  new arbor::IntraLayerClusteringAlgorithm::Factory));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "ArborConnectorClustering",
+			  new arbor::ArborConnectorClusteringAlgorithm::Factory));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "DummyClustering",
+			  new arbor::DummyClusteringAlgorithm::Factory));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "SmallClusterMerging",
+			  new arbor::SmallClusterMergingAlgorithm::Factory));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "ArborParent",
+			  new arbor::ArborParentAlgorithm::Factory));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "SimpleObjectCreation",
+			  new arbor::SimpleObjectCreationAlgorithm::Factory));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "ArborClusterConverter",
+			  new arbor::ArborClusterConverterAlgorithm::Factory));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "NeutralTreeMerging",
+			  new arbor::NeutralTreeMergingAlgorithm::Factory));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "TopologicalTrackAssociation",
+			  new arbor::TopologicalTrackAssociationAlgorithm::Factory));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "SmallNeutralFragmentMerging",
+			  new arbor::SmallNeutralFragmentMergingAlgorithm::Factory));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "ArborOutput",
+				  new arbor::ArborOutputAlgorithm::Factory));
+
+	return pandora::STATUS_CODE_SUCCESS;
+}
+
+//---------------------------------------------------------------------------------------------------------------
 
 pandora::StatusCode ArborApiImpl::RegisterEnergyResolutionFunction(const std::string &energyResolutionFunctionName, EnergyResolutionFunction *pEnergyResolutionFunction)
 {
@@ -71,20 +112,6 @@ pandora::StatusCode ArborApiImpl::RegisterEnergyResolutionFunction(const std::st
 
 	return STATUS_CODE_SUCCESS;
 }
-
-//---------------------------------------------------------------------------------------------------------------
-//
-//pandora::StatusCode ArborApiImpl::GetCurrentConnectorList(const ConnectorList *&pConnectorList, std::string &listName) const
-//{
-//	return m_pArbor->m_pConnectorManager->GetCurrentList(pConnectorList, listName);
-//}
-//
-////---------------------------------------------------------------------------------------------------------------
-//
-//pandora::StatusCode ArborApiImpl::GetConnectorList(const std::string &listName, const ConnectorList *&pConnectorList) const
-//{
-//	return m_pArbor->m_pConnectorManager->GetList(listName, pConnectorList);
-//}
 
 //---------------------------------------------------------------------------------------------------------------
 

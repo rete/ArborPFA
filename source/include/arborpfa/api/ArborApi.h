@@ -41,7 +41,8 @@ namespace pandora
 }
 
 
-namespace arborpfa {
+namespace arbor
+{
 
 class Arbor;
 class ArborAlgorithmFactory;
@@ -60,22 +61,14 @@ class ArborApi
 		static pandora::StatusCode PrepareEvent(const Arbor &arbor);
 
 		/**
-			* @brief Get the current connector list
-			*
-			* @param pConnectorList the connector to receive
-			* @param listName the connector list name
-			*/
-//	 static pandora::StatusCode GetCurrentConnectorList(const Arbor &arbor, const ConnectorList *&pConnectorList);
-//
-//	 /**
-//	  *
-//	  */
-//	 static pandora::StatusCode GetConnectorList(const Arbor &arbor, const std::string &listName, const ConnectorList *&pConnectorList);
-
-		/**
 			* @brief Register the reset function of Arbor framework
 			*/
 		static pandora::StatusCode RegisterResetFunction();
+
+		/**
+		 *
+		 */
+		static pandora::StatusCode RegisterArborAlgorithms(Arbor &arbor);
 
 		/**
 		 * @brief Reset the event before next event
@@ -85,16 +78,12 @@ class ArborApi
 		/**
 		 *
 		 */
-		static pandora::StatusCode RegisterAlgorithmFactory(const pandora::Pandora &pPandora, Arbor &pArbor, const std::string &factoryName, ArborAlgorithmFactory *pFactory);
+		static pandora::StatusCode RegisterAlgorithmFactory(Arbor &pArbor, const std::string &factoryName, ArborAlgorithmFactory *pFactory);
 
 		/**
 		 *
 		 */
-		static pandora::StatusCode RegisterEnergyResolutionFunction(Arbor &arbor, const std::string &energyResolutionFunctionName, EnergyResolutionFunction *pEnergyResolutionFunction);
-
-
-		// TODO Think about a a function like SetConnectorRelation(void *, ..., ...) to link LCRelation with LCObject
-
+		static pandora::StatusCode RegisterEnergyResolutionFunction(const Arbor &arbor, const std::string &energyResolutionFunctionName, EnergyResolutionFunction *pEnergyResolutionFunction);
 
 }; 
 
