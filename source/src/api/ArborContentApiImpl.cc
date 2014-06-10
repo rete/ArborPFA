@@ -29,15 +29,16 @@
 // arborpfa
 #include "arborpfa/api/ArborContentApiImpl.h"
 #include "arborpfa/arbor/Arbor.h"
-#include "arborpfa/content/ConnectorManager.h"
-#include "arborpfa/content/ArborObjectManager.h"
+#include "arborpfa/content/ObjectManager.h"
+#include "arborpfa/content/ClusterManager.h"
+#include "arborpfa/content/ArborPluginManager.h"
 
 // pandora
 #include "Api/PandoraContentApi.h"
 
 using namespace pandora;
 
-namespace arborpfa
+namespace arbor
 {
 
 ArborContentApiImpl::ArborContentApiImpl(Arbor *pArbor) :
@@ -46,232 +47,262 @@ ArborContentApiImpl::ArborContentApiImpl(Arbor *pArbor) :
 
 }
 
-/*
 
-pandora::StatusCode ArborContentApiImpl::CreateConnector(ArborObjectPair *pPair, arborpfa::Connector *&pConnector, float weight) const
+pandora::StatusCode ArborContentApiImpl::CreateObject(Object *&pObject, CaloHit *pInputCaloHit) const
 {
-	return this->CreateConnector(pPair->first, pPair->second, pConnector, weight);
+	return m_pArbor->m_pObjectManager->CreateObject(pObject, pInputCaloHit);
 }
 
-pandora::StatusCode ArborContentApiImpl::CreateConnector(ArborObject *pObj1, ArborObject *pObj2, arborpfa::Connector *&pConnector, float weight) const
+//-----------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborContentApiImpl::CreateCluster(arbor::Cluster *&pCluster, Object *pSeedObject) const
 {
-	return m_pArbor->m_pConnectorManager->CreateConnector(pObj1, pObj2, pConnector, weight);
+	ITreeBuilder *pTreeBuilder = NULL;
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborPluginManager->GetCurrentTreeBuilder(pTreeBuilder));
+	return m_pArbor->m_pClusterManager->CreateCluster(pCluster, pSeedObject, pTreeBuilder);
 }
 
-pandora::StatusCode ArborContentApiImpl::CreateArborObject(ArborObject *&pArborObject, ArborObject::Type type, void *pInputObject) const
-{
-	return m_pArbor->m_pArborObjectManager->CreateArborObject(pArborObject, type, pInputObject);
-}
+//-----------------------------------------------------------------------------------------------------------------------
 
+pandora::StatusCode ArborContentApiImpl::CreateBranch(Branch *&pBranch, Tree *pTree) const
+{
+	return m_pArbor->m_pClusterManager->CreateBranch(pBranch, pTree);
+}
 
 //-----------------------------------------------------------------------------------------------------------------------
 
 
-
-
-pandora::StatusCode ArborContentApiImpl::GetCurrentConnectorList(const ConnectorList *&pConnectorList, std::string &listName) const
+/**
+ * Object related methods
+ */
+pandora::StatusCode ArborContentApiImpl::GetCurrentObjectList(const ObjectList *&pObjectList, std::string &listName) const
 {
-	return m_pArbor->m_pConnectorManager->GetCurrentList(pConnectorList, listName);
+	return m_pArbor->m_pObjectManager->GetCurrentList(pObjectList, listName);
 }
-
-
-
-pandora::StatusCode ArborContentApiImpl::GetCurrentConnectorListName(std::string &listName) const
-{
-	return m_pArbor->m_pConnectorManager->GetCurrentListName(listName);
-}
-
-
-
-pandora::StatusCode ArborContentApiImpl::GetConnectorList(const std::string &listName, const ConnectorList *&pConnectorList) const
-{
-	return m_pArbor->m_pConnectorManager->GetList(listName, pConnectorList);
-}
-
-
-
-pandora::StatusCode ArborContentApiImpl::CreateTemporaryConnectorListAndSetCurrent(const ArborAlgorithm &algorithm, const ConnectorList *&pConnectorList, std::string &temporaryListName) const
-{
- PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pConnectorManager->CreateTemporaryListAndSetCurrent(&algorithm, temporaryListName));
- PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pConnectorManager->GetCurrentList(pConnectorList, temporaryListName));
-
- return STATUS_CODE_SUCCESS;
-}
-
-
-
-pandora::StatusCode ArborContentApiImpl::SaveConnectorList(const std::string &newListName) const
-{
- std::string currentConnectorListName;
- PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pConnectorManager->GetCurrentListName(currentConnectorListName));
- PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pConnectorManager->SaveObjects(newListName, currentConnectorListName));
-
- const ConnectorList *pNewConnectorList = NULL;
- PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pConnectorManager->GetList(newListName, pNewConnectorList));
-
- return STATUS_CODE_SUCCESS;
-}
-
-
-
-pandora::StatusCode ArborContentApiImpl::SaveConnectorList(const std::string &newConnectorListName, const ConnectorList &connectorsToSave) const
-{
- std::string currentConnectorListName;
- PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pConnectorManager->GetCurrentListName(currentConnectorListName));
- PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pConnectorManager->SaveObjects(newConnectorListName, currentConnectorListName, connectorsToSave));
-
- return STATUS_CODE_SUCCESS;
-}
-
-
-
-pandora::StatusCode ArborContentApiImpl::SaveConnectorList(const std::string &oldConnectorListName, const std::string &newConnectorListName) const
-{
-	return m_pArbor->m_pConnectorManager->SaveObjects(newConnectorListName, oldConnectorListName);
-}
-
-
-
-pandora::StatusCode ArborContentApiImpl::SaveConnectorList(const std::string &oldConnectorListName, const std::string &newConnectorListName, const ConnectorList &connectorsToSave) const
-{
-	return m_pArbor->m_pConnectorManager->SaveObjects(newConnectorListName, oldConnectorListName, connectorsToSave);
-}
-
-
-
-pandora::StatusCode ArborContentApiImpl::ReplaceCurrentConnectorList(const ArborAlgorithm &algorithm, const std::string &newListName) const
-{
-	return m_pArbor->m_pConnectorManager->ReplaceCurrentAndAlgorithmInputLists(&algorithm, newListName);
-}
-
-
-
-pandora::StatusCode ArborContentApiImpl::TemporarilyReplaceCurrentConnectorList(const std::string &newConnectorListName) const
-{
- return m_pArbor->m_pConnectorManager->TemporarilyReplaceCurrentList(newConnectorListName);
-}
-
-
-
-pandora::StatusCode ArborContentApiImpl::DropCurrentConnectorList() const
-{
-	return m_pArbor->m_pConnectorManager->DropCurrentList();
-}
-
-
 
 //-----------------------------------------------------------------------------------------------------------------------
 
-
-
-
-pandora::StatusCode ArborContentApiImpl::GetCurrentArborObjectList(const ArborObjectList *&pArborObjectList, std::string &listName) const
+pandora::StatusCode ArborContentApiImpl::GetCurrentObjectListName(std::string &listName) const
 {
-	return m_pArbor->m_pArborObjectManager->GetCurrentList(pArborObjectList, listName);
+	return m_pArbor->m_pObjectManager->GetCurrentListName(listName);
 }
 
+//-----------------------------------------------------------------------------------------------------------------------
 
-
-pandora::StatusCode ArborContentApiImpl::GetCurrentArborObjectListName(std::string &listName) const
+pandora::StatusCode ArborContentApiImpl::GetObjectList(const std::string &listName, const ObjectList *&pObjectList) const
 {
-	return m_pArbor->m_pArborObjectManager->GetCurrentListName(listName);
+	return m_pArbor->m_pObjectManager->GetList(listName, pObjectList);
 }
 
+//-----------------------------------------------------------------------------------------------------------------------
 
-
-pandora::StatusCode ArborContentApiImpl::GetArborObjectList(const std::string &listName, const ArborObjectList *&pArborObjectList) const
+pandora::StatusCode ArborContentApiImpl::CreateTemporaryObjectListAndSetCurrent(const ArborAlgorithm &algorithm, const ObjectList *&pObjectList, std::string &temporaryListName) const
 {
-	return m_pArbor->m_pArborObjectManager->GetList(listName, pArborObjectList);
-}
-
-
-
-pandora::StatusCode ArborContentApiImpl::CreateTemporaryArborObjectListAndSetCurrent(const ArborAlgorithm &algorithm, const ArborObjectList *&pArborObjectList, std::string &temporaryListName) const
-{
- PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborObjectManager->CreateTemporaryListAndSetCurrent(&algorithm, temporaryListName));
- PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborObjectManager->GetCurrentList(pArborObjectList, temporaryListName));
+ PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pObjectManager->CreateTemporaryListAndSetCurrent(&algorithm, temporaryListName));
+ PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pObjectManager->GetCurrentList(pObjectList, temporaryListName));
 
  return STATUS_CODE_SUCCESS;
 }
 
+//-----------------------------------------------------------------------------------------------------------------------
 
-
-pandora::StatusCode ArborContentApiImpl::SaveArborObjectList(const std::string &newListName) const
+pandora::StatusCode ArborContentApiImpl::SaveObjectList(const std::string &newListName) const
 {
- std::string currentArborObjectListName;
- PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborObjectManager->GetCurrentListName(currentArborObjectListName));
- PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborObjectManager->SaveObjects(newListName, currentArborObjectListName));
+ std::string currentObjectListName;
+ PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pObjectManager->GetCurrentListName(currentObjectListName));
+ PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pObjectManager->SaveObjects(newListName, currentObjectListName));
 
- const ArborObjectList *pNewArborObjectList = NULL;
- PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborObjectManager->GetList(newListName, pNewArborObjectList));
+ const ObjectList *pNewObjectList = NULL;
+ PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pObjectManager->GetList(newListName, pNewObjectList));
 
  return STATUS_CODE_SUCCESS;
 }
 
+//-----------------------------------------------------------------------------------------------------------------------
 
-
-pandora::StatusCode ArborContentApiImpl::SaveArborObjectList(const std::string &newArborObjectListName, const ArborObjectList &objectsToSave) const
+pandora::StatusCode ArborContentApiImpl::SaveObjectList(const std::string &newObjectListName, const ObjectList &objectsToSave) const
 {
- std::string currentArborObjectListName;
- PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborObjectManager->GetCurrentListName(currentArborObjectListName));
- PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborObjectManager->SaveObjects(newArborObjectListName, currentArborObjectListName, objectsToSave));
+ std::string currentObjectListName;
+ PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pObjectManager->GetCurrentListName(currentObjectListName));
+ PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pObjectManager->SaveObjects(newObjectListName, currentObjectListName, objectsToSave));
 
  return STATUS_CODE_SUCCESS;
 }
 
+//-----------------------------------------------------------------------------------------------------------------------
 
-
-pandora::StatusCode ArborContentApiImpl::SaveArborObjectList(const std::string &oldArborObjectListName, const std::string &newArborObjectListName) const
+pandora::StatusCode ArborContentApiImpl::SaveObjectList(const std::string &oldObjectListName, const std::string &newObjectListName) const
 {
-	return m_pArbor->m_pArborObjectManager->SaveObjects(newArborObjectListName, oldArborObjectListName);
+	return m_pArbor->m_pObjectManager->SaveObjects(newObjectListName, oldObjectListName);
 }
 
+//-----------------------------------------------------------------------------------------------------------------------
 
-
-pandora::StatusCode ArborContentApiImpl::SaveArborObjectList(const std::string &oldArborObjectListName, const std::string &newArborObjectListName, const ArborObjectList &objectsToSave) const
+pandora::StatusCode ArborContentApiImpl::SaveObjectList(const std::string &oldObjectListName, const std::string &newObjectListName, const ObjectList &objectsToSave) const
 {
-	return m_pArbor->m_pArborObjectManager->SaveObjects(newArborObjectListName, oldArborObjectListName, objectsToSave);
+	return m_pArbor->m_pObjectManager->SaveObjects(newObjectListName, oldObjectListName, objectsToSave);
 }
 
+//-----------------------------------------------------------------------------------------------------------------------
 
-
-pandora::StatusCode ArborContentApiImpl::ReplaceCurrentArborObjectList(const ArborAlgorithm &algorithm, const std::string &newListName) const
+pandora::StatusCode ArborContentApiImpl::ReplaceCurrentObjectList(const ArborAlgorithm &algorithm, const std::string &newListName) const
 {
-	return m_pArbor->m_pArborObjectManager->ReplaceCurrentAndAlgorithmInputLists(&algorithm, newListName);
+	return m_pArbor->m_pObjectManager->ReplaceCurrentAndAlgorithmInputLists(&algorithm, newListName);
 }
 
+//-----------------------------------------------------------------------------------------------------------------------
 
-
-pandora::StatusCode ArborContentApiImpl::TemporarilyReplaceCurrentArborObjectList(const std::string &newArborObjectListName) const
+pandora::StatusCode ArborContentApiImpl::TemporarilyReplaceCurrentObjectList(const std::string &newObjectListName) const
 {
- return m_pArbor->m_pArborObjectManager->TemporarilyReplaceCurrentList(newArborObjectListName);
+ return m_pArbor->m_pObjectManager->TemporarilyReplaceCurrentList(newObjectListName);
 }
 
+//-----------------------------------------------------------------------------------------------------------------------
 
-
-pandora::StatusCode ArborContentApiImpl::DropCurrentArborObjectList() const
+pandora::StatusCode ArborContentApiImpl::DropCurrentObjectList() const
 {
-	return m_pArbor->m_pArborObjectManager->DropCurrentList();
+	return m_pArbor->m_pObjectManager->DropCurrentList();
 }
 
+//-----------------------------------------------------------------------------------------------------------------------
 
+/**
+ * Cluster related methods
+ */
 
-
-
-pandora::StatusCode ArborContentApiImpl::RunArborObjectAlgorithm(const ArborAlgorithm *pAlgorithm, const std::string algorithmName, const ArborObjectList *&pArborObjectList, std::string &listName) const
+pandora::StatusCode ArborContentApiImpl::GetCurrentClusterList(const ClusterList *&pClusterList, std::string &listName) const
 {
-	const pandora::Algorithm *pPandoraAlgorithm = (const pandora::Algorithm *) pAlgorithm;
-//	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborObjectManager->RegisterAlgorithm((const pandora::Algorithm *)pAlgorithm));
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborObjectManager->CreateTemporaryListAndSetCurrent(pAlgorithm, listName));
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::RunDaughterAlgorithm(*pPandoraAlgorithm, algorithmName));
-//	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborObjectManager->ResetAlgorithmInfo((const pandora::Algorithm *)pAlgorithm, true));
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborObjectManager->GetCurrentList(pArborObjectList, listName));
-	pPandoraAlgorithm = 0;
+	return m_pArbor->m_pClusterManager->GetCurrentList(pClusterList, listName);
+}
+
+//-----------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborContentApiImpl::GetCurrentClusterListName(std::string &listName) const
+{
+	return m_pArbor->m_pClusterManager->GetCurrentListName(listName);
+}
+
+//-----------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborContentApiImpl::GetClusterList(const std::string &listName, const ClusterList *&pClusterList) const
+{
+	return m_pArbor->m_pClusterManager->GetList(listName, pClusterList);
+}
+
+//-----------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborContentApiImpl::CreateTemporaryClusterListAndSetCurrent(const ArborAlgorithm &algorithm, const ClusterList *&pClusterList, std::string &temporaryListName) const
+{
+ PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pClusterManager->CreateTemporaryListAndSetCurrent(&algorithm, temporaryListName));
+ PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pClusterManager->GetCurrentList(pClusterList, temporaryListName));
+
+ return STATUS_CODE_SUCCESS;
+}
+
+//-----------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborContentApiImpl::SaveClusterList(const std::string &newListName) const
+{
+ std::string currentClusterListName;
+ PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pClusterManager->GetCurrentListName(currentClusterListName));
+ PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pClusterManager->SaveObjects(newListName, currentClusterListName));
+
+ const ClusterList *pNewClusterList = NULL;
+ PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pClusterManager->GetList(newListName, pNewClusterList));
+
+ return STATUS_CODE_SUCCESS;
+}
+
+//-----------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborContentApiImpl::SaveClusterList(const std::string &newClusterListName, const ClusterList &objectsToSave) const
+{
+ std::string currentClusterListName;
+ PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pClusterManager->GetCurrentListName(currentClusterListName));
+ PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pClusterManager->SaveObjects(newClusterListName, currentClusterListName, objectsToSave));
+
+ return STATUS_CODE_SUCCESS;
+}
+
+//-----------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborContentApiImpl::SaveClusterList(const std::string &oldClusterListName, const std::string &newClusterListName) const
+{
+	return m_pArbor->m_pClusterManager->SaveObjects(newClusterListName, oldClusterListName);
+}
+
+//-----------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborContentApiImpl::SaveClusterList(const std::string &oldClusterListName, const std::string &newClusterListName, const ClusterList &objectsToSave) const
+{
+	return m_pArbor->m_pClusterManager->SaveObjects(newClusterListName, oldClusterListName, objectsToSave);
+}
+
+//-----------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborContentApiImpl::ReplaceCurrentClusterList(const ArborAlgorithm &algorithm, const std::string &newListName) const
+{
+	return m_pArbor->m_pClusterManager->ReplaceCurrentAndAlgorithmInputLists(&algorithm, newListName);
+}
+
+//-----------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborContentApiImpl::TemporarilyReplaceCurrentClusterList(const std::string &newClusterListName) const
+{
+ return m_pArbor->m_pClusterManager->TemporarilyReplaceCurrentList(newClusterListName);
+}
+
+//-----------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborContentApiImpl::DropCurrentClusterList() const
+{
+	return m_pArbor->m_pClusterManager->DropCurrentList();
+}
+
+//-----------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborContentApiImpl::DeleteCluster(arbor::Cluster *pCluster) const
+{
+	return m_pArbor->m_pClusterManager->DeleteObject(pCluster);
+}
+
+//-----------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborContentApiImpl::RemoveBranchFromTree(Tree *pTree, Branch *pBranch) const
+{
+	return m_pArbor->m_pClusterManager->RemoveBranchFromTree(pTree, pBranch);
+}
+
+//-----------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborContentApiImpl::MoveTree(arbor::Cluster *pOldCluster, arbor::Cluster *pNewCluster, Tree *pTree) const
+{
+	return m_pArbor->m_pClusterManager->MoveTree(pOldCluster, pNewCluster, pTree);
+}
+
+//-----------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborContentApiImpl::RunObjectCreationAlgorithm(const ArborAlgorithm &arborAlgorithm, const std::string &arborObjectAlgorithmName,
+		const ObjectList *&pObjectList, std::string &newObjectListName) const
+{
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pObjectManager->CreateTemporaryListAndSetCurrent(&arborAlgorithm, newObjectListName));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::RunDaughterAlgorithm((const pandora::Algorithm &)arborAlgorithm, arborObjectAlgorithmName));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pObjectManager->GetCurrentList(pObjectList, newObjectListName));
 
 	return STATUS_CODE_SUCCESS;
 }
 
-*/
+//-----------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborContentApiImpl::RunClusterCreationAlgorithm(const ArborAlgorithm &arborAlgorithm, const std::string &arborClusterAlgorithmName,
+		const ClusterList *&pClusterList, std::string &newClusterListName) const
+{
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pClusterManager->CreateTemporaryListAndSetCurrent(&arborAlgorithm, newClusterListName));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::RunDaughterAlgorithm((const pandora::Algorithm &)arborAlgorithm, arborClusterAlgorithmName));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pClusterManager->GetCurrentList(pClusterList, newClusterListName));
+
+	return STATUS_CODE_SUCCESS;
+}
 
 } 
 
