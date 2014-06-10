@@ -642,12 +642,6 @@ pandora::StatusCode ArborConnectorClusteringAlgorithm::ReadSettings(const pandor
  PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, XmlHelper::ReadValue(xmlHandle,
      "BackwardConnectorWeight", m_backwardConnectorWeight));
 
- if(m_shouldRunSeedMerging)
- {
-		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, XmlHelper::ReadValue(xmlHandle,
-						"CloseBySeedDistance", m_closeBySeedDistance));
- }
-
  PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, XmlHelper::ReadValue(xmlHandle,
  		  "ShouldUseIsolatedObjects", m_shouldUseIsolatedObjects));
 

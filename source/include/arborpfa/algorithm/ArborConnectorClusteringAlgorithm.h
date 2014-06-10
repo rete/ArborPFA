@@ -140,13 +140,11 @@ class ArborConnectorClusteringAlgorithm : public ArborAlgorithm
 		float               m_orderParameterDistancePower;
 		float               m_forwardConnectorWeight;
 		float               m_backwardConnectorWeight;
-		float               m_closeBySeedDistance;
 
 		bool                m_allowForwardConnectionForIsolatedObjects;
 		bool                m_showConnectors;
 		bool                m_shouldUseIsolatedObjects;
 		bool                m_shouldRunSecondCleaning;
-		bool                m_shouldRunSeedMerging;
 }; 
 
 //--------------------------------------------------------------------------------------------------------------------
