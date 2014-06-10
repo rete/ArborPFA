@@ -18,7 +18,7 @@
 #include "TrackCreator.h"
 
 namespace pandora  {class Pandora;}
-namespace arborpfa {class Arbor;}
+namespace arbor {class Arbor;}
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -118,7 +118,7 @@ private:
     void Reset();
 
     static pandora::Pandora        *m_pPandora;                     ///< Address of the pandora instance
-    static arborpfa::Arbor         *m_pArbor;                       ///< Address of the arbor instance
+    static arbor::Arbor            *m_pArbor;                       ///< Address of the arbor instance
     static EVENT::LCEvent           *m_pLcioEvent;                   ///< Address of the current lcio event
 
     GeometryCreator                *m_pGeometryCreator;             ///< The geometry creator

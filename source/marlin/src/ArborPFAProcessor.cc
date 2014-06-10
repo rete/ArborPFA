@@ -38,7 +38,7 @@
 ArborPFAProcessor arborPFAProcessor;
 
 pandora::Pandora    *ArborPFAProcessor::m_pPandora   = NULL;
-arborpfa::Arbor   *ArborPFAProcessor::m_pArbor     = NULL;
+arbor::Arbor        *ArborPFAProcessor::m_pArbor     = NULL;
 EVENT::LCEvent      *ArborPFAProcessor::m_pLcioEvent = NULL;
 
 //------------------------------------------------------------------------------------------------------------------------------------------
@@ -66,7 +66,7 @@ void ArborPFAProcessor::init()
         streamlog_out(MESSAGE) << "ArborPFAProcessor - Init" << std::endl;
         this->FinaliseSteeringParameters();
 
-        m_pArbor = new arborpfa::Arbor();
+        m_pArbor = new arbor::Arbor();
         m_pPandora = m_pArbor->GetPandora();
         m_pGeometryCreator = new GeometryCreator(m_geometryCreatorSettings);
         m_pCaloHitCreator = new CaloHitCreator(m_caloHitCreatorSettings);
@@ -127,7 +127,7 @@ void ArborPFAProcessor::processEvent(LCEvent *pLCEvent)
         PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pCaloHitCreator->CreateCaloHits(pLCEvent));
         PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pMCParticleCreator->CreateCaloHitToMCParticleRelationships(pLCEvent));
 
-        PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, arborpfa::ArborApi::PrepareEvent(*m_pArbor));
+        PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, arbor::ArborApi::PrepareEvent(*m_pArbor));
         PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::ProcessEvent(*m_pPandora));
         PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pPfoCreator->CreateParticleFlowObjects(pLCEvent));
 
@@ -198,20 +198,20 @@ pandora::StatusCode ArborPFAProcessor::RegisterUserComponents() const
     PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::RegisterAlgorithmFactory(*m_pPandora, "ExternalClustering",
         new ExternalClusteringAlgorithm::Factory));
 
-    PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, arborpfa::ArborApi::RegisterAlgorithmFactory(*m_pPandora, *m_pArbor, "IntraLayerClustering",
-        new arborpfa::IntraLayerClusteringAlgorithm::Factory));
+    PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, arbor::ArborApi::RegisterAlgorithmFactory(*m_pArbor, "IntraLayerClustering",
+        new arbor::IntraLayerClusteringAlgorithm::Factory));
 
-    PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, arborpfa::ArborApi::RegisterAlgorithmFactory(*m_pPandora, *m_pArbor, "ArborConnectorClustering",
-        new arborpfa::ArborConnectorClusteringAlgorithm::Factory));
+    PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, arbor::ArborApi::RegisterAlgorithmFactory(*m_pArbor, "ArborConnectorClustering",
+        new arbor::ArborConnectorClusteringAlgorithm::Factory));
 
-    PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, arborpfa::ArborApi::RegisterAlgorithmFactory(*m_pPandora, *m_pArbor, "DummyClustering",
-        new arborpfa::DummyClusteringAlgorithm::Factory));
+    PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, arbor::ArborApi::RegisterAlgorithmFactory(*m_pArbor, "DummyClustering",
+        new arbor::DummyClusteringAlgorithm::Factory));
 
-    PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, arborpfa::ArborApi::RegisterAlgorithmFactory(*m_pPandora, *m_pArbor, "HoughTransform",
-        new arborpfa::HoughTransformAlgorithm::Factory));
+    PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, arbor::ArborApi::RegisterAlgorithmFactory(*m_pArbor, "HoughTransform",
+        new arbor::HoughTransformAlgorithm::Factory));
 
-    PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, arborpfa::ArborApi::RegisterAlgorithmFactory(*m_pPandora, *m_pArbor, "SmallClusterMerging",
-        new arborpfa::SmallClusterMergingAlgorithm::Factory));
+    PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, arbor::ArborApi::RegisterAlgorithmFactory(*m_pArbor, "SmallClusterMerging",
+        new arbor::SmallClusterMergingAlgorithm::Factory));
 
     // Example registrations
     //PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::RegisterEnergyCorrectionFunction(*m_pPandora,
