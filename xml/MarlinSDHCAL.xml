@@ -18,14 +18,18 @@
   /home/remi/git/ArborPFA/output/Separation/OverlayEvent_10_GeV_charged_40_GeV_charged_5_cm_ArborPFA_MC.slcio
   /home/remi/ilcsoft/SDHCAL/data/testBeam/2012/TDHCAL_715751_cut_I0.slcio
   /home/remi/git/ArborPFA/output/Separation/OverlayEvent_30_GeV_charged_10_GeV_charged_5_cm_ArborPFA_MC.slcio
+  /home/remi/git/ArborPFA/output/Separation/OverlayEvent_10_GeV_neutral_30_GeV_charged_5_cm_ArborPFA_MC.slcio
+  /home/remi/ilcsoft/SDHCAL/data/testBeam/2012/TDHCAL_715693_cut_I0.slcio
+  /home/remi/git/ArborPFA/output/Separation/OverlayEvent_10_GeV_neutral_30_GeV_charged_5_cm_ArborPFA_MC.slcio
   -->
 
 	<global>
 	  <parameter name="LCIOInputFiles">
 	  /home/remi/ilcsoft/SDHCAL/data/simulation/pi-/single_calorimeterhit_pi-_20GeV_new.slcio
+	  <!-- /home/remi/git/ArborPFA/output/Separation/OverlayEvent_10_GeV_neutral_30_GeV_charged_10_cm_ArborPFA_MC.slcio -->
 	  </parameter>
 	  <parameter name="GearXMLFile" value="/home/remi/git/ArborPFA/xml/SDHCALGearFile.xml"/>
-	  <parameter name="MaxRecordNumber" value="2000"/>
+	  <parameter name="MaxRecordNumber" value="5000"/>
 	  <parameter name="SkipNEvents" value="0"/>
 	  <parameter name="SupressCheck" value="false"/>
 	  <parameter name="Verbosity" options="DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT"> MESSAGE </parameter>
@@ -34,9 +38,8 @@
 
 	<processor name="MyMarlinSDHCALArbor" type="SDHCALArborProcessor">
 	
-	 <!-- <parameter name="PandoraSettingsXmlFile" type="String">/home/remi/git/ArborPFA/xml/PandoraSettingsDefault.xml</parameter> -->
-	 <parameter name="PandoraSettingsXmlFile" type="String">/home/remi/git/ArborPFA/xml/SDHCALArborPandoraSettings.xml</parameter>
-	  
+	<!--  <parameter name="PandoraSettingsXmlFile" type="String">/home/remi/git/ArborPFA/xml/PandoraSettingsDefault.xml</parameter> -->
+	<parameter name="PandoraSettingsXmlFile" type="String">/home/remi/git/ArborPFA/xml/SDHCALArborPandoraSettings_testApi.xml</parameter>   
 	  <!-- Collection names -->
 	  <parameter name="HCalCaloHitCollection" type="String"> HCALBarrel </parameter>
 	  <parameter name="GenericObjectTrackInfoCollection" type="String"> SDHCALTrackInfo </parameter>
@@ -55,6 +58,16 @@
 	    0.258078
 	  </parameter>
 	  <parameter name="SDHCALEnergyConstants" type="FloatVec"> 
+	  0.0442674
+	  3.95986e-05
+	  -2.0133e-10
+	  0.0781586
+	  -5.9623e-05
+	  -3.06952e-08
+	  0.115295
+	  1.57508e-05
+	  2.28041e-09
+	  <!--  Old parameters
 	    0.0227148
 	    4.77839e-05
 	    -4.05221e-08
@@ -63,12 +76,10 @@
 	    2.9642e-08
 	    0.156503
 	    0.00010774
-	    4.97735e-08
+	    4.97735e-08 -->
 	  </parameter>
 	  <parameter name="IsSingleParticleStudy" type="bool"> true </parameter>
-	  <parameter name="SingleParticleMomentum" type="float"> 20.0 </parameter>
-	  <parameter name="RootOuputFileName" type ="string"> testArbor.root </parameter>
-	  <parameter name="RootTreeName" type ="string"> PFOAnalysis </parameter>
+	  <parameter name="SingleParticleMomentum" type="float"> 20 </parameter>
 	  <parameter name="Verbosity" options="DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT"> MESSAGE DEBUG </parameter>
 	</processor>
 
