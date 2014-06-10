@@ -30,7 +30,7 @@
 
 using namespace pandora;
 
-namespace arborpfa
+namespace arbor
 {
 
 EnergyResolutionFunctionMap EnergyResolutionHelper::m_energyResolutionFunctionMap;

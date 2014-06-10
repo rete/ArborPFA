@@ -35,7 +35,7 @@
 
 #include "arborpfa/arbor/ArborTypes.h"
 
-namespace arborpfa
+namespace arbor
 {
 
 class EnergyResolutionFunction
