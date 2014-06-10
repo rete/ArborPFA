@@ -27,7 +27,11 @@
 
 #include "arborpfa/algorithm/ArborAlgorithm.h"
 
-namespace arborpfa {
+#include "arborpfa/content/ObjectManager.h"
+#include "arborpfa/content/ClusterManager.h"
+
+namespace arbor
+{
 
 ArborAlgorithm::ArborAlgorithm() :
 		m_pArbor(NULL)
@@ -35,14 +39,14 @@ ArborAlgorithm::ArborAlgorithm() :
 
 }
 
-
+//--------------------------------------------------------------------------------------------------------------------
 
 ArborAlgorithm::~ArborAlgorithm()
 {
 
 }
 
-
+//--------------------------------------------------------------------------------------------------------------------
 
 const Arbor *ArborAlgorithm::GetArbor() const
 {
@@ -52,7 +56,7 @@ const Arbor *ArborAlgorithm::GetArbor() const
 	return m_pArbor;
 }
 
-
+//--------------------------------------------------------------------------------------------------------------------
 
 const ArborContentApiImpl *ArborAlgorithm::GetArborContentApiImpl() const
 {
@@ -62,7 +66,7 @@ const ArborContentApiImpl *ArborAlgorithm::GetArborContentApiImpl() const
 	return m_pArbor->GetArborContentApiImpl();
 }
 
-
+//--------------------------------------------------------------------------------------------------------------------
 
 pandora::StatusCode ArborAlgorithm::RegisterArbor(Arbor *pArbor)
 {
@@ -74,6 +78,24 @@ pandora::StatusCode ArborAlgorithm::RegisterArbor(Arbor *pArbor)
 	return pandora::STATUS_CODE_SUCCESS;
 }
 
+//--------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborAlgorithm::Run()
+{
+	if(NULL == m_pArbor)
+		return pandora::STATUS_CODE_NOT_INITIALIZED;
+
+
+	PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pArbor->m_pObjectManager->RegisterAlgorithm(this));
+	PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pArbor->m_pClusterManager->RegisterAlgorithm(this));
+
+	pandora::StatusCode statusCode = this->RunArborAlgorithm();
+
+	PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pArbor->m_pObjectManager->ResetAlgorithmInfo(this, true));
+	PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pArbor->m_pClusterManager->ResetAlgorithmInfo(this, true));
+
+	return statusCode;
+}
 
 
 } 

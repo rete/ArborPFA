@@ -36,7 +36,8 @@
 #include "arborpfa/arbor/Arbor.h"
 #include "arborpfa/api/ArborContentApiImpl.h"
 
-namespace arborpfa {
+namespace arbor
+{
 
 class ArborAlgorithmFactory;
 
@@ -67,12 +68,19 @@ class ArborAlgorithm : public pandora::Algorithm
 		 */
 		const ArborContentApiImpl *GetArborContentApiImpl() const;
 
+ private:
+
+		/**
+			*  @brief  Run the algorithm
+			*/
+		pandora::StatusCode Run();
+
  protected:
 
 		/**
 			*  @brief  Run the algorithm
 			*/
-		virtual pandora::StatusCode Run() = 0;
+		virtual pandora::StatusCode RunArborAlgorithm() = 0;
 
 		/**
 			*  @brief  Read the algorithm settings
@@ -86,9 +94,11 @@ class ArborAlgorithm : public pandora::Algorithm
 			*/
 		pandora::StatusCode RegisterArbor(Arbor *pArbor);
 
-
 		Arbor     *m_pArbor;          ///< The arbor instance to run this algorithm
 
+		friend class Arbor;
+		friend class ObjectManager;
+		friend class ClusterManager;
 		friend class ArborAlgorithmFactory;
 
 };
