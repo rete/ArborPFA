@@ -35,14 +35,11 @@
 #include "arborpfa/api/ArborContentApi.h"
 
 // content
-#include "arborpfa/content/ArborObject.h"
-#include "arborpfa/content/ArborObjectImpl.h"
-#include "arborpfa/content/CaloHitObject.h"
-#include "arborpfa/content/ClusterObject.h"
-//#include "arborpfa/content/MipPointObject.h"
-#include "arborpfa/content/TrackObject.h"
+#include "arborpfa/content/Cluster.h"
+#include "arborpfa/content/Object.h"
+#include "arborpfa/content/Branch.h"
+#include "arborpfa/content/Tree.h"
 #include "arborpfa/content/Connector.h"
-
 #include "arborpfa/content/CaloHitHelper.h"
 #include "arborpfa/content/ArborHelper.h"
 #include "arborpfa/content/EnergyResolutionHelper.h"
