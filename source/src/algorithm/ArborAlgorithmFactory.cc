@@ -27,7 +27,8 @@
 
 #include "arborpfa/algorithm/ArborAlgorithmFactory.h"
 
-namespace arborpfa {
+namespace arbor
+{
 
 ArborAlgorithmFactory::ArborAlgorithmFactory() :
 		m_pArbor(NULL)
@@ -39,10 +40,10 @@ ArborAlgorithmFactory::ArborAlgorithmFactory() :
 
 pandora::Algorithm *ArborAlgorithmFactory::CreateAlgorithm() const
 {
-	ArborAlgorithm *algorithm = this->CreateArborAlgorithm();
-	PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, algorithm->RegisterArbor(m_pArbor));
+	ArborAlgorithm *pAlgorithm = this->CreateArborAlgorithm();
+	PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, pAlgorithm->RegisterArbor(m_pArbor));
 
-	return algorithm;
+	return pAlgorithm;
 }
 
 //--------------------------------------------------------------------------------------------------------
