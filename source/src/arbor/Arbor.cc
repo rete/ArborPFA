@@ -27,8 +27,9 @@
 
 // arborpfa
 #include "arborpfa/arbor/Arbor.h"
-#include "arborpfa/content/ConnectorManager.h"
-#include "arborpfa/content/ArborObjectManager.h"
+#include "arborpfa/content/ObjectManager.h"
+#include "arborpfa/content/ClusterManager.h"
+#include "arborpfa/content/ArborPluginManager.h"
 #include "arborpfa/arbor/ArborImpl.h"
 #include "arborpfa/api/ArborApiImpl.h"
 #include "arborpfa/api/ArborContentApiImpl.h"
@@ -38,12 +39,10 @@
 
 using namespace pandora;
 
-namespace arborpfa
+namespace arbor
 {
 
-Arbor::Arbor() :
-		m_pArborObjectManager(NULL),
-		m_pConnectorManager(NULL)
+Arbor::Arbor()
 {
  try
  {
@@ -51,8 +50,10 @@ Arbor::Arbor() :
   m_pArborApiImpl = new ArborApiImpl(this);
   m_pArborContentApiImpl = new ArborContentApiImpl(this);
   m_pArborImpl = new ArborImpl(this);
- 	m_pArborObjectManager = new ArborObjectManager();
- 	m_pConnectorManager = new ConnectorManager();
+ 	m_pObjectManager = new ObjectManager();
+ 	m_pClusterManager = new ClusterManager();
+ 	m_pArborPluginManager = new ArborPluginManager();
+
  	PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterResetFunction());
  }
  catch(StatusCodeException &e)
@@ -84,8 +85,8 @@ pandora::StatusCode Arbor::RegisterResetFunction()
 Arbor::~Arbor()
 {
 	delete m_pPandora;
-	delete m_pArborObjectManager;
-	delete m_pConnectorManager;
+	delete m_pObjectManager;
+	delete m_pClusterManager;
  delete m_pArborApiImpl;
  delete m_pArborContentApiImpl;
  delete m_pArborImpl;
@@ -95,6 +96,7 @@ Arbor::~Arbor()
 
 void Arbor::Reset()
 {
+	// Find a way to call the ResetEvent() method to clean the framework
 	return;
 }
 
@@ -102,23 +104,14 @@ void Arbor::Reset()
 
 pandora::StatusCode Arbor::PrepareEvent()
 {
-//	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArborImpl->PrepareConnectors());
-
-	return STATUS_CODE_SUCCESS;
-}
-
-//------------------------------------------------------------------------------------------------------------------------------------------
-
-pandora::StatusCode Arbor::PrepareConnectors()
-{
-    return m_pArborImpl->PrepareConnectors();
+	return m_pArborImpl->PrepareEvent();
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 pandora::StatusCode Arbor::ResetEvent()
 {
-    return m_pArborImpl->ResetEvent();
+ return m_pArborImpl->ResetEvent();
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
@@ -135,7 +128,7 @@ const ArborContentApiImpl *Arbor::GetArborContentApiImpl() const
 	return m_pArborContentApiImpl;
 }
 
-
+//------------------------------------------------------------------------------------------------------------------------------------------
 
 Pandora *Arbor::GetPandora() const
 {

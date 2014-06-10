@@ -37,11 +37,12 @@ namespace pandora
  class Pandora;
 }
 
-namespace arborpfa
+namespace arbor
 {
 
-class ArborObjectManager;
-class ConnectorManager;
+class ObjectManager;
+class ClusterManager;
+class ArborPluginManager;
 class ArborApiImpl;
 class ArborContentApiImpl;
 class ArborImpl;
@@ -102,26 +103,22 @@ class Arbor
 		/**
 		 *
 		 */
-		pandora::StatusCode PrepareConnectors();
-
-		/**
-		 *
-		 */
 		pandora::StatusCode ResetEvent();
 
 
-		ArborObjectManager        *m_pArborObjectManager;
-		ConnectorManager          *m_pConnectorManager;
+		arbor::ObjectManager        *m_pObjectManager;
+		arbor::ClusterManager       *m_pClusterManager;
+		arbor::ArborPluginManager   *m_pArborPluginManager;
 
   ArborApiImpl              *m_pArborApiImpl;             ///< The arbor api implementation
-  ArborContentApiImpl       *m_pArborContentApiImpl;      ///< The arbor content api implementation
+  ArborContentApiImpl       *m_pArborContentApiImpl;     ///< The arbor content api implementation
   ArborImpl                 *m_pArborImpl;                ///< The arbor implementation
-  pandora::Pandora                   *m_pPandora;
+  pandora::Pandora          *m_pPandora;                  ///< The wrapped instance of pandora
 
   friend class ArborApiImpl;
   friend class ArborContentApiImpl;
   friend class ArborImpl;
-
+  friend class ArborAlgorithm;
 }; 
 
 
