@@ -35,10 +35,10 @@
 // arborpfa
 #include "arborpfa/arbor/ArborTypes.h"
 
-namespace arborpfa
+namespace arbor
 {
 
-class ArborObject;
+class Object;
 
 /** 
  * @brief Connector class. </br>
@@ -46,46 +46,60 @@ class ArborObject;
  */ 
 class Connector 
 {
-	public:
+ public:
+
+		/**
+			* @brief Ctor with the two object to connect and the connection weight
+			*
+			* @param pObject1 the first object to connect
+			* @param pObject2 the second object to connect
+			* @param weight the connection weight
+			*/
+		Connector(Object *pObject1, Object *pObject2, const float weight = 1.0);
+
+		/**
+			* @brief Dtor
+			*/
+		virtual ~Connector();
 
 		/**
 			* @brief Return the first connected object
 			*/
-		virtual ArborObject *GetFirst() const = 0;
+		virtual Object *GetFirst() const;
 
 		/**
 			* @brief Return the second connected object
 			*/
-		virtual ArborObject *GetSecond() const = 0;
+		virtual Object *GetSecond() const;
 
 		/**
 			* @brief Set the weight of the connection
 			*
 			* @param weight the weight of the connection
 			*/
-		virtual pandora::StatusCode SetWeight(float weight) = 0;
+		virtual pandora::StatusCode SetWeight(float weight);
 
 		/**
 			* @brief Return the connection weight
 			*/
-		virtual float GetWeight() const = 0;
+		virtual float GetWeight() const;
 
 		/**
 			* @brief Return the connected objects in a pair
 			*/
-		virtual const ArborObjectPair &GetObjects() const = 0;
+		virtual const ObjectPair &GetObjects() const;
 
 		/**
 		 * @brief Whether the object is the first or second object of this connector
 		 *
 		 * @param pObject the object to compare
 		 */
-		virtual bool Contains(ArborObject *pObject) const = 0;
+		virtual bool Contains(const Object *pObject) const;
 
 		/**
 		 * @brief Return the distance between the two connected objects
 		 */
-		virtual float GetDistanceBetweenObjects() const = 0;
+		virtual float GetDistanceBetweenObjects() const;
 
 		/**
 		 * @brief Set the type of connection. Often represents a step in </br>
@@ -93,15 +107,72 @@ class Connector
 		 *
 		 * @param type the connector type. See enum in ArborTypes.h
 		 */
-		virtual pandora::StatusCode SetType(ConnectorType type) = 0;
+		virtual pandora::StatusCode SetType(ConnectorType type);
 
 		/**
 		 * @brief Return the connector type
 		 */
-		virtual ConnectorType GetType() const = 0;
+		virtual ConnectorType GetType() const;
 
-		// friendship
-		friend class ArborManager;
+ protected:
+
+		// members
+		ObjectPair              m_objectPair;     ///< The objects that are connected
+		float                  m_weight;          ///< The connection weight
+		ConnectorType           m_type;            ///< The connector type
+
+//		/**
+//			* @brief Return the first connected object
+//			*/
+//		virtual Object *GetFirst() const = 0;
+//
+//		/**
+//			* @brief Return the second connected object
+//			*/
+//		virtual Object *GetSecond() const = 0;
+//
+//		/**
+//			* @brief Set the weight of the connection
+//			*
+//			* @param weight the weight of the connection
+//			*/
+//		virtual pandora::StatusCode SetWeight(float weight) = 0;
+//
+//		/**
+//			* @brief Return the connection weight
+//			*/
+//		virtual float GetWeight() const = 0;
+//
+//		/**
+//			* @brief Return the connected objects in a pair
+//			*/
+//		virtual const ObjectPair &GetObjects() const = 0;
+//
+//		/**
+//		 * @brief Whether the object is the first or second object of this connector
+//		 *
+//		 * @param pObject the object to compare
+//		 */
+//		virtual bool Contains(Object *pObject) const = 0;
+//
+//		/**
+//		 * @brief Return the distance between the two connected objects
+//		 */
+//		virtual float GetDistanceBetweenObjects() const = 0;
+//
+//		/**
+//		 * @brief Set the type of connection. Often represents a step in </br>
+//		 * the Arbor algorithm
+//		 *
+//		 * @param type the connector type. See enum in ArborTypes.h
+//		 */
+//		virtual pandora::StatusCode SetType(ConnectorType type) = 0;
+//
+//		/**
+//		 * @brief Return the connector type
+//		 */
+//		virtual ConnectorType GetType() const = 0;
+
 }; 
 
 } 
