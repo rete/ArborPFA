@@ -35,7 +35,7 @@ namespace pandora_monitoring
  class TTreeWrapper;
 }
 
-namespace arborpfa
+namespace arbor
 {
  class Arbor;
 }
@@ -85,7 +85,7 @@ private:
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-class SDHCALEnergyResolutionFunction : public arborpfa::EnergyResolutionFunction
+class SDHCALEnergyResolutionFunction : public arbor::EnergyResolutionFunction
 {
 	public:
 
@@ -245,8 +245,8 @@ private:
     static void SDHCALEnergyCorrectionFunctionLCCaloHitVec(const std::vector<EVENT::CalorimeterHit*> &caloHitVec, float &energyCorrection);
 
     static pandora::Pandora        *m_pPandora;                     ///< Address of the pandora instance
-    static arborpfa::Arbor         *m_pArbor;                       ///< Address of the arbor instance
-    static EVENT::LCEvent           *m_pLcioEvent;                   ///< Address of the current lcio event
+    static arbor::Arbor            *m_pArbor;                       ///< Address of the arbor instance
+    static EVENT::LCEvent          *m_pLcioEvent;                  ///< Address of the current lcio event
 
     // global settings
     Settings                        m_settings;                     ///< The settings for the pandora pfa new processor

@@ -23,6 +23,8 @@
 // pandora sdk
 #include "Api/PandoraApi.h"
 #include "Objects/CartesianVector.h"
+#include "Objects/ParticleFlowObject.h"
+#include "Objects/Track.h"
 #include "Helpers/XmlHelper.h"
 
 // pandora content
@@ -33,12 +35,8 @@
 
 #include "SDHCALArborProcessor.h"
 
-// arborpfa
-#include "arborpfa/algorithm/IntraLayerClusteringAlgorithm.h"
-#include "arborpfa/algorithm/ArborConnectorClusteringAlgorithm.h"
-#include "arborpfa/algorithm/DummyClusteringAlgorithm.h"
-#include "arborpfa/algorithm/HoughTransformAlgorithm.h"
-#include "arborpfa/algorithm/SmallClusterMergingAlgorithm.h"
+// arbor
+#include "arborpfa/arbor/Arbor.h"
 #include "arborpfa/api/ArborApi.h"
 #include "arborpfa/content/ArborHelper.h"
 #include "arborpfa/content/CaloHitHelper.h"
@@ -77,7 +75,7 @@
 SDHCALArborProcessor sdhcalArborProcessor;
 
 pandora::Pandora    *SDHCALArborProcessor::m_pPandora   = NULL;
-arborpfa::Arbor     *SDHCALArborProcessor::m_pArbor     = NULL;
+arbor::Arbor        *SDHCALArborProcessor::m_pArbor     = NULL;
 EVENT::LCEvent      *SDHCALArborProcessor::m_pLcioEvent = NULL;
 SDHCALArborProcessor::FloatVector          SDHCALArborProcessor::m_sdhcalEnergyFactors = SDHCALArborProcessor::FloatVector();
 SDHCALArborProcessor::FloatVector          SDHCALArborProcessor::m_sdhcalEnergyConstants = SDHCALArborProcessor::FloatVector();
@@ -137,32 +135,8 @@ void SDHCALArborProcessor::init()
         streamlog_out(MESSAGE) << "SDHCALArborProcessor - Init" << std::endl;
         this->FinaliseSteeringParameters();
 
-        m_pArbor = new arborpfa::Arbor();
+        m_pArbor = new arbor::Arbor();
         m_pPandora = m_pArbor->GetPandora();
-
-        if(m_rootFileName.empty())
-        {
-        	streamlog_out(ERROR) << "Please, specify a root output file name (not empty)" << std::endl;
-        	throw marlin::StopProcessingException(this);
-        }
-
-        // ROOT file creation
-        m_rootFile = TFile::Open(m_rootFileName.c_str(), "RECREATE", m_rootFileName.c_str());
-
-        if(0 == m_rootFile)
-        {
-        	streamlog_out(ERROR) << "Couldn't create root file : " << m_rootFileName << std::endl;
-        	throw marlin::StopProcessingException(this);
-        }
-
-        m_rootFile->cd();
-
-        m_pTTreeWrapper = new pandora_monitoring::TTreeWrapper();
-
-        m_nPfos = 0;
-        m_pTTreeWrapper->Set(m_rootTreeName, "nPfos", m_nPfos);
-
-        m_pTTreeWrapper->GetTree(m_rootTreeName)->SetDirectory(m_rootFile);
 
         PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->RegisterUserComponents());
         PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->CreateGeometry());
@@ -208,14 +182,14 @@ void SDHCALArborProcessor::processEvent(LCEvent *pLCEvent)
 
     try
     {
-        streamlog_out(DEBUG5) << "SDHCALArborProcessor, Run " << m_nRun << ", Event " << ++m_nEvent << std::endl;
+        streamlog_out(MESSAGE) << "SDHCALArborProcessor, Run " << m_nRun << ", Event " << ++m_nEvent << std::endl;
 
         PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->CreateCaloHits(pLCEvent));
         PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->CreateTracks(pLCEvent));
-        PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, arborpfa::ArborApi::PrepareEvent(*m_pArbor));
+        PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, arbor::ArborApi::PrepareEvent(*m_pArbor));
         PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::ProcessEvent(*m_pPandora));
+        PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, arbor::ArborApi::Reset(*m_pArbor));
 //        PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->CreateParticleFlowObjects(pLCEvent));
-        PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->FillRootTree());
 
         PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::Reset(*m_pPandora));
         this->Reset();
@@ -253,15 +227,8 @@ void SDHCALArborProcessor::check(LCEvent */*pLCEvent*/)
 
 void SDHCALArborProcessor::end()
 {
-    delete m_pArbor;
-
-    m_pTTreeWrapper->Print(m_rootTreeName);
-
-    m_rootFile->Write();
-    m_rootFile->Close();
-    m_rootFile->Delete();
-
-    streamlog_out(MESSAGE) << "SDHCALArborProcessor - End" << std::endl;
+ streamlog_out(MESSAGE) << "SDHCALArborProcessor - End" << std::endl;
+ delete m_pArbor;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
@@ -283,32 +250,19 @@ pandora::StatusCode SDHCALArborProcessor::RegisterUserComponents() const
     PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::SetBFieldCalculator(*m_pPandora,
         new SDHCALBFieldCalculator()));
 
-    PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, arborpfa::ArborApi::RegisterAlgorithmFactory(*m_pPandora, *m_pArbor, "IntraLayerClustering",
-        new arborpfa::IntraLayerClusteringAlgorithm::Factory));
+    // register arbor algorithms
+				PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, arbor::ArborApi::RegisterArborAlgorithms(*m_pArbor));
 
-    PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, arborpfa::ArborApi::RegisterAlgorithmFactory(*m_pPandora, *m_pArbor, "ArborConnectorClustering",
-        new arborpfa::ArborConnectorClusteringAlgorithm::Factory));
-//
-    PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, arborpfa::ArborApi::RegisterAlgorithmFactory(*m_pPandora, *m_pArbor, "DummyClustering",
-        new arborpfa::DummyClusteringAlgorithm::Factory));
-
-    PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, arborpfa::ArborApi::RegisterAlgorithmFactory(*m_pPandora, *m_pArbor, "HoughTransform",
-        new arborpfa::HoughTransformAlgorithm::Factory));
-
-    PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, arborpfa::ArborApi::RegisterAlgorithmFactory(*m_pPandora, *m_pArbor, "SmallClusterMerging",
-        new arborpfa::SmallClusterMergingAlgorithm::Factory));
-
+				// energy correction for sdhcal
     PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::RegisterEnergyCorrectionFunction(*m_pPandora,
         "SDHCALEnergyCorrection", pandora::HADRONIC, &SDHCALArborProcessor::SDHCALEnergyCorrectionFunction));
 
-    PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, arborpfa::ArborApi::RegisterEnergyResolutionFunction(*m_pArbor, "SDHCALEnergyResolution",
+    // energy resolution of sdhcal related to the
+    PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, arbor::ArborApi::RegisterEnergyResolutionFunction(*m_pArbor, "SDHCALEnergyResolution",
     		  new SDHCALEnergyResolutionFunction()));
 
     PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::RegisterSettingsFunction(*m_pPandora, "EnergyResolutionHelper",
-    		&arborpfa::EnergyResolutionHelper::ReadSettings));
-
-    //PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::RegisterParticleIdFunction(*m_pPandora, "MyParticleId",
-    //    &SDHCALArborProcessor::MyParticleId));
+    		&arbor::EnergyResolutionHelper::ReadSettings));
 
     return pandora::STATUS_CODE_SUCCESS;
 }
@@ -324,12 +278,6 @@ void SDHCALArborProcessor::ProcessSteeringFile()
                             std::string());
 
     // Input collections
-//    registerInputCollections(LCIO::TRACK,
-//                            "TrackCollections",
-//                            "Names of the Track collections used for clustering",
-//                            m_trackCreatorSettings.m_trackCollections,
-//                            StringVector());
-
     registerInputCollection(LCIO::CALORIMETERHIT,
                             "HCalCaloHitCollection",
                             "Name of the HCAL calo hit collection",
@@ -366,17 +314,6 @@ void SDHCALArborProcessor::ProcessSteeringFile()
                               m_pfoCollectionName,
 																													std::string("ArborPFAPfoCollection"));
 
-//    // B-field parameters
-//    registerProcessorParameter("MuonBarrelBField",
-//                            "The bfield in the muon barrel, units Tesla",
-//                            SimpleBFieldCalculator::m_muonBarrelBField,
-//                            float(-1.5f));
-//
-//    registerProcessorParameter("MuonEndCapBField",
-//                            "The bfield in the muon endcap, units Tesla",
-//                            SimpleBFieldCalculator::m_muonEndCapBField,
-//                            float(0.01f));
-
 				registerProcessorParameter("SDHCALBField",
 																												"The bfield in the sdhcal prototype, units Tesla",
 																												SDHCALBFieldCalculator::m_BField,
@@ -391,7 +328,6 @@ void SDHCALArborProcessor::ProcessSteeringFile()
 																												"The SDHCAL energy constant for computation alphas(1,2,3), betas(1,2,3) and gammas(1,2,3) ",
 																												m_sdhcalEnergyConstants,
 																												FloatVector());
-
 
     // Number of events to skip
     registerProcessorParameter("NEventsToSkip",
@@ -408,16 +344,6 @@ void SDHCALArborProcessor::ProcessSteeringFile()
                             "",
                             m_singleParticleMomentum,
                             static_cast<float>(0.f) );
-
-    registerProcessorParameter("RootOuputFileName",
-                            "Name of the ROOT output filefor analysis",
-                            m_rootFileName,
-                            std::string(""));
-
-    registerProcessorParameter("RootTreeName",
-                            "Name of the TTree for root file",
-                            m_rootTreeName,
-                            std::string(""));
 
 }
 
@@ -439,8 +365,6 @@ void SDHCALArborProcessor::FinaliseSteeringParameters()
 
 				if(3 != m_sdhcalEnergyFactors.size() || 9 != m_sdhcalEnergyConstants.size())
 					throw pandora::StatusCodeException(pandora::STATUS_CODE_INVALID_PARAMETER);
-
-						//    SimpleBFieldCalculator::m_innerBField = marlin::Global::GEAR->getBField().at(gear::Vector3D(0., 0., 0.)).z();
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
@@ -534,8 +458,6 @@ pandora::StatusCode SDHCALArborProcessor::CreateCaloHits(EVENT::LCEvent *pLCEven
 										    float cellSize0 = endcapLayerLayout.getCellSize0(K);
 										    float cellSize1 = endcapLayerLayout.getCellSize1(K);
 
-										    // TODO convertir la position des calo hit dans le calcul du point d'entrée
-
 										   	float x = - m_NCells0 / 2.0 * cellSize0 + I * cellSize0;
 										   	float y = - m_NCells1 / 2.0 * cellSize1 + J * cellSize1;
 										   	float z = m_hCalEndCapInnerZ + 22.0 + K * m_hCalEndCapLayerThickness;
@@ -570,8 +492,6 @@ pandora::StatusCode SDHCALArborProcessor::CreateCaloHits(EVENT::LCEvent *pLCEven
 
 										        break;
 										    }
-
-//										    std::cout << "pCaloHit->getEnergy() : " << pCaloHit->getEnergy() << std::endl;
 
 										    if(pCaloHit->getEnergy() - 1.f < std::numeric_limits<float>::epsilon())
 										     caloHitParameters.m_inputEnergy = 0.0406459;
@@ -635,7 +555,6 @@ pandora::StatusCode SDHCALArborProcessor::CreateTracks(EVENT::LCEvent *pLCEvent)
    float enteringPointZ = m_hCalEndCapInnerZ;
 
    pandora::CartesianVector trackPositionAtEnd(enteringPointX, enteringPointY, enteringPointZ);
-//   std::cout << "trackPositionAtEnd : " << trackPositionAtEnd << std::endl;
 
    pandora::CartesianVector trackMomemtumAtEnd(0.0001, 0.0001, m_singleParticleMomentum);
    float trackMomentum = trackMomemtumAtEnd.GetMagnitude();
@@ -674,13 +593,8 @@ pandora::StatusCode SDHCALArborProcessor::CreateTracks(EVENT::LCEvent *pLCEvent)
       streamlog_out(WARNING) << "Failed to extract a vertex: " << exception.what() << std::endl;
   }
 
-
 		return pandora::STATUS_CODE_SUCCESS;
 	}
-
-
-
-
 
 	try
 	{
@@ -691,7 +605,6 @@ pandora::StatusCode SDHCALArborProcessor::CreateTracks(EVENT::LCEvent *pLCEvent)
 		if(0 == nElements)
 			return pandora::STATUS_CODE_FAILURE;
 
-//		const gear::CalorimeterParameters &endcapParameters(marlin::Global::GEAR->getHcalEndcapParameters());
 		const gear::LayerLayout &endcapLayerLayout(marlin::Global::GEAR->getHcalEndcapParameters().getLayerLayout());
 		float cellSize0 = endcapLayerLayout.getCellSize0(0);
 		float cellSize1 = endcapLayerLayout.getCellSize1(0);
@@ -711,8 +624,6 @@ pandora::StatusCode SDHCALArborProcessor::CreateTracks(EVENT::LCEvent *pLCEvent)
     unsigned int entryPointCell0 = static_cast<unsigned int>(pTrackInfoGO->getFloatVal(0));
     unsigned int entryPointCell1 = static_cast<unsigned int>(pTrackInfoGO->getFloatVal(1));
 
-//    std::cout << "Entering point cell : (" << entryPointCell0 << "," << entryPointCell1 << ")" << std::endl;
-
     float trackAtEndX = - m_NCells0 / 2.0 * cellSize0 + entryPointCell0 * cellSize0;
     float trackAtEndY = - m_NCells1 / 2.0 * cellSize1 + entryPointCell1 * cellSize1;
     float trackAtEndZ = m_hCalEndCapInnerZ;
@@ -722,7 +633,6 @@ pandora::StatusCode SDHCALArborProcessor::CreateTracks(EVENT::LCEvent *pLCEvent)
     float momentumZ = pTrackInfoGO->getFloatVal(5);
 
     pandora::CartesianVector trackPositionAtEnd(trackAtEndX, trackAtEndY, trackAtEndZ);
-//    std::cout << "Track end position (from LCGO) : " << trackPositionAtEnd << std::endl;
     pandora::CartesianVector trackMomemtumAtEnd(0.0001, 0.0001, momentumZ);
     float trackMomentum = trackMomemtumAtEnd.GetMagnitude();
 
@@ -925,8 +835,6 @@ pandora::StatusCode SDHCALArborProcessor::FindShowerEnteringPoint(float &enterin
 	enteringPointX = 0.f;
 	enteringPointY = 0.f;
 
-//	std::cout << "caloHitVecForEnteringPoint.size() : " << caloHitVecForEnteringPoint.size() << std::endl;
-
 	for(unsigned int c=0 ; c<caloHitVecForEnteringPoint.size() ; c++)
 	{
 		EVENT::CalorimeterHit *pCaloHit = caloHitVecForEnteringPoint.at(c);
@@ -946,22 +854,16 @@ pandora::StatusCode SDHCALArborProcessor::FindShowerEnteringPoint(float &enterin
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-// TODO Mauvaises courbes par rapport au display EVE. Courbe d'energie du chargé pas compatible avec le display
-
 pandora::StatusCode SDHCALArborProcessor::FillRootTree()
 {
  const pandora::PfoList *pPfoList = NULL;
  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::GetCurrentPfoList(*m_pPandora, pPfoList));
 	int pfoID = 0;
 
-	std::cout << "Nb of pfos : " << pPfoList->size() << std::endl;
-
  for (pandora::PfoList::const_iterator itPFO = pPfoList->begin(), itPFOEnd = pPfoList->end(); itPFO != itPFOEnd; ++itPFO)
  {
  	pandora::ParticleFlowObject *pPfo = *itPFO;
  	float pfoEnergy = 0.f;
-
- 	std::cout << "PFO no " << pfoID << std::endl;
 
  	// compute the pfo energy
  	pandora::CaloHitList allPfoCaloHitList;
@@ -977,39 +879,23 @@ pandora::StatusCode SDHCALArborProcessor::FillRootTree()
  		allPfoCaloHitList.insert(clusterCaloHitList.begin(), clusterCaloHitList.end());
  	}
 
- 	std::cout << "allPfoCaloHitList.size() : " << allPfoCaloHitList.size() << std::endl;
-
  	if(allPfoCaloHitList.empty())
  		continue;
 
  	SDHCALArborProcessor::SDHCALEnergyCorrectionFunctionCaloHitList(allPfoCaloHitList, pfoEnergy);
  	m_pfoEnergies.push_back(pfoEnergy);
 
-// 	pandora::CartesianVector centerOfGravity(0.f, 0.f, 0.f);
-//
-// 	PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, arborpfa::CaloHitHelper::GetCentroid(&allPfoCaloHitList, centerOfGravity));
-//
-// 	m_centerOfGravityPfoX.push_back(centerOfGravity.GetX());
-// 	m_centerOfGravityPfoY.push_back(centerOfGravity.GetY());
-// 	m_centerOfGravityPfoZ.push_back(centerOfGravity.GetZ());
-
- 	std::cout << " Energy : " << pfoEnergy << std::endl;
- 	std::cout << " Pandora PFO energy : " << pandoraPFOEnergy << std::endl;
-
  	const pandora::TrackList &trackList = pPfo->GetTrackList();
  	pandora::Track *pTrack = NULL;
 
  	if(!trackList.empty())
  	{
- 		std::cout << " PFO is charged !" << std::endl;
  		pTrack = *trackList.begin();
  		float chiComparison = pTrack->GetTrackStateAtCalorimeter().GetMomentum().GetMagnitude() - pfoEnergy;
- 		std::cout << " Chi 2 track - cluster : " << chiComparison*chiComparison << std::endl;
  		m_chi2TrackClusterComparison.push_back(chiComparison*chiComparison);
  	}
  	else
  	{
- 		std::cout << " PFO is neutral !" << std::endl;
  		m_chi2TrackClusterComparison.push_back(0.f);
  	}
 
@@ -1052,9 +938,7 @@ pandora::StatusCode SDHCALArborProcessor::FillRootTree()
 
   pfoID++;
  }
- std::cout << "m_rootFile : " << m_rootFile << std::endl;
  m_nPfos = pPfoList->size();
-// m_algorithmEfficiency = (m_nPfos == 2) ? 1 : 0;
 
  float totalEventEnergy = 0.f;
  SDHCALArborProcessor::SDHCALEnergyCorrectionFunctionLCCaloHitVec(m_caloHitVec, totalEventEnergy);
@@ -1063,8 +947,6 @@ pandora::StatusCode SDHCALArborProcessor::FillRootTree()
  float energyMC2 = 0.f;
  SDHCALArborProcessor::SDHCALEnergyCorrectionFunctionLCCaloHitVec(m_caloHitTypeParticle1, energyMC1);
  SDHCALArborProcessor::SDHCALEnergyCorrectionFunctionLCCaloHitVec(m_caloHitTypeParticle2, energyMC2);
-
-// std::cout << << << std::endl;
 
  m_rootFile->cd();
 
@@ -1077,10 +959,6 @@ pandora::StatusCode SDHCALArborProcessor::FillRootTree()
  m_pTTreeWrapper->Set(m_rootTreeName, "nNeutralParticles", m_nNeutralParticles);
  m_pTTreeWrapper->Set(m_rootTreeName, "chargedEnergy", m_chargedEnergy);
 	m_pTTreeWrapper->Set(m_rootTreeName, "neutralEnergy", m_neutralEnergy);
-//	m_pTTreeWrapper->Set(m_rootTreeName, "algorithmEfficiency", m_algorithmEfficiency);
-//	m_pTTreeWrapper->Set(m_rootTreeName, "centerOfGravityPfoX", &m_centerOfGravityPfoX);
-//	m_pTTreeWrapper->Set(m_rootTreeName, "centerOfGravityPfoY", &m_centerOfGravityPfoY);
-//	m_pTTreeWrapper->Set(m_rootTreeName, "centerOfGravityPfoZ", &m_centerOfGravityPfoZ);
 	m_pTTreeWrapper->Set(m_rootTreeName, "isCharged", &m_isCharged);
 	m_pTTreeWrapper->Set(m_rootTreeName, "nHitType1", &m_nHitType1);
 	m_pTTreeWrapper->Set(m_rootTreeName, "nHitType2", &m_nHitType2);
@@ -1095,7 +973,7 @@ pandora::StatusCode SDHCALArborProcessor::FillRootTree()
 	return pandora::STATUS_CODE_SUCCESS;
 }
 
-//------------------------------------------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------------------------------
 
 void SDHCALArborProcessor::Reset()
 {
@@ -1124,9 +1002,6 @@ void SDHCALArborProcessor::Reset()
 
 void SDHCALArborProcessor::SDHCALEnergyCorrectionFunction(const pandora::Cluster *const pCluster, float &energyCorrection)
 {
-
-//	std::cout << "Energy correction function called" << std::endl;
-
 	if(NULL == pCluster)
 		throw pandora::StatusCodeException(pandora::STATUS_CODE_INVALID_PARAMETER);
 
