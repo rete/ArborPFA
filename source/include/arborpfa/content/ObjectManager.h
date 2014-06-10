@@ -31,29 +31,29 @@
 #include "Managers/AlgorithmObjectManager.h"
 #include "Pandora/PandoraInternal.h"
 
-#include "arborpfa/content/ArborObject.h"
+#include "arborpfa/content/Object.h"
 
 
-namespace arborpfa
+namespace arbor
 {
 
 class ArborAlgorithm;
 
 /** 
- * @brief ArborObjectManager class
+ * @brief ObjectManager class
  */ 
-class ArborObjectManager : public pandora::AlgorithmObjectManager<ArborObject>
+class ObjectManager : public pandora::AlgorithmObjectManager<arbor::Object>
 {
  public:
  /**
   * @brief Ctor
   */
- ArborObjectManager();
+ ObjectManager();
 
  /**
   * @brief Dtor 
   */
- virtual ~ArborObjectManager();
+ virtual ~ObjectManager();
 
 protected:
 
@@ -71,16 +71,14 @@ protected:
  /**
   *
   */
- pandora::StatusCode CreateArborObject(ArborObject *&pArborObject, ArborObjectType objectType, void *pObject);
-
- // members
- bool m_canCreateConnectors;
+ pandora::StatusCode CreateObject(Object *&pObject, pandora::CaloHit *pInputCaloHit);
 
  // friend class field
  friend class ArborImpl;
  friend class ArborContentApiImpl;
+ friend class ArborAlgorithm;
 }; 
 
 } 
 
-#endif  //  ARBOROBJECTMANAGER_H
+#endif  //  OBJECTMANAGER_H
