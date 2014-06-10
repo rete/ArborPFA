@@ -31,7 +31,8 @@
 #include "Pandora/PandoraInputTypes.h"
 #include "Pandora/PandoraInternal.h"
 
-namespace arborpfa {
+namespace arbor
+{
 
 class Arbor;
 
@@ -45,7 +46,7 @@ class ArborImpl
  /**
   *
   */
-  pandora::StatusCode PrepareConnectors() const;
+  pandora::StatusCode PrepareEvent() const;
 
   /**
    *
@@ -61,7 +62,6 @@ class ArborImpl
   Arbor          *m_pArbor;
 
   friend class Arbor;
-
 }; 
 
 } 

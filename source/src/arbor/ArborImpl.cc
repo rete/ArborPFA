@@ -28,12 +28,12 @@
 // arborpfa
 #include "arborpfa/arbor/ArborImpl.h"
 #include "arborpfa/arbor/Arbor.h"
-#include "arborpfa/content/ArborObjectManager.h"
-#include "arborpfa/content/ConnectorManager.h"
+#include "arborpfa/content/ObjectManager.h"
+#include "arborpfa/content/ClusterManager.h"
 
 using namespace pandora;
 
-namespace arborpfa
+namespace arbor
 {
 
 ArborImpl::ArborImpl(Arbor *pArbor) :
@@ -44,21 +44,17 @@ ArborImpl::ArborImpl(Arbor *pArbor) :
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode ArborImpl::PrepareConnectors() const
+pandora::StatusCode ArborImpl::PrepareEvent() const
 {
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborObjectManager->CreateInitialLists());
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pConnectorManager->CreateInitialLists());
-
-	return STATUS_CODE_SUCCESS;
+	return this->ResetEvent();
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 pandora::StatusCode ArborImpl::ResetEvent() const
 {
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborObjectManager->ResetForNextEvent());
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pConnectorManager->ResetForNextEvent());
-
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pObjectManager->ResetForNextEvent());
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pClusterManager->ResetForNextEvent());
 	return STATUS_CODE_SUCCESS;
 }
 
