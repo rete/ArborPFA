@@ -50,6 +50,7 @@ namespace arbor
 ArborOutputAlgorithm::~ArborOutputAlgorithm()
 {
 	m_pTTreeWrapper->GetTree(m_rootTreeName)->SetDirectory(m_pRootFile);
+	m_pTTreeWrapper->GetTree(m_rootTreeName)->Print();
 
 	m_pRootFile->Write();
 	m_pRootFile->Close();
@@ -234,7 +235,7 @@ pandora::StatusCode ArborOutputAlgorithm::ReadSettings(const pandora::TiXmlHandl
  PANDORA_RETURN_RESULT_IF_AND_IF(pandora::STATUS_CODE_SUCCESS, pandora::STATUS_CODE_NOT_FOUND, !=, pandora::XmlHelper::ReadValue(xmlHandle,
      "RootFileName", m_rootFileName));
 
- m_rootTreeName = "ArborOutputTree.root";
+ m_rootTreeName = "ArborOutputTree";
  PANDORA_RETURN_RESULT_IF_AND_IF(pandora::STATUS_CODE_SUCCESS, pandora::STATUS_CODE_NOT_FOUND, !=, pandora::XmlHelper::ReadValue(xmlHandle,
      "RootTreeName", m_rootTreeName));
 
