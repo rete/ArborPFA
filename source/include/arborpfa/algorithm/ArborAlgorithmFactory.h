@@ -32,7 +32,8 @@
 
 #include "arborpfa/algorithm/ArborAlgorithm.h"
 
-namespace arborpfa {
+namespace arbor
+{
 
 /** 
  * @brief ArborAlgorithmFactory class
