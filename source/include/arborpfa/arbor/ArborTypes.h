@@ -31,24 +31,22 @@
 #include <set>
 #include <utility>
 #include <vector>
+#include <map>
+#include <string>
 
-namespace arborpfa
+namespace arbor
 {
-
 	class Connector;
-	class ArborObject;
-
-	typedef std::set<Connector*>         ConnectorList;
-	typedef std::vector<Connector*>      ConnectorVector;
-
-	typedef std::set<ArborObject*>       ArborObjectList;
-	typedef std::vector<ArborObject*>    ArborObjectVector;
-
-	typedef std::pair<ArborObject*,ArborObject*> ArborObjectPair;
+	class Object;
+	class Cluster;
+	class Branch;
+	class Tree;
+	class ITreeBuilder;
+	class IBranchBuilder;
 
 	/**
-	 * @brief ConnectorDirection enum
-	 */
+		* @brief ConnectorDirection enum
+		*/
 	enum ConnectorDirection
 	{
 		BACKWARD,
@@ -56,8 +54,8 @@ namespace arborpfa
 	};
 
 	/**
-	 * @brief ArborObjectType enum
-	 */
+		* @brief ArborObjectType enum
+		*/
 	enum ArborObjectType
 	{
 		CALO_HIT,
@@ -67,8 +65,8 @@ namespace arborpfa
 	};
 
 	/**
-	 * @brief ConnectorType enum
-	 */
+		* @brief ConnectorType enum
+		*/
 	enum ConnectorType
 	{
 		INITIAL_CONNECTOR,
@@ -77,6 +75,57 @@ namespace arborpfa
 		FINAL_DECISION,
 		UNDEFINED_CONNECTOR
 	};
+
+	/**
+		* @brief ObjectTagFlag
+		*/
+	enum ObjectTagFlag
+	{
+		CORE_OBJECT,
+		ISOLATED_OBJECT,
+		MIP_OBJECT,
+		NOISE_OBJECT
+	};
+
+	typedef std::set<Connector*>                                     ConnectorList;
+	typedef std::vector<Connector*>                                  ConnectorVector;
+
+	typedef std::set<Object*>                                        ObjectList;
+	typedef std::vector<Object*>                                     ObjectVector;
+	typedef std::map<unsigned int, ObjectList>                      OrderedObjectList;
+
+	typedef std::set<Cluster*>                                       ClusterList;
+	typedef std::vector<Cluster*>                                    ClusterVector;
+
+	typedef std::set<Branch*>                                        BranchList;
+	typedef std::vector<Branch*>                                     BranchVector;
+
+	typedef std::pair<Object*, Object*>                              ObjectPair;
+
+	typedef std::map<ObjectTagFlag, bool>                            TagFlagMap;
+
+	typedef std::map<std::string, ITreeBuilder*>                     TreeBuilderMap;
+	typedef std::map<std::string, IBranchBuilder*>                   BranchBuilderMap;
+
+	typedef std::set<Tree*>                                          TreeList;
+	typedef std::vector<Tree*>                                       TreeVector;
+
+	typedef std::map<Tree*, Cluster*>                                TreeToClusterMap;
+	typedef std::map<Cluster*, Cluster*>                             ClusterToClusterMap;
+
+	/**
+	 * @brief ObjectCleaningInfo class. </br>
+	 * Used while cleaning connectors
+	 */
+	class ObjectCleaningInfo
+	{
+	 public:
+			Object        *m_pObject;
+			Connector     *m_pBestConnector;
+			ObjectList     m_deleteConnectionList;
+	};
+
+	typedef std::set<ObjectCleaningInfo *>                        ObjectCleaningInfoList;
 
 } 
 
