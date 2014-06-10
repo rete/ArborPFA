@@ -35,7 +35,8 @@
 
 #include "TEveElement.h"
 
-namespace arborpfa {
+namespace arbor
+{
 
 /** 
  * @brief ArborConnectorClusteringAlgorithm class
@@ -56,23 +57,12 @@ class ArborConnectorClusteringAlgorithm : public ArborAlgorithm
 		/**
 			* @brief Run the algorithm
 			*/
-		pandora::StatusCode Run();
+		pandora::StatusCode RunArborAlgorithm();
 
 		/**
 			* @brief Read settings from Xml handler
 			*/
 		pandora::StatusCode ReadSettings(const pandora::TiXmlHandle xmlHandle);
-
-		/**
-		 * @brief Create all the arbor objects. </br>
-		 * These objects are used as points to connect together. </br>
-		 * Objects can be, for example, an entry point of a track, a simple calo hit or a small cluster
-		 *
-		 * @param pCaloHitList the calo hit list. </br>
-		 * @param pTrackList the track list. Entry points in the Ecal are identified as arbor objects
-		 */
-		pandora::StatusCode CreateArborObjects(const pandora::CaloHitList *pCaloHitList,
-                                           const pandora::TrackList *pTrackList);
 
 		/**
 		 * @brief Seed the initial connectors. </br>
@@ -106,36 +96,11 @@ class ArborConnectorClusteringAlgorithm : public ArborAlgorithm
 		pandora::StatusCode DoClustering();
 
 		/**
-		 *
-		 */
-		pandora::StatusCode MergeClustersWithCloseBySeeds();
-
-		/**
 		 * @brief Clear all content, all the objects allocated on the heap.
 		 */
 		pandora::StatusCode ClearContent();
 
 //-----------------------------------------------------------------------------------------------------------------
-
-		/**
-		 *
-		 */
-		pandora::StatusCode ComputeOrderParameter(const ArborObject *pArborObject1, const ArborObject *pArborObject2, const pandora::CartesianVector &referenceVector, float &orderParameter);
-
-		/**
-		 *
-		 */
-		pandora::StatusCode ComputeMeanBackwardDirection(const ArborObject *pArborObject, pandora::CartesianVector &meanBackwardDirection, unsigned int &nbOfBackwardConnections) const;
-
-		/**
-		 *
-		 */
-//		pandora::StatusCode IsBackwardConnector(const ArborObject *const pArborObject, const Connector *pConnector, bool &isBackwardConnector) const;
-
-		/**
-		 *
-		 */
-		pandora::StatusCode RecursiveClustering(pandora::Cluster *pClusterToEnlarge, ArborObject *pArborObject);
 
 		/**
 		 *
@@ -147,49 +112,23 @@ class ArborConnectorClusteringAlgorithm : public ArborAlgorithm
 		 */
 		pandora::StatusCode DrawEveArrow(TEveElement *pParentCollection, const pandora::CartesianVector &from, const pandora::CartesianVector &to, int color) const;
 
-		/**
-		 *
-		 */
-		pandora::StatusCode CreateInitialCluster(ArborObject *pArborObject, pandora::Cluster *&pCluster);
-
-		/**
-		 *
-		 */
-		pandora::StatusCode MergeObjectContentInCluster(ArborObject *pArborObject, pandora::Cluster *pCluster);
-
-		/**
-		 *
-		 */
-		pandora::StatusCode CreateReadoutLayerMap(const pandora::CaloHitList *pCaloHitList, pandora::OrderedCaloHitList &readoutLayerToCaloHitListMap);
-
-		/**
-		 *
-		 */
-		pandora::StatusCode RecursiveClustering(pandora::CaloHitList *pCaloHitList, pandora::Cluster *pCluster, pandora::CaloHit *pCaloHit);
-
-		/**
-		 *
-		 */
-		pandora::StatusCode SplitClusterInSingleCaloHitClusters(pandora::Cluster *pCluster, pandora::ClusterList &newClusterList);
-
-
  protected:
 
 		// list and function names
-		std::string        m_inputCaloHitListName;
-		std::string        m_trackListName;
+		std::string        m_trackListName;  // for track-cluster association
 		std::string        m_hcalEnergyResolutionFunctionName;
 
 		// algorithm tools
-		ArborObjectList                                    m_arborObjectList;
-		ArborObjectList                                    m_alreadyUsedObjectsForClustering;
-		ArborObjectList                                    m_currentClusterObjectList;
-		TrackObjectList                                    m_trackObjectList;
-		ConnectorList                                      m_inputSecondCleaningConnectorList;
-		pandora::ClusterList                               m_finalClusterList;
+		const ObjectList                            *m_pObjectList;
+		ObjectList                                    m_abjectList;
+		OrderedObjectList                             m_orderedObjectList;
+		ConnectorList                                 m_connectorList;
+		ConnectorList                                 m_secondCleaningConnectors;
+		ClusterList                                   m_clusterList;
 
 		// algorithm parameters
-		unsigned int       m_maximumSizeForClusterSplitting;
+		unsigned int       m_referenceDirectionDepth;
+		unsigned int       m_referenceDirectionMaximumForwardLayer;
 
 		float               m_maximumDistanceForConnectionCoarse;
 		float               m_maximumDistanceForConnectionFine;
@@ -202,16 +141,15 @@ class ArborConnectorClusteringAlgorithm : public ArborAlgorithm
 		float               m_forwardConnectorWeight;
 		float               m_backwardConnectorWeight;
 		float               m_closeBySeedDistance;
-		float               m_intraLayerMaxDistance;
 
 		bool                m_allowForwardConnectionForIsolatedObjects;
 		bool                m_showConnectors;
 		bool                m_shouldUseIsolatedObjects;
 		bool                m_shouldRunSecondCleaning;
 		bool                m_shouldRunSeedMerging;
-		bool                m_shouldUseReadoutLayer;
-		bool                m_shouldSplitClusterInSingleCaloHitClusters;
 }; 
+
+//--------------------------------------------------------------------------------------------------------------------
 
 inline ArborAlgorithm *ArborConnectorClusteringAlgorithm::Factory::CreateArborAlgorithm() const
 {

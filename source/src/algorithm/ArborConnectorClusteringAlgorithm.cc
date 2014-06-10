@@ -25,8 +25,9 @@
  */
 
 
-// arborpfa
 #include "arborpfa/algorithm/ArborConnectorClusteringAlgorithm.h"
+
+// arbor
 #include "arborpfa/arbor/AlgorithmHeaders.h"
 
 // root
@@ -42,52 +43,52 @@
 
 using namespace pandora;
 
-namespace arborpfa
+namespace arbor
 {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode ArborConnectorClusteringAlgorithm::Run()
+pandora::StatusCode ArborConnectorClusteringAlgorithm::RunArborAlgorithm()
 {
-	const CaloHitList *pCaloHitList = NULL;
-	const TrackList   *pTrackList = NULL;
-
-	// grab the needed content : calo hits and tracks
-	if(m_inputCaloHitListName.empty())
-	{
-		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetCurrentCaloHitList(*this, pCaloHitList));
-	}
-	else
-	{
-		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetCaloHitList(*this, m_inputCaloHitListName, pCaloHitList));
-	}
-
-	if(m_trackListName.empty())
-	{
-	 PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetCurrentTrackList(*this, pTrackList));
-	}
-	else
-	{
-		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetTrackList(*this, m_trackListName, pTrackList));
-	}
-
 	// process the whole machine !!
-	std::cout << "== Creating arbor objects ==" << std::endl;
-	PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->CreateArborObjects(pCaloHitList, pTrackList));
-
-	std::cout << "== Seeding initial connectors ==" << std::endl;
-	PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->SeedInitialConnectors());
-
-	std::cout << "== Cleaning connectors ==" << std::endl;
-	PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->CleanConnectors());
-
-	std::cout << "== Doing clustering ==" << std::endl;
-	PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->DoClustering());
-
-	if(m_shouldRunSeedMerging)
+	try
 	{
-		std::cout << "== Merging clusters with close-by seeds ==" << std::endl;
-		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->MergeClustersWithCloseBySeeds());
+//		const pandora::CaloHitList *pCaloHitList = NULL;
+//		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetCurrentCaloHitList(*this, pCaloHitList));
+
+//		std::cout << "pCaloHitList->size() : " << pCaloHitList->size() << std::endl;
+
+		m_pObjectList = NULL;
+		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, ArborContentApi::GetCurrentObjectList(*this, m_pObjectList));
+
+//		unsigned int nCaloHits = 0;
+//		for(ObjectList::iterator iter1 = m_pObjectList->begin() , endIter1 = m_pObjectList->end() ; endIter1 != iter1 ; ++iter1)
+//		{
+//			nCaloHits += (*iter1)->GetCaloHitList().size();
+//		}
+//
+//		std::cout << "nCaloHits : " << nCaloHits << std::endl;
+
+		std::cout << "== Seeding initial connectors ==" << std::endl;
+		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->SeedInitialConnectors());
+
+		std::cout << "== Cleaning connectors ==" << std::endl;
+		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->CleanConnectors());
+
+		if(m_showConnectors)
+		{
+			PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->DrawConnectors());
+		}
+
+		std::cout << "== Doing clustering ==" << std::endl;
+		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->DoClustering());
+
+	}
+	catch(StatusCodeException &exception)
+	{
+		std::cout << "== Exception caught ==> CLEARING THE CONTENT ==" << std::endl;
+		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->ClearContent());
+		return exception.GetStatusCode();
 	}
 
 	std::cout << "== Clearing the content ==" << std::endl;
@@ -98,213 +99,46 @@ pandora::StatusCode ArborConnectorClusteringAlgorithm::Run()
 
 //----------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode ArborConnectorClusteringAlgorithm::CreateArborObjects(const pandora::CaloHitList *pCaloHitList,
-                                         const pandora::TrackList *pTrackList)
-{
-	if(NULL == pCaloHitList)
-		return STATUS_CODE_FAILURE;
-
-	OrderedCaloHitList orderedCaloHitList;
-
-	if(m_shouldUseReadoutLayer)
-	{
-		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->CreateReadoutLayerMap(pCaloHitList, orderedCaloHitList));
-	}
-	else
-	{
-		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, orderedCaloHitList.Add(*pCaloHitList));
-	}
-
-	// loop over layers and build small clusters representing
-	// objects to be connected together
-	for(OrderedCaloHitList::iterator iter = orderedCaloHitList.begin(), iterEnd = orderedCaloHitList.end(); iter != iterEnd; ++iter)
-	{
-
-		PseudoLayer layer = iter->first;
-		CaloHitList *pLayerCaloHitList = iter->second;
-
-		// loop over calo hit in layer
-		for(CaloHitList::iterator iter = pLayerCaloHitList->begin(), endIter = pLayerCaloHitList->end() ; iter != endIter ; ++iter)
-		{
-
-			CaloHit *pCaloHit = *iter;
-			Cluster *pCluster = NULL;
-
-			if(!PandoraContentApi::IsCaloHitAvailable(*this, pCaloHit))
-				continue;
-
-			// create a cluster ...
-			PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::Cluster::Create(*this, pCaloHit, pCluster));
-
-			// ... and build it
-			PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RecursiveClustering(pLayerCaloHitList, pCluster, pCaloHit));
-
-			ClusterList objectClusterList;
-
-			if(m_shouldSplitClusterInSingleCaloHitClusters && m_maximumSizeForClusterSplitting < pCluster->GetNCaloHits())
-			{
-				PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->SplitClusterInSingleCaloHitClusters(pCluster, objectClusterList));
-			}
-			else
-			{
-				objectClusterList.insert(pCluster);
-			}
-
-			for(ClusterList::iterator clusterIter = objectClusterList.begin() , clusterEndIter = objectClusterList.end() ; clusterEndIter != clusterIter ; ++clusterIter)
-			{
-				Cluster *pObjectCluster = *clusterIter;
-
-				CaloHitList caloHitList;
-				pObjectCluster->GetOrderedCaloHitList().GetCaloHitList(caloHitList);
-				bool isObjectIsolated = true;
-
-				for(CaloHitList::iterator hitIter = caloHitList.begin() , hitEndIter = caloHitList.end() ; hitEndIter != hitIter ; ++hitIter)
-				{
-					CaloHit *pCaloHit = *hitIter;
-					if(!pCaloHit->IsIsolated())
-					{
-						isObjectIsolated = false;
-						break;
-					}
-				}
-
-				if(isObjectIsolated && !m_shouldUseIsolatedObjects)
-					continue;
-
-				ClusterObject *pClusterObj = new ClusterObject(pObjectCluster);
-				pClusterObj->SetIsIsolated(isObjectIsolated);
-				m_arborObjectList.insert(pClusterObj);
-
-			}
-		}
-	}
-
-	// track objects associated to a track entry point in the calorimeter (ECAL)
-	for(TrackList::const_iterator iter = pTrackList->begin() , endIter = pTrackList->end() ; endIter != iter ; ++iter)
-	{
-		Track *pTrack = *iter;
-
-		if(!pTrack->CanFormPfo() || !pTrack->ReachesCalorimeter())
-			continue;
-
-		TrackObject *pTrackObj = new TrackObject(pTrack);
-		m_arborObjectList.insert(pTrackObj);
-		m_trackObjectList.insert(pTrackObj);
-	}
-
-	return STATUS_CODE_SUCCESS;
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-
-StatusCode ArborConnectorClusteringAlgorithm::RecursiveClustering(CaloHitList *pCaloHitList, Cluster *pCluster, CaloHit *pCaloHit)
-{
-
-	for(CaloHitList::iterator iter = pCaloHitList->begin() , endIter = pCaloHitList->end() ; iter != endIter ; ++iter)
-	{
-
-		if(pCaloHit == *iter)
-			continue;
-
-		CaloHit *pOtherCaloHit = *iter;
-
-		const CartesianVector hitPosition(pCaloHit->GetPositionVector());
-		const CartesianVector otherHitPosition(pOtherCaloHit->GetPositionVector());
-		const float separationDistance = (hitPosition - otherHitPosition).GetMagnitude();
-
-		if(separationDistance > m_intraLayerMaxDistance)
-			continue;
-
-		if(!PandoraContentApi::IsCaloHitAvailable(*this, pOtherCaloHit))
-			continue;
-
-		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::AddCaloHitToCluster(*this, pCluster, pOtherCaloHit));
-		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RecursiveClustering(pCaloHitList , pCluster, pOtherCaloHit));
-
-	}
-
-	return STATUS_CODE_SUCCESS;
-}
-
-//----------------------------------------------------------------------------------------------------------------
-
-pandora::StatusCode ArborConnectorClusteringAlgorithm::SplitClusterInSingleCaloHitClusters(pandora::Cluster *pCluster, pandora::ClusterList &newClusterList)
-{
-
-	CaloHitList caloHitList;
-	pCluster->GetOrderedCaloHitList().GetCaloHitList(caloHitList);
-
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::DeleteCluster(*this, pCluster));
-
-	for(CaloHitList::const_iterator iter = caloHitList.begin() , endIter = caloHitList.end() ; endIter != iter ; ++iter)
-	{
-		CaloHit *pCaloHit = *iter;
-		Cluster *pSingleCaloHitCluster = NULL;
-
-		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::Cluster::Create(*this, pCaloHit, pSingleCaloHitCluster));
-		newClusterList.insert(pSingleCaloHitCluster);
-	}
-
-	return STATUS_CODE_SUCCESS;
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-
 pandora::StatusCode ArborConnectorClusteringAlgorithm::SeedInitialConnectors()
 {
-
-	if(m_arborObjectList.empty())
-	{
-		std::cout << "ArborObject list is empty while creating initial connectors" << std::endl;
-		return STATUS_CODE_NOT_INITIALIZED;
-	}
+	// TODO run this part with ordered object list and by looking n layers after
 
 	// Create all the initial connectors
-	for(ArborObjectList::iterator iter1 = m_arborObjectList.begin() , endIter1 = m_arborObjectList.end() ; endIter1 != iter1 ; ++iter1)
+	for(ObjectList::iterator iter1 = m_pObjectList->begin() , endIter1 = m_pObjectList->end() ; endIter1 != iter1 ; ++iter1)
 	{
-		ArborObject *pArborObject1 = *iter1;
+		Object *pObject1 = *iter1;
 
-		if(pArborObject1->IsIsolated() && !m_allowForwardConnectionForIsolatedObjects)
+		if(pObject1->GetFlag(ISOLATED_OBJECT) && !m_allowForwardConnectionForIsolatedObjects)
 			continue;
 
-		PseudoLayer pseudoLayer1 = pArborObject1->GetPseudoLayer();
-		const CartesianVector objectPosition1 = pArborObject1->GetPosition();
-		float radius1, phi1, theta1 = 0.f;
-		objectPosition1.GetSphericalCoordinates(radius1, phi1, theta1);
+		PseudoLayer pseudoLayer1 = pObject1->GetPseudoLayer();
+		const CartesianVector objectPosition1 = pObject1->GetPosition();
 
-		for(ArborObjectList::iterator iter2 = m_arborObjectList.begin() , endIter2 = m_arborObjectList.end() ; endIter2 != iter2 ; ++iter2)
+		for(ObjectList::iterator iter2 = m_pObjectList->begin() , endIter2 = m_pObjectList->end() ; endIter2 != iter2 ; ++iter2)
 		{
-			ArborObject *pArborObject2 = *iter2;
+			Object *pObject2 = *iter2;
 
-			if(pArborObject1 == pArborObject2)
+			if(pObject1 == pObject2)
 				continue;
 
-			if(pArborObject2->GetType() == TRACK)
+			PseudoLayer pseudoLayer2 = pObject2->GetPseudoLayer();
+
+			if(pseudoLayer2 <= pseudoLayer1)
 				continue;
 
-			if(pArborObject1->GetType() == TRACK && pArborObject2->GetType() == TRACK)
-				continue;
-
-			const CartesianVector objectPosition2 = pArborObject2->GetPosition();
-			float radius2, phi2, theta2 = 0.f;
-			objectPosition2.GetSphericalCoordinates(radius2, phi2, theta2);
+			const CartesianVector objectPosition2 = pObject2->GetPosition();
 
 			const CartesianVector differenceVector = objectPosition2 - objectPosition1;
-			const float openingAngle = objectPosition1.GetOpeningAngle(differenceVector);
-			float maximumDistanceForConnection = pArborObject2->GetGranularity() >= COARSE ? m_maximumDistanceForConnectionCoarse : m_maximumDistanceForConnectionFine;
-			bool inSamePseudoLayer = pArborObject1->GetPseudoLayer() == pArborObject2->GetPseudoLayer();
+			float maximumDistanceForConnection = pObject2->GetGranularity() >= COARSE ? m_maximumDistanceForConnectionCoarse : m_maximumDistanceForConnectionFine;
 
-			// Cut on geometrical variables for initial connections:
-			//  - object2 must be forward
-			//  - transverse distance
-			//  - forward distance
-			if(openingAngle < M_PI_2 && differenceVector.GetMagnitude() < maximumDistanceForConnection && !inSamePseudoLayer)
+			if(differenceVector.GetMagnitude() < maximumDistanceForConnection)
 			{
-				if(!pArborObject1->IsConnectedWith(pArborObject2))
+				if(!pObject1->IsConnectedWith(pObject2))
 				{
 					Connector *pConnector = NULL;
-					PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pArborObject1->ConnectWith(pArborObject2, FORWARD, pConnector));
+					PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pObject1->ConnectWith(pObject2, FORWARD, pConnector));
 					PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pConnector->SetType(INITIAL_CONNECTOR));
+					m_connectorList.insert(pConnector);
 				}
 			}
 		}
@@ -317,18 +151,12 @@ pandora::StatusCode ArborConnectorClusteringAlgorithm::SeedInitialConnectors()
 
 pandora::StatusCode ArborConnectorClusteringAlgorithm::CleanConnectors()
 {
+	PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->FirstConnectorCleaning());
 
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->FirstConnectorCleaning());
-
-	if(m_shouldRunSecondCleaning)
-	{
-	 PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->SecondConnectorCleaning());
-	}
-
-	if(m_showConnectors)
-	{
-		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->DrawConnectors());
-	}
+//	if(m_shouldRunSecondCleaning)
+//	{
+//	 PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->SecondConnectorCleaning());
+//	}
 
 	return STATUS_CODE_SUCCESS;
 }
@@ -337,270 +165,325 @@ pandora::StatusCode ArborConnectorClusteringAlgorithm::CleanConnectors()
 
 pandora::StatusCode ArborConnectorClusteringAlgorithm::FirstConnectorCleaning()
 {
+	unsigned int count = 0;
+
+	ObjectCleaningInfoList objectInfoList;
 
 	// loop over objects
-	for(ArborObjectList::const_iterator iter = m_arborObjectList.begin() , endIter = m_arborObjectList.end() ; endIter != iter ; ++iter)
+	for(ObjectList::const_iterator iter = m_pObjectList->begin() , endIter = m_pObjectList->end() ; endIter != iter ; ++iter)
 	{
-		ArborObject *pArborObject = *iter;
+		Object *pObject = *iter;
+
+		// initialization of final backward connector
+		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pObject->SetCurrentBackwardConnector(NULL));
 
 		// if no backward connection no need to continue.
-		if(pArborObject->GetBackwardConnectorList().empty())
+		if(pObject->GetBackwardConnectorList().empty())
 			continue;
 
-		unsigned int nbOfBackwardConnections = 0;
 		CartesianVector meanBackwardDirection(0.f, 0.f, 0.f);
-		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, ComputeMeanBackwardDirection(pArborObject, meanBackwardDirection, nbOfBackwardConnections));
+		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, ArborHelper::GetReferenceDirection(pObject,
+				m_backwardConnectorWeight, m_forwardConnectorWeight, m_referenceDirectionDepth,
+				m_referenceDirectionMaximumForwardLayer, meanBackwardDirection));
 
-		if(0 == nbOfBackwardConnections)
-			continue;
+		const ConnectorList &connectorList = pObject->GetBackwardConnectorList();
+		const CartesianVector &objectPosition = pObject->GetPosition();
 
-		ConnectorList &connectorList = pArborObject->GetBackwardConnectorList();
-		const CartesianVector &objectPosition = pArborObject->GetPosition();
-
-		ArborObject *pBestArborObject = NULL;
+		Object *pBestObject = NULL;
 		Connector *pBestConnector = NULL;
 		float bestOrderParameter = std::numeric_limits<float>::max();
-		ArborObjectList deleteConnectionObjects;
+		ObjectList deleteConnectionObjects;
 
 		// loop over connectors and find the one with the best order parameter
 		for(ConnectorList::const_iterator connectorIter = connectorList.begin() , connectorEndIter = connectorList.end() ; connectorEndIter != connectorIter ; ++connectorIter)
 		{
 			Connector *pConnector = *connectorIter;
 
-//			if(FINAL_DECISION == pConnector->GetType())
-//				continue;
+			Object *pOtherObject = NULL;
 
-			ArborObject *pOtherArborObject = NULL;
-
-			if(pArborObject == pConnector->GetFirst())
-			{
-				pOtherArborObject = pConnector->GetSecond();
-			}
+			if(pObject == pConnector->GetFirst())
+				pOtherObject = pConnector->GetSecond();
 			else
-			{
-				pOtherArborObject = pConnector->GetFirst();
-			}
+				pOtherObject = pConnector->GetFirst();
 
 			float orderParameter = 0.f;
 			// compute the order parameter wrt the mean backward direction (unit vector)
-			PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->ComputeOrderParameter(pArborObject, pOtherArborObject, meanBackwardDirection.GetUnitVector(), orderParameter));
+			PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, ArborHelper::GetKappaParameter(pObject, pOtherObject,
+					meanBackwardDirection.GetUnitVector(), m_orderParameterAnglePower, m_orderParameterDistancePower, orderParameter));
 
 			if(bestOrderParameter > orderParameter)
 			{
-				if(NULL != pBestArborObject)
-				{
-					deleteConnectionObjects.insert(pBestArborObject);
-				}
+				if(NULL != pBestObject)
+					deleteConnectionObjects.insert(pBestObject);
 
 				bestOrderParameter = orderParameter;
 				pBestConnector = pConnector;
-				pBestArborObject = pOtherArborObject;
+				pBestObject = pOtherObject;
 		 }
 			else
 			{
-				deleteConnectionObjects.insert(pOtherArborObject);
+				deleteConnectionObjects.insert(pOtherObject);
 			}
 
 		} // end of connector loop
 
-		if(NULL != pBestArborObject)
-		{
-			// Remove all other connectors and keep only the best one.
-			for(ArborObjectList::iterator objectIter = deleteConnectionObjects.begin() , objectEndIter = deleteConnectionObjects.end() ; objectEndIter != objectIter ; ++objectIter)
-			{
-				ArborObject *pOtherArborObject = *objectIter;
-				PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pArborObject->RemoveConnectionWith(pOtherArborObject));
-				pOtherArborObject = NULL;
-			}
+		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pObject->SetCurrentBackwardConnector(NULL));
 
-			if(!m_shouldRunSecondCleaning)
-			{
-				// Set it as final decision
-				PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pBestConnector->SetType(FINAL_DECISION));
-			}
-			else
-			{
-				PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pBestConnector->SetType(FIRST_CLEANING));
-			}
+		if(NULL != pBestObject)
+		{
+			ObjectCleaningInfo *objectInfo = new ObjectCleaningInfo();
+			objectInfo->m_pObject = pObject;
+			objectInfo->m_pBestConnector = pBestConnector;
+			objectInfo->m_deleteConnectionList = deleteConnectionObjects;
+
+			objectInfoList.insert(objectInfo);
+		}
+	}
+
+	// delete all the connectors that are no longer needed and
+	// set the best connector as the current backward one
+	for(ObjectCleaningInfoList::iterator iter = objectInfoList.begin() , endIter = objectInfoList.end() ; endIter != iter ; ++iter)
+	{
+		ObjectCleaningInfo *pObjectCleaningInfo = *iter;
+		Object *pObject = pObjectCleaningInfo->m_pObject;
+
+		for(ObjectList::iterator objectIter = pObjectCleaningInfo->m_deleteConnectionList.begin() , objectEndIter = pObjectCleaningInfo->m_deleteConnectionList.end() ; objectEndIter != objectIter ; ++objectIter)
+		{
+			Object *pOtherObject = *objectIter;
+
+			Connector *pCurrentConnector = NULL;
+			PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pObject->FindConnector(pOtherObject, pCurrentConnector));
+			size_t nErase = m_connectorList.erase(pCurrentConnector);
+
+			if(1 != nErase)
+				return STATUS_CODE_FAILURE;
+
+			PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pObject->RemoveConnectionWith(pOtherObject));
+			pOtherObject = NULL;
 		}
 
+		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pObject->SetCurrentBackwardConnector(pObjectCleaningInfo->m_pBestConnector));
+
+		if(!m_shouldRunSecondCleaning)
+		{
+			// Set it as final decision
+			PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pObjectCleaningInfo->m_pBestConnector->SetType(FINAL_DECISION));
+		}
+		else
+		{
+			PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pObjectCleaningInfo->m_pBestConnector->SetType(FIRST_CLEANING));
+		}
+
+		delete pObjectCleaningInfo;
 	}
+
+	objectInfoList.clear();
 
 	return STATUS_CODE_SUCCESS;
 }
 
+//----------------------------------------------------------------------------------------------------------------------
 
 pandora::StatusCode ArborConnectorClusteringAlgorithm::SecondConnectorCleaning()
 {
-	std::map<ArborObject*,pandora::CartesianVector> objectToReferenceDirectionMap;
+	std::map<Object*, CartesianVector> objectToReferenceDirectionMap;
 
-	// Add new connectors !
-	for(ArborObjectList::const_iterator iter = m_arborObjectList.begin() , endIter = m_arborObjectList.end() ; endIter != iter ; ++iter)
+	for(ConnectorList::iterator connectorIter = m_connectorList.begin(), connectorEndIter = m_connectorList.end() ; connectorEndIter != connectorIter ; ++connectorIter)
 	{
-		ArborObject *pArborObject = *iter;
+		Connector *pConnector = *connectorIter;
 
-		if(!pArborObject->IsConnected())
-			continue;
+		Object *pObjectFrom = pConnector->GetFirst()->IsBackwardConnector(pConnector) ? pConnector->GetSecond() : pConnector->GetFirst();
+		Object *pObjectTo = pConnector->GetFirst() == pObjectFrom ? pConnector->GetSecond() : pConnector->GetFirst();
 
-		CartesianVector objectPosition = pArborObject->GetPosition();
-	 ConnectorList connectorList = pArborObject->GetConnectors();
-	 const PseudoLayer objectPseudoLayer = pArborObject->GetPseudoLayer();
+		const CartesianVector positionFrom = pObjectFrom->GetPosition();
+		const CartesianVector positionTo   = pObjectTo->GetPosition();
+		const CartesianVector differenceVector = pObjectTo->GetPosition() - pObjectFrom->GetPosition();
+		const PseudoLayer pseudoLayerFrom = pObjectFrom->GetPseudoLayer();
+		const PseudoLayer pseudoLayerTo   = pObjectTo->GetPseudoLayer();
 
-	 CartesianVector referenceDirection(objectPosition.GetUnitVector());
+		std::map<Object*, CartesianVector>::iterator findIterFrom = objectToReferenceDirectionMap.find(pObjectFrom);
+		std::map<Object*, CartesianVector>::iterator findIterTo   = objectToReferenceDirectionMap.find(pObjectTo);
 
-		for(ConnectorList::const_iterator connectorIter = connectorList.begin() , connectorEndIter = connectorList.end() ; connectorEndIter != connectorIter ; ++connectorIter)
+		if(findIterFrom == objectToReferenceDirectionMap.end())
 		{
-			Connector *pConnector = *connectorIter;
+			objectToReferenceDirectionMap.insert(std::make_pair<Object*,CartesianVector>(pObjectFrom, CartesianVector(0.f, 0.f, 0.f)));
+		}
 
-			ArborObject *pOtherArborObject = NULL;
+		if(findIterTo == objectToReferenceDirectionMap.end())
+		{
+			objectToReferenceDirectionMap.insert(std::make_pair<Object*,CartesianVector>(pObjectTo, CartesianVector(0.f, 0.f, 0.f)));
+		}
 
-			if(pArborObject == pConnector->GetFirst())
-			{
-				pOtherArborObject = pConnector->GetSecond();
-			}
-			else
-			{
-				pOtherArborObject = pConnector->GetFirst();
-			}
-
-			bool isBackwardConnector = pArborObject->IsBackwardConnector(pConnector);
-
-			CartesianVector differencePosition = (pOtherArborObject->GetPosition() - objectPosition).GetUnitVector();
-
-			if(FIRST_CLEANING == pConnector->GetType())
-			{
-				if(isBackwardConnector)
-				{
-					referenceDirection += differencePosition * m_backwardConnectorWeight;
-				}
-				else
-				{
-					referenceDirection += differencePosition * - m_forwardConnectorWeight;
-				}
-			}
-
-			if(!isBackwardConnector)
-				continue;
-
-			const PseudoLayer otherObjectPseudoLayer = pOtherArborObject->GetPseudoLayer();
-			const CartesianVector &otherObjectPosition = pOtherArborObject->GetPosition();
-
-			const CartesianVector differenceVector = otherObjectPosition - objectPosition;
-
-			for(ArborObjectList::const_iterator iter2 = m_arborObjectList.begin() , endIter2 = m_arborObjectList.end() ; endIter2 != iter2 ; ++iter2)
-			{
-				ArborObject *pArborObjectTest = *iter2;
-
-				if(pArborObject == pArborObjectTest || pOtherArborObject == pArborObjectTest)
-					continue;
-
-				const CartesianVector &testPosition = pArborObjectTest->GetPosition();
-				const PseudoLayer testPseudoLayer = pArborObjectTest->GetPseudoLayer();
-
-				float testConnectorDistance = std::min((testPosition-objectPosition).GetMagnitude(), (testPosition-otherObjectPosition).GetMagnitude());
-				float distanceForConnection = pArborObjectTest->GetGranularity() == COARSE ? m_maximumDistanceForConnectionCoarse : m_maximumDistanceForConnectionFine;
-				float distanceForConnection2 = pArborObjectTest->GetGranularity() == COARSE ? m_maximumDistanceForConnectionCoarse2 : m_maximumDistanceForConnectionFine2;
-
-				if(/*testConnectorDistance > distanceForConnection && */testConnectorDistance < distanceForConnection2)
-				{
-					float forwardAngle = differenceVector.GetOpeningAngle(testPosition-otherObjectPosition);
-					float backwardAngle = differenceVector.GetOpeningAngle(objectPosition-testPosition);
-					float angleForSecondCleaning = pArborObjectTest->GetGranularity() == COARSE ? m_angleForSecondCleaningCoarse : m_angleForSecondCleaningFine;
-
-					if(forwardAngle < angleForSecondCleaning && testPseudoLayer != otherObjectPseudoLayer && !pOtherArborObject->IsConnectedWith(pArborObjectTest))
-					{
-						Connector *pNewConnector = NULL;
-						PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pOtherArborObject->ConnectWith(pArborObjectTest, BACKWARD, pNewConnector));
-						PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pNewConnector->SetType(SECOND_CLEANING));
-					}
-					else if(backwardAngle < angleForSecondCleaning && testPseudoLayer != objectPseudoLayer && !pArborObject->IsConnectedWith(pArborObjectTest))
-					{
-						Connector *pNewConnector = NULL;
-						PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pArborObject->ConnectWith(pArborObjectTest, FORWARD, pNewConnector));
-						PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pNewConnector->SetType(SECOND_CLEANING));
-					}
-
-				}
-
-			}
-
-		} // end of connector loop
-
-		objectToReferenceDirectionMap.insert(std::make_pair<ArborObject*,CartesianVector>(pArborObject,referenceDirection));
+		findIterFrom->second += differenceVector * - m_forwardConnectorWeight;
+		findIterTo->second   += differenceVector *   m_backwardConnectorWeight;
 	}
 
-	// clean the new connectors
-	for(ArborObjectList::const_iterator iter = m_arborObjectList.begin() , endIter = m_arborObjectList.end() ; endIter != iter ; ++iter)
+	for(ConnectorList::iterator connectorIter = m_connectorList.begin(), connectorEndIter = m_connectorList.end() ; connectorEndIter != connectorIter ; ++connectorIter)
 	{
-		ArborObject *pArborObject = *iter;
+		Connector *pConnector = *connectorIter;
 
-		if(!pArborObject->IsConnected())
+		Object *pObjectFrom = pConnector->GetFirst()->IsBackwardConnector(pConnector) ? pConnector->GetSecond() : pConnector->GetFirst();
+		Object *pObjectTo = pConnector->GetFirst() == pObjectFrom ? pConnector->GetSecond() : pConnector->GetFirst();
+
+		const CartesianVector positionFrom = pObjectFrom->GetPosition();
+		const CartesianVector positionTo   = pObjectTo->GetPosition();
+		const CartesianVector differenceVector = pObjectTo->GetPosition() - pObjectFrom->GetPosition();
+		const PseudoLayer pseudoLayerFrom = pObjectFrom->GetPseudoLayer();
+		const PseudoLayer pseudoLayerTo   = pObjectTo->GetPseudoLayer();
+
+		for(ObjectList::const_iterator objIter = m_pObjectList->begin() , objEndIter = m_pObjectList->end() ; objEndIter != objIter ; ++objIter)
+		{
+			Object *pObjectTest = *objIter;
+
+			if(pObjectFrom == pObjectTest || pObjectTo == pObjectTest)
+				continue;
+
+			const CartesianVector objectTestPosition = pObjectTest->GetPosition();
+			const PseudoLayer objectTestPseudoLayer = pObjectTest->GetPseudoLayer();
+			float distanceForConnection = pObjectTest->GetGranularity() >= COARSE ? m_maximumDistanceForConnectionCoarse : m_maximumDistanceForConnectionFine;
+			float distanceForConnection2 = pObjectTest->GetGranularity() >= COARSE ? m_maximumDistanceForConnectionCoarse2 : m_maximumDistanceForConnectionFine2;
+
+			const float testDistance = std::min((objectTestPosition-positionFrom).GetMagnitude(), (objectTestPosition-positionTo).GetMagnitude());
+
+			if(testDistance > distanceForConnection && testDistance < distanceForConnection2)
+			{
+				float forwardAngle = differenceVector.GetOpeningAngle(objectTestPosition-positionTo);
+				float backwardAngle = differenceVector.GetOpeningAngle(positionFrom-objectTestPosition);
+				float angleForSecondCleaning = pObjectTest->GetGranularity() >= COARSE ? m_angleForSecondCleaningCoarse : m_angleForSecondCleaningFine;
+
+				if(forwardAngle < angleForSecondCleaning && objectTestPseudoLayer > pseudoLayerTo && !pObjectTo->IsConnectedWith(pObjectTest))
+				{
+					Connector *pNewConnector = NULL;
+					PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pObjectTo->ConnectWith(pObjectTest, FORWARD, pNewConnector));
+					PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pNewConnector->SetType(SECOND_CLEANING));
+					m_secondCleaningConnectors.insert(pNewConnector);
+				}
+				else if(backwardAngle < angleForSecondCleaning && objectTestPseudoLayer < pseudoLayerFrom && !pObjectFrom->IsConnectedWith(pObjectTest))
+				{
+					Connector *pNewConnector = NULL;
+					PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pObjectFrom->ConnectWith(pObjectTest, BACKWARD, pNewConnector));
+					PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pNewConnector->SetType(SECOND_CLEANING));
+					m_secondCleaningConnectors.insert(pNewConnector);
+				}
+			}
+		}
+	}
+
+	// insert the new connectors in the global list and
+	// clean the new connector list (no longer needed)
+	m_connectorList.insert(m_secondCleaningConnectors.begin(), m_secondCleaningConnectors.end());
+	m_secondCleaningConnectors.clear();
+
+	// clean the new connectors
+	for(ObjectList::const_iterator iter = m_pObjectList->begin() , endIter = m_pObjectList->end() ; endIter != iter ; ++iter)
+	{
+		Object *pObject = *iter;
+
+		if(pObject->GetBackwardConnectorList().empty())
+		{
+			PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pObject->SetCurrentBackwardConnector(NULL));
 			continue;
+		}
 
-		std::map<ArborObject*,CartesianVector>::iterator refIter = objectToReferenceDirectionMap.find(pArborObject);
-
-		if(objectToReferenceDirectionMap.end() == refIter)
+		if(1 == pObject->GetBackwardConnectorList().size())
+		{
+			PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pObject->SetCurrentBackwardConnector(*pObject->GetBackwardConnectorList().begin()));
 			continue;
+		}
 
-		CartesianVector referenceDirection(refIter->second.GetUnitVector());
+		std::map<Object*,CartesianVector>::iterator refIter = objectToReferenceDirectionMap.find(pObject);
+
+		CartesianVector referenceDirection(0.f, 0.f, 0.f);
+
+		if(objectToReferenceDirectionMap.end() == refIter || refIter->second == CartesianVector(0.f, 0.f, 0.f))
+		{
+			referenceDirection = pObject->GetPosition() * - m_backwardConnectorWeight;
+		}
+		else
+		{
+			referenceDirection = refIter->second + pObject->GetPosition() * - m_backwardConnectorWeight;
+ 	}
+
+		if(referenceDirection == CartesianVector(0.f, 0.f, 0.f))
+		{
+			std::cout << "Problem : Zero vector direction !!!! " << std::endl;
+			continue;
+		}
+
+		referenceDirection = referenceDirection.GetUnitVector();
 
 		float bestOrderParameter(std::numeric_limits<float>::max());
-		ArborObject *pBestArborObject = NULL;
+		Object *pBestObject = NULL;
 		Connector *pBestConnector = NULL;
-		ArborObjectList deleteConnectionObjects;
+		ObjectList deleteConnectionObjects;
 
-		const ConnectorList &connectorList = pArborObject->GetBackwardConnectorList();
+		const ConnectorList &connectorList = pObject->GetBackwardConnectorList();
 
 		for(ConnectorList::const_iterator connectorIter = connectorList.begin() , connectorEndIter = connectorList.end() ; connectorEndIter != connectorIter ; ++connectorIter)
 		{
 			Connector *pConnector = *connectorIter;
 
-			ArborObject *pOtherArborObject = NULL;
+			Object *pOtherObject = NULL;
 
-			if(pArborObject == pConnector->GetFirst())
-			{
-				pOtherArborObject = pConnector->GetSecond();
-			}
+			if(pObject == pConnector->GetFirst())
+				pOtherObject = pConnector->GetSecond();
 			else
-			{
-				pOtherArborObject = pConnector->GetFirst();
-			}
+				pOtherObject = pConnector->GetFirst();
 
 			float orderParameter = 0.f;
 			// compute the order parameter wrt the mean backward direction (unit vector)
-			PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->ComputeOrderParameter(pArborObject, pOtherArborObject, referenceDirection, orderParameter));
+			PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, ArborHelper::GetKappaParameter(pObject, pOtherObject,
+					referenceDirection, m_orderParameterAnglePower, m_orderParameterDistancePower, orderParameter));
 
 			if(bestOrderParameter > orderParameter)
 			{
-				if(NULL != pBestArborObject)
+				if(NULL != pBestObject)
 				{
-					deleteConnectionObjects.insert(pBestArborObject);
+					deleteConnectionObjects.insert(pBestObject);
 				}
 
 				bestOrderParameter = orderParameter;
 				pBestConnector = pConnector;
-				pBestArborObject = pOtherArborObject;
+				pBestObject = pOtherObject;
 		 }
 			else
 			{
-				deleteConnectionObjects.insert(pOtherArborObject);
+				deleteConnectionObjects.insert(pOtherObject);
 			}
 		}
 
-		if(NULL != pBestArborObject)
+		if(NULL != pBestObject)
 		{
 			// Remove all other connectors and keep only the best one.
-			for(ArborObjectList::iterator objectIter = deleteConnectionObjects.begin() , objectEndIter = deleteConnectionObjects.end() ; objectEndIter != objectIter ; ++objectIter)
+			for(ObjectList::iterator objectIter = deleteConnectionObjects.begin() , objectEndIter = deleteConnectionObjects.end() ; objectEndIter != objectIter ; ++objectIter)
 			{
-				ArborObject *pOtherArborObject = *objectIter;
-				PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pArborObject->RemoveConnectionWith(pOtherArborObject));
-				pOtherArborObject = NULL;
+				Object *pOtherObject = *objectIter;
+
+				Connector *pCurrentConnector = NULL;
+				PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pObject->FindConnector(pOtherObject, pCurrentConnector));
+
+				size_t nErase = m_connectorList.erase(pCurrentConnector);
+
+				if(1 != nErase)
+					return STATUS_CODE_FAILURE;
+
+				PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pObject->RemoveConnectionWith(pOtherObject));
 			}
 
 			// Set it as final decision
 			PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pBestConnector->SetType(FINAL_DECISION));
 		}
 
+		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pObject->SetCurrentBackwardConnector(pBestConnector));
+	}
+
+	for(ObjectList::const_iterator iter = m_pObjectList->begin() , endIter = m_pObjectList->end() ; endIter != iter ; ++iter)
+	{
+		Object *pObject = *iter;
+		Connector *pBestConnector = pObject->GetCurrentBackwardConnector();
+
+		if(pObject->GetBackwardConnectorList().empty())
+			continue;
 	}
 
 	return STATUS_CODE_SUCCESS;
@@ -610,394 +493,40 @@ pandora::StatusCode ArborConnectorClusteringAlgorithm::SecondConnectorCleaning()
 
 pandora::StatusCode ArborConnectorClusteringAlgorithm::DoClustering()
 {
-
-	unsigned int nbOfCreatedClusters = 0;
-	for(ArborObjectList::const_iterator objIter = m_arborObjectList.begin() , objEndIter = m_arborObjectList.end() ; objEndIter != objIter ; ++objIter)
+	for(ObjectList::const_iterator objIter = m_pObjectList->begin() , objEndIter = m_pObjectList->end() ; objEndIter != objIter ; ++objIter)
 	{
-		ArborObject *pArborObject = *objIter;
+		Object *pObject = *objIter;
 
-		if(std::find(m_alreadyUsedObjectsForClustering.begin(), m_alreadyUsedObjectsForClustering.end(), pArborObject) != m_alreadyUsedObjectsForClustering.end())
+//		if(pObject->GetFlag(ISOLATED_OBJECT))
+//			std::cout << "building isolated cluster 1" << std::endl;
+
+
+
+		// we use only seed object to build clusters
+		if(NULL != pObject->GetCurrentBackwardConnector())
 			continue;
 
-		m_alreadyUsedObjectsForClustering.insert(pArborObject);
+//		if(pObject->GetFlag(ISOLATED_OBJECT))
+//			std::cout << "building isolated cluster 2" << std::endl;
 
-		pandora::Cluster *pCluster = NULL;
+//		if(pObject->GetConnectorList().empty())
+//			std::cout << "Building cluster with only one non-connected object" << std::endl;
 
-		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->CreateInitialCluster(pArborObject, pCluster));
-		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RecursiveClustering(pCluster, pArborObject));
+		arbor::Cluster *pCluster = NULL;
+		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, ArborContentApi::Cluster::Create(*this, pCluster, pObject));
 
-		nbOfCreatedClusters++;
-		m_finalClusterList.insert(pCluster);
-	}
+		// TODO Deal with branches ...
 
-	std::cout << "nbOfCreatedClusters : " << nbOfCreatedClusters << std::endl;
+//		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pCluster->CreateBranches());
+//		const ArborBranchList &branchList = pCluster->GetBranchList();
 
-	m_currentClusterObjectList.clear();
-
-	return STATUS_CODE_SUCCESS;
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-
-pandora::StatusCode ArborConnectorClusteringAlgorithm::MergeClustersWithCloseBySeeds()
-{
-
-	std::vector<std::pair<Cluster*, Cluster*> > branchToClusterVector;
-
-	// loop over clusters to identify which ones have to be merged
-	// fill a vector of pair of clusters to be merged together.
-	// the pair::first will be one to be deleted and the pair::second to be enlarged
-	for(ClusterList::iterator clIter = m_finalClusterList.begin() , clEndIter = m_finalClusterList.end() ; clEndIter != clIter ; ++clIter)
-	{
-		Cluster *pBranchCluster = *clIter;
-
-		if(!pBranchCluster->GetAssociatedTrackList().empty())
-			continue;
-
-		CartesianVector clusterSeedPosition = pBranchCluster->GetCentroid(pBranchCluster->GetInnerPseudoLayer());
-
-		for(ClusterList::iterator clIter2 = clIter , clEndIter2 = m_finalClusterList.end() ; clEndIter2 != clIter2 ; ++clIter2)
-		{
-			Cluster *pCluster = *clIter2;
-
-			if(pBranchCluster == pCluster)
-				continue;
-
-			CaloHitList clusterCaloHits;
-			pCluster->GetOrderedCaloHitList().GetCaloHitList(clusterCaloHits);
-
-			for(CaloHitList::iterator hitIter = clusterCaloHits.begin() , endHitIter = clusterCaloHits.end() ; hitIter != endHitIter ; ++hitIter)
-			{
-				CaloHit *pCaloHit = *hitIter;
-				const float distance = (pCaloHit->GetPositionVector() - clusterSeedPosition).GetMagnitude();
-
-				if(m_closeBySeedDistance > distance)
-				{
-					branchToClusterVector.push_back(std::pair<Cluster*, Cluster*>(*clIter, *clIter2));
-				}
-			}
-		}
-	}
-
-	std::cout << "branchToClusterVector.size() : " << branchToClusterVector.size() << std::endl;
-
-	// Merge clusters together.
-	// pair::first is deleted and pair::second is enlarged.
-	// Occurrences of deleted clusters are changed in the vector before deletion.
-	// End of iteration should be inside the loop since the size of the vector may vary
-	for(unsigned int mapID = 0 ; ; mapID++)
-	{
-		// end of iteration condition
-		if(mapID == branchToClusterVector.size()-1)
-			break;
-
-		Cluster *pClusterToDelete = branchToClusterVector.at(mapID).first;
-		Cluster *pClusterToEnlarge = branchToClusterVector.at(mapID).second;
-
-		if(NULL == pClusterToDelete
-		 || NULL == pClusterToEnlarge
-		 || pClusterToDelete == pClusterToEnlarge)
-			continue;
-
-		std::cout << "Cluster to delete address (before internal loop): " << pClusterToDelete << std::endl;
-		std::cout << "Cluster to enlarge address (before internal loop): " << pClusterToEnlarge << std::endl;
-
-		int inc = 0;
-
-		for(unsigned int mapID2 = mapID+1 ; ; mapID2++)
-		{
-			// end of iteration condition
-			if(mapID2 >= branchToClusterVector.size()-1)
-				break;
-
-			Cluster *pClusterToDelete2 = branchToClusterVector.at(mapID2).first;
-			Cluster *pClusterToEnlarge2 = branchToClusterVector.at(mapID2).second;
-
-			if(NULL == pClusterToDelete2
-			 || NULL == pClusterToEnlarge2)
-				continue;
-
-			// replace occurrence
-			if(pClusterToEnlarge2 == pClusterToDelete)
-				branchToClusterVector.at(mapID2).second = pClusterToEnlarge;
-
-			// replace occurrence
-			if(pClusterToDelete2 == pClusterToDelete)
-			{
-				std::cout << "Replacement on first done, second will be : " << pClusterToEnlarge << std::endl;
-				branchToClusterVector.at(mapID2).first = pClusterToEnlarge;
-			}
-
-			// erase occurrence if clusters are the same
-			if(branchToClusterVector.at(mapID2).first == branchToClusterVector.at(mapID2).second)
-			{
-				std::cout << "Occurrence removed ! (" << branchToClusterVector.at(mapID2).first << ")" << std::endl;
-				branchToClusterVector.erase(branchToClusterVector.begin()+mapID2);
-				inc++;
-			}
-
-		}
-
-		std::cout << "Nb of occurrence removed : " << inc << std::endl;
-
-		if(!pClusterToDelete->GetAssociatedTrackList().empty()
-		&& !pClusterToEnlarge->GetAssociatedTrackList().empty())
-			continue;
-
-		if(!pClusterToDelete->GetAssociatedTrackList().empty())
-		{
-			std::cout << "!! SWAP CALLED !!" << std::endl;
-			std::swap(pClusterToDelete, pClusterToEnlarge);
-		}
-
-		std::cout << "Cluster to delete address : " << pClusterToDelete << std::endl;
-		std::cout << "Cluster to enlarge address : " << pClusterToEnlarge << std::endl;
-
-		// FIXME bug on pClusterToDelete which was already deleted!
-		// A replacement seems to do not have been made ...
-		// Leads to an exception thrown and framework not reinitialized for next events
-
-		// finally merge them together
-		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::MergeAndDeleteClusters(*this, pClusterToEnlarge, pClusterToDelete));
-	}
-
-	branchToClusterVector.clear();
-
-	return STATUS_CODE_SUCCESS;
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-
-pandora::StatusCode ArborConnectorClusteringAlgorithm::ComputeOrderParameter(const ArborObject *pArborObject1, const ArborObject *pArborObject2, const pandora::CartesianVector &referenceVector, float &orderParameter)
-{
-	const CartesianVector differencePosition = pArborObject2->GetPosition() - pArborObject1->GetPosition();
-
-	orderParameter = std::pow(differencePosition.GetOpeningAngle(referenceVector), m_orderParameterAnglePower)
-	                *std::pow(differencePosition.GetMagnitude(), m_orderParameterDistancePower);
-
-	return STATUS_CODE_SUCCESS;
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-
-pandora::StatusCode ArborConnectorClusteringAlgorithm::ComputeMeanBackwardDirection(const ArborObject *pArborObject, pandora::CartesianVector &meanBackwardDirection,
-		unsigned int &nbOfBackwardConnections) const
-{
-	meanBackwardDirection = pandora::CartesianVector(0.f, 0.f, 0.f);
-	nbOfBackwardConnections = 0;
-
-	if(NULL == pArborObject)
-	{
-		std::cout << "pArborObject is NULL" << std::endl;
-		return STATUS_CODE_INVALID_PARAMETER;
-	}
-
-	const ConnectorList &connectorList = pArborObject->GetConnectors();
-	const CartesianVector &objectPosition = pArborObject->GetPosition();
-
-	for(ConnectorList::const_iterator iter = connectorList.begin() , endIter = connectorList.end() ; endIter != iter ; ++iter)
-	{
-		const Connector *pConnector = *iter;
-		const ArborObject *pOtherArborObject = NULL;
-
-		if(pArborObject == pConnector->GetFirst())
-		{
-			pOtherArborObject = pConnector->GetSecond();
-		}
-		else
-		{
-			pOtherArborObject = pConnector->GetFirst();
-		}
-
-		CartesianVector differencePosition = pOtherArborObject->GetPosition() - objectPosition;
-
-		if(!pOtherArborObject->IsBackwardConnector(pConnector))
-		{
-			meanBackwardDirection += differencePosition * - m_forwardConnectorWeight;
-		}
-		else
-		{
-			meanBackwardDirection += differencePosition * m_backwardConnectorWeight;
-		}
-
-		nbOfBackwardConnections++;
+		m_clusterList.insert(pCluster);
 	}
 
 	return STATUS_CODE_SUCCESS;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-
-//pandora::StatusCode ArborConnectorClusteringAlgorithm::IsBackwardConnector(const ArborObject *pArborObject, const Connector *const pConnector, bool &isBackwardConnector) const
-//{
-//	const CartesianVector &objectPosition = pArborObject->GetPosition();
-//
-//	ArborObject *pOtherArborObject = NULL;
-//
-//	if(pArborObject == pConnector->GetFirst())
-//	{
-//		pOtherArborObject = pConnector->GetSecond();
-//	}
-//	else if(pArborObject == pConnector->GetSecond())
-//	{
-//		pOtherArborObject = pConnector->GetFirst();
-//	}
-//	else
-//	{
-//  std::cout << "Bad connector for backward computation" << std::endl;
-//	 return STATUS_CODE_INVALID_PARAMETER;
-//	}
-//
-//	const CartesianVector differenceVector = pOtherArborObject->GetPosition() - objectPosition;
-//	float openingAngle = objectPosition.GetOpeningAngle(differenceVector);
-//	bool inSameLayer = pArborObject->GetPseudoLayer() == pOtherArborObject->GetPseudoLayer();
-//
-//	if(inSameLayer)
-//	{
-//		isBackwardConnector = false;
-//		return STATUS_CODE_SUCCESS;
-//	}
-//	else
-//	{
-//		isBackwardConnector = openingAngle > M_PI_2;
-//	}
-//
-//	return STATUS_CODE_SUCCESS;
-//}
-
-//----------------------------------------------------------------------------------------------------------------------
-
-pandora::StatusCode ArborConnectorClusteringAlgorithm::RecursiveClustering(pandora::Cluster *pClusterToEnlarge, ArborObject *pArborObject)
-{
-
-	if(NULL == pClusterToEnlarge || NULL == pArborObject)
-	{
-		std::cout << "NULL objects for clustering" << std::endl;
-		return STATUS_CODE_INVALID_PARAMETER;
-	}
-
-	const ConnectorList &connectorList = pArborObject->GetConnectors();
-
-	for(ConnectorList::const_iterator iter = connectorList.begin() , endIter = connectorList.end() ; endIter != iter ; ++iter)
-	{
-		Connector *pConnector = *iter;
-		ArborObject *pOtherArborObject = NULL;
-
-		if(pArborObject == pConnector->GetFirst())
-		{
-			pOtherArborObject = pConnector->GetSecond();
-		}
-		else
-		{
-			pOtherArborObject = pConnector->GetFirst();
-		}
-
-		if(std::find(m_alreadyUsedObjectsForClustering.begin(), m_alreadyUsedObjectsForClustering.end(), pOtherArborObject) != m_alreadyUsedObjectsForClustering.end())
-			continue;
-
-		m_alreadyUsedObjectsForClustering.insert(pOtherArborObject);
-//		m_currentClusterObjectList.insert(pOtherArborObject);
-
-		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->MergeObjectContentInCluster(pOtherArborObject, pClusterToEnlarge));
-		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RecursiveClustering(pClusterToEnlarge, pOtherArborObject));
-	}
-
-	return STATUS_CODE_SUCCESS;
-}
-
-
-pandora::StatusCode ArborConnectorClusteringAlgorithm::CreateInitialCluster(ArborObject *pArborObject, pandora::Cluster *&pCluster)
-{
-
-	if(CLUSTER == pArborObject->GetType())
-	{
-		ClusterObject *pClusterObject = dynamic_cast<ClusterObject*>(pArborObject);
-		pandora::Cluster *pAssociatedCluster = pClusterObject->GetCluster();
-
-		pCluster = NULL;
-
-		CaloHitList clusterCaloHits;
-		pAssociatedCluster->GetOrderedCaloHitList().GetCaloHitList(clusterCaloHits);
-
-		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::DeleteCluster(*this, pAssociatedCluster));
-		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::Cluster::Create(*this, &clusterCaloHits, pCluster));
-
-		return STATUS_CODE_SUCCESS;
-	}
-	else if(TRACK == pArborObject->GetType())
-	{
-		TrackObject *pTrackObject = dynamic_cast<TrackObject*>(pArborObject);
-		pandora::Track *pAssociatedTrack = pTrackObject->GetTrack();
-
-		if(!pAssociatedTrack->IsAvailable())
-			return STATUS_CODE_NOT_ALLOWED;
-
-		pCluster = NULL;
-
-		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::Cluster::Create(*this, pAssociatedTrack, pCluster));
-
-		return STATUS_CODE_SUCCESS;
-	}
-	// TODO do this for mip point object
-	else
-	{
-		// not yet implemented for other cases
-		return STATUS_CODE_FAILURE;
-	}
-
-	return STATUS_CODE_SUCCESS;
-}
-
-
-
-pandora::StatusCode ArborConnectorClusteringAlgorithm::MergeObjectContentInCluster(ArborObject *pArborObject, pandora::Cluster *pCluster)
-{
-
-	if(CLUSTER == pArborObject->GetType())
-	{
-		ClusterObject *pClusterObject = dynamic_cast<ClusterObject*>(pArborObject);
-		pandora::Cluster *pAssociatedCluster = pClusterObject->GetCluster();
-
-		std::string currentClusterListName;
-		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetCurrentClusterListName(*this, currentClusterListName));
-		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::MergeAndDeleteClusters(*this, pCluster, pAssociatedCluster));
-
-		return STATUS_CODE_SUCCESS;
-	}
-	else if(TRACK == pArborObject->GetType())
-	{
-		TrackObject *pTrackObject = dynamic_cast<TrackObject*>(pArborObject);
-		pandora::Track *pAssociatedTrack = pTrackObject->GetTrack();
-
-		if(!pAssociatedTrack->IsAvailable())
-			return STATUS_CODE_SUCCESS;
-
-		// if an association has been made, remove it
-		if(pAssociatedTrack->HasAssociatedCluster())
-		{
-			Cluster *pAssociatedCluster = NULL;
-			pAssociatedTrack->GetAssociatedCluster(pAssociatedCluster);
-
-			if(NULL != pAssociatedCluster && pCluster != pAssociatedCluster)
-			{
-			PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::RemoveTrackClusterAssociation(*this, pAssociatedTrack, pCluster));
-			}
-		}
-
-		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::AddTrackClusterAssociation(*this, pAssociatedTrack, pCluster));
-
-		return STATUS_CODE_SUCCESS;
-	}
-	else
-	{
-		// not yet implemented for other cases
-		return STATUS_CODE_FAILURE;
-	}
-
-	return STATUS_CODE_SUCCESS;
-}
-
-
 
 pandora::StatusCode ArborConnectorClusteringAlgorithm::DrawConnectors() const
 {
@@ -1007,27 +536,27 @@ pandora::StatusCode ArborConnectorClusteringAlgorithm::DrawConnectors() const
 
 	TEveElement *pParentCollection = new TEveArrow();
 
-	for(ArborObjectList::const_iterator objIter = m_arborObjectList.begin() , objEndIter = m_arborObjectList.end() ; objEndIter != objIter ; ++objIter)
+	for(ObjectList::const_iterator objIter = m_pObjectList->begin() , objEndIter = m_pObjectList->end() ; objEndIter != objIter ; ++objIter)
 	{
-		ArborObject *pArborObject = *objIter;
-		ConnectorList &connectorList = pArborObject->GetForwardConnectorList();
+		Object *pObject = *objIter;
+		const ConnectorList &connectorList = pObject->GetForwardConnectorList();
 
 		for(ConnectorList::const_iterator iter = connectorList.begin() , endIter = connectorList.end() ; endIter != iter ; ++iter)
 		{
 			Connector *pConnector = *iter;
-			const ArborObject *pOtherArborObject = NULL;
+			const Object *pOtherObject = NULL;
 
-			if(pArborObject == pConnector->GetFirst())
+			if(pObject == pConnector->GetFirst())
 			{
-				pOtherArborObject = pConnector->GetSecond();
+				pOtherObject = pConnector->GetSecond();
 			}
 			else
 			{
-				pOtherArborObject = pConnector->GetFirst();
+				pOtherObject = pConnector->GetFirst();
 			}
 
-			CartesianVector fromPosition = pArborObject->GetPosition();
-			CartesianVector toPosition = pOtherArborObject->GetPosition();
+			CartesianVector fromPosition = pObject->GetPosition();
+			CartesianVector toPosition = pOtherObject->GetPosition();
 
 			PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->DrawEveArrow(pParentCollection, fromPosition, toPosition, kRed));
 		}
@@ -1039,6 +568,7 @@ pandora::StatusCode ArborConnectorClusteringAlgorithm::DrawConnectors() const
 	return STATUS_CODE_SUCCESS;
 }
 
+//----------------------------------------------------------------------------------------------------------------------
 
 pandora::StatusCode ArborConnectorClusteringAlgorithm::DrawEveArrow(TEveElement *pParentCollection, const pandora::CartesianVector &from, const pandora::CartesianVector &to, int color) const
 {
@@ -1068,16 +598,9 @@ pandora::StatusCode ArborConnectorClusteringAlgorithm::DrawEveArrow(TEveElement 
 
 pandora::StatusCode ArborConnectorClusteringAlgorithm::ClearContent()
 {
-
-	for(ArborObjectList::iterator iter = m_arborObjectList.begin() , endIter = m_arborObjectList.end() ; endIter != iter ; ++iter)
-	{
-		delete *iter;
-	}
-
-	m_arborObjectList.clear();
-	m_trackObjectList.clear();
-	m_alreadyUsedObjectsForClustering.clear();
-	m_finalClusterList.clear();
+	m_orderedObjectList.clear();
+	m_clusterList.clear();
+	m_connectorList.clear();
 
 	return STATUS_CODE_SUCCESS;
 }
@@ -1086,22 +609,6 @@ pandora::StatusCode ArborConnectorClusteringAlgorithm::ClearContent()
 
 pandora::StatusCode ArborConnectorClusteringAlgorithm::ReadSettings(const pandora::TiXmlHandle xmlHandle)
 {
-	PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, XmlHelper::ReadValue(xmlHandle,
-	     "IntraLayerMaxDistance", m_intraLayerMaxDistance));
-
-	PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, XmlHelper::ReadValue(xmlHandle,
-	     "ShouldUseReadoutLayer", m_shouldUseReadoutLayer));
-
-	PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, XmlHelper::ReadValue(xmlHandle,
-	     "ShouldSplitClusterInSingleCaloHitClusters", m_shouldSplitClusterInSingleCaloHitClusters));
-
-	PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, XmlHelper::ReadValue(xmlHandle,
-	     "MaximumSizeForClusterSplitting", m_maximumSizeForClusterSplitting));
-
-	m_inputCaloHitListName = "";
- PANDORA_THROW_RESULT_IF_AND_IF(STATUS_CODE_SUCCESS, STATUS_CODE_NOT_FOUND, !=, XmlHelper::ReadValue(xmlHandle,
-     "InputCaloHitListName", m_inputCaloHitListName));
-
  m_trackListName = "";
  PANDORA_THROW_RESULT_IF_AND_IF(STATUS_CODE_SUCCESS, STATUS_CODE_NOT_FOUND, !=, XmlHelper::ReadValue(xmlHandle,
      "TrackListName", m_trackListName));
@@ -1112,9 +619,7 @@ pandora::StatusCode ArborConnectorClusteringAlgorithm::ReadSettings(const pandor
  PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, XmlHelper::ReadValue(xmlHandle,
      "MaximumDistanceForConnectionCoarse", m_maximumDistanceForConnectionCoarse));
 
- m_shouldRunSecondCleaning = true;
- PANDORA_THROW_RESULT_IF_AND_IF(STATUS_CODE_SUCCESS, STATUS_CODE_NOT_FOUND, !=, XmlHelper::ReadValue(xmlHandle,
-      "ShouldRunSecondCleaning", m_shouldRunSecondCleaning));
+ m_shouldRunSecondCleaning = false;
 
  if(m_shouldRunSecondCleaning)
  {
@@ -1136,10 +641,6 @@ pandora::StatusCode ArborConnectorClusteringAlgorithm::ReadSettings(const pandor
 
  PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, XmlHelper::ReadValue(xmlHandle,
      "BackwardConnectorWeight", m_backwardConnectorWeight));
-
- m_shouldRunSeedMerging = true;
- PANDORA_THROW_RESULT_IF_AND_IF(STATUS_CODE_SUCCESS, STATUS_CODE_NOT_FOUND, !=, XmlHelper::ReadValue(xmlHandle,
-      "ShouldRunSeedMerging", m_shouldRunSeedMerging));
 
  if(m_shouldRunSeedMerging)
  {
@@ -1169,47 +670,13 @@ pandora::StatusCode ArborConnectorClusteringAlgorithm::ReadSettings(const pandor
  PANDORA_THROW_RESULT_IF_AND_IF(STATUS_CODE_SUCCESS, STATUS_CODE_NOT_FOUND, !=, XmlHelper::ReadValue(xmlHandle,
       "ShowConnectors", m_showConnectors));
 
-	return STATUS_CODE_SUCCESS;
-}
+ m_referenceDirectionDepth = 1;
+ PANDORA_THROW_RESULT_IF_AND_IF(STATUS_CODE_SUCCESS, STATUS_CODE_NOT_FOUND, !=, XmlHelper::ReadValue(xmlHandle,
+     "ReferenceDirectionDepth", m_referenceDirectionDepth));
 
-
-pandora::StatusCode ArborConnectorClusteringAlgorithm::CreateReadoutLayerMap(const CaloHitList *pInputCaloHitList, OrderedCaloHitList &readoutLayerToCaloHitListMap)
-{
-	if(NULL == pInputCaloHitList)
-		return STATUS_CODE_FAILURE;
-
-	readoutLayerToCaloHitListMap.Reset();
-
-	for(CaloHitList::iterator iter = pInputCaloHitList->begin() , endIter = pInputCaloHitList->end() ; endIter != iter
-	 ; ++iter)
-	{
-		CaloHit *pCaloHit = *iter;
-		const unsigned int layer = pCaloHit->GetLayer();
-
-  OrderedCaloHitList::iterator findIter = readoutLayerToCaloHitListMap.find(layer);
-
-  if (readoutLayerToCaloHitListMap.end() == findIter)
-  {
-			CaloHitList *pCaloHitList = new CaloHitList;
-
-			if (!pCaloHitList->insert(pCaloHit).second)
-			{
-				delete pCaloHitList;
-				return STATUS_CODE_FAILURE;
-			}
-
-			if (!(readoutLayerToCaloHitListMap.insert(OrderedCaloHitList::value_type(layer, pCaloHitList)).second))
-			{
-				delete pCaloHitList;
-				return STATUS_CODE_FAILURE;
-			}
-  }
-  else
-  {
-			if (!findIter->second->insert(pCaloHit).second)
-							return STATUS_CODE_ALREADY_PRESENT;
-  }
-	}
+ m_referenceDirectionMaximumForwardLayer = 10000;
+ PANDORA_THROW_RESULT_IF_AND_IF(STATUS_CODE_SUCCESS, STATUS_CODE_NOT_FOUND, !=, XmlHelper::ReadValue(xmlHandle,
+     "ReferenceDirectionMaximumForwardLayer", m_referenceDirectionMaximumForwardLayer));
 
 	return STATUS_CODE_SUCCESS;
 }
