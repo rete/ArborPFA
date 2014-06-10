@@ -31,8 +31,7 @@
 #include "arborpfa/algorithm/ArborAlgorithm.h"
 #include "arborpfa/algorithm/ArborAlgorithmFactory.h"
 
-
-namespace arborpfa
+namespace arbor
 {
 
 /** 
@@ -54,7 +53,7 @@ class DummyClusteringAlgorithm : public ArborAlgorithm
 		/**
 			* @brief Run the algorithm
 			*/
-		pandora::StatusCode Run();
+		pandora::StatusCode RunArborAlgorithm();
 
 		/**
 			* @brief Read settings from Xml handler

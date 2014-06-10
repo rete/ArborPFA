@@ -33,38 +33,36 @@
 
 using namespace pandora;
 
-namespace arborpfa
+namespace arbor
 {
 
 
-StatusCode IntraLayerClusteringAlgorithm::Run()
+StatusCode IntraLayerClusteringAlgorithm::RunArborAlgorithm()
 {
-
-	const CaloHitList *pCaloHitList = NULL;
-
+	const pandora::CaloHitList *pCaloHitList = NULL;
 	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetCurrentCaloHitList(*this, pCaloHitList));
 
 	if(pCaloHitList->empty())
 		return STATUS_CODE_INVALID_PARAMETER;
 
-	OrderedCaloHitList orderedCaloHitList;
+	pandora::OrderedCaloHitList orderedCaloHitList;
 	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, orderedCaloHitList.Add(*pCaloHitList));
 
 	unsigned int nbOfCreatedClusters = 0;
 
 	// loop over layers
-	for(OrderedCaloHitList::iterator iter = orderedCaloHitList.begin(), iterEnd = orderedCaloHitList.end(); iter != iterEnd; ++iter)
+	for(pandora::OrderedCaloHitList::iterator iter = orderedCaloHitList.begin(), iterEnd = orderedCaloHitList.end(); iter != iterEnd; ++iter)
 	{
 
-		PseudoLayer layer = iter->first;
-		CaloHitList *pLayerCaloHitList = iter->second;
+		pandora::PseudoLayer layer = iter->first;
+		pandora::CaloHitList *pLayerCaloHitList = iter->second;
 
 		// loop over calo hit in layer
 		for(CaloHitList::iterator iter = pLayerCaloHitList->begin(), endIter = pLayerCaloHitList->end() ; iter != endIter ; ++iter)
 		{
 
-			CaloHit *pCaloHit = *iter;
-			Cluster *pCluster = NULL;
+			pandora::CaloHit *pCaloHit = *iter;
+			pandora::Cluster *pCluster = NULL;
 
 			if( std::find(m_alreadyUsedCaloHitList.begin(), m_alreadyUsedCaloHitList.end(), pCaloHit) != m_alreadyUsedCaloHitList.end())
 				continue;
@@ -98,7 +96,7 @@ StatusCode IntraLayerClusteringAlgorithm::Run()
 
 //---------------------------------------------------------------------------------------------------------------
 
-StatusCode IntraLayerClusteringAlgorithm::RecursiveClustering(CaloHitList *pCaloHitList, Cluster *pCluster, CaloHit *pCaloHit)
+StatusCode IntraLayerClusteringAlgorithm::RecursiveClustering(CaloHitList *pCaloHitList, pandora::Cluster *pCluster, CaloHit *pCaloHit)
 {
 
 	for(CaloHitList::iterator iter = pCaloHitList->begin() , endIter = pCaloHitList->end() ; iter != endIter ; ++iter)
@@ -143,7 +141,7 @@ pandora::StatusCode IntraLayerClusteringAlgorithm::SplitClusterInSingleCaloHitCl
 	for(CaloHitList::const_iterator iter = caloHitList.begin() , endIter = caloHitList.end() ; endIter != iter ; ++iter)
 	{
 		CaloHit *pCaloHit = *iter;
-		Cluster *pSingleCaloHitCluster = NULL;
+		pandora::Cluster *pSingleCaloHitCluster = NULL;
 
 		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::Cluster::Create(*this, pCaloHit, pSingleCaloHitCluster));
 	}

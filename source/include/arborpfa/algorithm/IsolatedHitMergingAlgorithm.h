@@ -33,7 +33,7 @@
 #include "arborpfa/algorithm/ArborAlgorithm.h"
 #include "arborpfa/algorithm/ArborAlgorithmFactory.h"
 
-namespace arborpfa
+namespace arbor
 {
 
 /** 
@@ -55,7 +55,7 @@ class IsolatedHitMergingAlgorithm : public ArborAlgorithm
 		/**
 			* @brief Run the algorithm
 			*/
-		virtual pandora::StatusCode Run();
+		virtual pandora::StatusCode RunArborAlgorithm();
 
 		/**
 			* @brief Read settings from Xml handler

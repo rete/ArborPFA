@@ -31,11 +31,10 @@
 #include "arborpfa/algorithm/ArborAlgorithm.h"
 #include "arborpfa/algorithm/ArborAlgorithmFactory.h"
 
-
-namespace arborpfa
+namespace arbor
 {
 
-	typedef std::map<pandora::Cluster*,pandora::Cluster*> ClusterToClusterMap;
+//	typedef std::map<pandora::Cluster*,pandora::Cluster*> ClusterToClusterMap;
 
 /** 
  * @brief SmallClusterMergingAlgorithm class
@@ -56,7 +55,7 @@ class SmallClusterMergingAlgorithm : public ArborAlgorithm
 		/**
 			* @brief Run the algorithm
 			*/
-		pandora::StatusCode Run();
+		pandora::StatusCode RunArborAlgorithm();
 
 		/**
 			* @brief Read settings from Xml handler

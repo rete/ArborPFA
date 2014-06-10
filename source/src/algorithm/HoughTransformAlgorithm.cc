@@ -34,7 +34,7 @@
 
 using namespace pandora;
 
-namespace arborpfa
+namespace arbor
 {
 
 unsigned int HoughTransformAlgorithm::m_minimumHoughSpaceBinningCut = 0;
@@ -65,10 +65,10 @@ HoughTransformAlgorithm::HoughCluster &HoughTransformAlgorithm::HoughCluster::op
 
 //----------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode HoughTransformAlgorithm::Run()
+pandora::StatusCode HoughTransformAlgorithm::RunArborAlgorithm()
 {
 
-	const ClusterList *pClusterList = NULL;
+	const pandora::ClusterList *pClusterList = NULL;
 	std::string currentClusterListName;
 	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetCurrentClusterList(*this, pClusterList));
 	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetCurrentClusterListName(*this, currentClusterListName));
@@ -91,11 +91,11 @@ pandora::StatusCode HoughTransformAlgorithm::Run()
 
 	std::cout << "Cluster list at the end of algorithm (1): " << pClusterList->size() << std::endl;
 
-	ClusterVector clustersToDelete;
+	pandora::ClusterVector clustersToDelete;
 
-	for(ClusterList::iterator clIter = pClusterList->begin() , clEndIter = pClusterList->end() ; clEndIter != clIter ; ++clIter)
+	for(pandora::ClusterList::iterator clIter = pClusterList->begin() , clEndIter = pClusterList->end() ; clEndIter != clIter ; ++clIter)
 	{
-		Cluster *pCluster = *clIter;
+		pandora::Cluster *pCluster = *clIter;
 
 		if(!pCluster->IsMipTrack())
 		{
@@ -261,9 +261,9 @@ pandora::StatusCode HoughTransformAlgorithm::FindClusterCandidates(const pandora
 
 	unsigned int clusterID = 0;
 
-	for(ClusterList::iterator clIter = pInitialClusterList->begin() , clEndIter = pInitialClusterList->end() ; clEndIter != clIter ; ++clIter)
+	for(pandora::ClusterList::iterator clIter = pInitialClusterList->begin() , clEndIter = pInitialClusterList->end() ; clEndIter != clIter ; ++clIter)
 	{
-		Cluster *pCluster = *clIter;
+		pandora::Cluster *pCluster = *clIter;
 //		std::cout << "Initial cluster list size (find) : " << pInitialClusterList->size() << std::endl;
 
 		bool isCandidate = false;
@@ -291,7 +291,7 @@ pandora::StatusCode HoughTransformAlgorithm::FindClusterCandidates(const pandora
 
 //----------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode HoughTransformAlgorithm::IsClusterCandidate(pandora::Cluster *pCluster, const ClusterList *pClusterList, bool &isClusterCandidate) const
+pandora::StatusCode HoughTransformAlgorithm::IsClusterCandidate(pandora::Cluster *pCluster, const pandora::ClusterList *pClusterList, bool &isClusterCandidate) const
 {
 
 //	std::cout << "m_maximumClusterSizeForHoughCandidate : " << m_maximumClusterSizeForHoughCandidate << std::endl;
@@ -312,11 +312,11 @@ pandora::StatusCode HoughTransformAlgorithm::IsClusterCandidate(pandora::Cluster
 	CartesianVector clusterPosition(0.f, 0.f, 0.f);
 	CaloHitList clusterCaloHitList;
 	pCluster->GetOrderedCaloHitList().GetCaloHitList(clusterCaloHitList);
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, arborpfa::CaloHitHelper::GetCentroid(&clusterCaloHitList, clusterPosition));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, arbor::CaloHitHelper::GetCentroid(&clusterCaloHitList, clusterPosition));
 
-	for(ClusterList::iterator clIter = pClusterList->begin() , clEndIter = pClusterList->end() ; clEndIter != clIter ; ++clIter)
+	for(pandora::ClusterList::iterator clIter = pClusterList->begin() , clEndIter = pClusterList->end() ; clEndIter != clIter ; ++clIter)
 	{
-		Cluster *pOtherCluster = *clIter;
+		pandora::Cluster *pOtherCluster = *clIter;
 
 		if(pCluster == pOtherCluster)
 			continue;
@@ -324,7 +324,7 @@ pandora::StatusCode HoughTransformAlgorithm::IsClusterCandidate(pandora::Cluster
 		CartesianVector otherClusterPosition(0.f, 0.f, 0.f);
 		CaloHitList otherClusterCaloHitList;
 		pCluster->GetOrderedCaloHitList().GetCaloHitList(otherClusterCaloHitList);
-		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, arborpfa::CaloHitHelper::GetCentroid(&otherClusterCaloHitList, otherClusterPosition));
+		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, arbor::CaloHitHelper::GetCentroid(&otherClusterCaloHitList, otherClusterPosition));
 
 		const float distance = (otherClusterPosition - clusterPosition).GetMagnitude();
 
@@ -357,7 +357,7 @@ pandora::StatusCode HoughTransformAlgorithm::InitializeHoughCluster(pandora::Clu
 	CartesianVector clusterPosition(0.f, 0.f, 0.f);
 	CaloHitList clusterCaloHitList;
 	pCluster->GetOrderedCaloHitList().GetCaloHitList(clusterCaloHitList);
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, arborpfa::CaloHitHelper::GetCentroid(&clusterCaloHitList, clusterPosition));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, arbor::CaloHitHelper::GetCentroid(&clusterCaloHitList, clusterPosition));
 
 	HoughCluster *pHoughCluster = new HoughCluster();
 	pHoughCluster->m_pCluster = pCluster;
@@ -450,14 +450,14 @@ pandora::StatusCode HoughTransformAlgorithm::BuildMipTrackFromClusters(HoughClus
 	if(houghClusterVector.empty())
 		return STATUS_CODE_INVALID_PARAMETER;
 
-	Cluster *pMipCluster = NULL;
+	pandora::Cluster *pMipCluster = NULL;
 	unsigned int counter = 0;
 	IntVector usedPseudoLayers;
 
 	std::sort(houghClusterVector.begin(), houghClusterVector.end(), HoughTransformAlgorithm::SortByPseudoLayer);
 
-	Cluster *pFirstCluster = (*houghClusterVector.begin())->m_pCluster;
-	Cluster *pLastCluster =   (*(houghClusterVector.end()-1))->m_pCluster;
+	pandora::Cluster *pFirstCluster = (*houghClusterVector.begin())->m_pCluster;
+	pandora::Cluster *pLastCluster =   (*(houghClusterVector.end()-1))->m_pCluster;
 
 	int layerDifference = abs(pFirstCluster->GetInnerPseudoLayer() - pLastCluster->GetInnerPseudoLayer());
 
@@ -473,8 +473,8 @@ pandora::StatusCode HoughTransformAlgorithm::BuildMipTrackFromClusters(HoughClus
 		if(iter+1 == endIter)
 			break;
 
-		Cluster *pCurrentCluster = (*iter)->m_pCluster;
-		Cluster *pNextCluster = (*(iter+1))->m_pCluster;
+		pandora::Cluster *pCurrentCluster = (*iter)->m_pCluster;
+		pandora::Cluster *pNextCluster = (*(iter+1))->m_pCluster;
 
 		int currentLayerDifference = abs(pCurrentCluster->GetInnerPseudoLayer() - pNextCluster->GetInnerPseudoLayer());
 
@@ -561,8 +561,8 @@ pandora::StatusCode HoughTransformAlgorithm::SplitAlignedPointsInMipTrack(const 
 		if(cl == houghClusterVector.size() - 1)
 			break;
 
-		Cluster *pCurrentCluster = houghClusterVector.at(cl)->m_pCluster;
-		Cluster *pNextCluster = houghClusterVector.at(cl+1)->m_pCluster;
+		pandora::Cluster *pCurrentCluster = houghClusterVector.at(cl)->m_pCluster;
+		pandora::Cluster *pNextCluster = houghClusterVector.at(cl+1)->m_pCluster;
 
 		PseudoLayer layerDifference = pNextCluster->GetInnerPseudoLayer() - pCurrentCluster->GetInnerPseudoLayer();
 		float distance = (houghClusterVector.at(cl)->m_position - houghClusterVector.at(cl+1)->m_position).GetMagnitude();

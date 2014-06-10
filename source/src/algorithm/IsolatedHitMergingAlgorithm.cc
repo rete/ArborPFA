@@ -36,14 +36,14 @@
 
 using namespace pandora;
 
-namespace arborpfa
+namespace arbor
 {
 
-StatusCode IsolatedHitMergingAlgorithm::Run()
+StatusCode IsolatedHitMergingAlgorithm::RunArborAlgorithm()
 {
 
 	const CaloHitList *pCaloHitList = NULL;
-	const ClusterList *pClusterList = NULL;
+	const pandora::ClusterList *pClusterList = NULL;
 
 	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetCurrentCaloHitList(*this, pCaloHitList));
 	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetCurrentClusterList(*this, pClusterList));
@@ -51,26 +51,24 @@ StatusCode IsolatedHitMergingAlgorithm::Run()
 	if(pCaloHitList->empty())
 		return STATUS_CODE_INVALID_PARAMETER;
 
-	std::map<CaloHit*, Cluster*> hitToClusterAssociationMap;
+	std::map<CaloHit*, pandora::Cluster*> hitToClusterAssociationMap;
 
 	// loop over isolated calo hit
 	for(CaloHitList::const_iterator iter = pCaloHitList->begin(), iterEnd = pCaloHitList->end(); iter != iterEnd; ++iter)
 	{
-
 		CaloHit *pCaloHit = *iter;
 
 		if(!pCaloHit->IsIsolated() && !PandoraContentApi::IsCaloHitAvailable(*this, pCaloHit))
 			continue;
 
 		float minDistance = std::numeric_limits<float>::max();
-		Cluster *pClosestCluster = NULL;
+		pandora::Cluster *pClosestCluster = NULL;
 		bool isFirstCluster = true;
 
 		// loop over clusters to find the closest one
-		for(ClusterList::const_iterator iter = pClusterList->begin(), endIter = pClusterList->end() ; iter != endIter ; ++iter)
+		for(pandora::ClusterList::const_iterator iter = pClusterList->begin(), endIter = pClusterList->end() ; iter != endIter ; ++iter)
 		{
-
-			Cluster *pCluster = *iter;
+			pandora::Cluster *pCluster = *iter;
 
 			if(isFirstCluster)
 			{
@@ -93,10 +91,10 @@ StatusCode IsolatedHitMergingAlgorithm::Run()
 		hitToClusterAssociationMap[pCaloHit] = pClosestCluster;
 	}
 
-	for(std::map<CaloHit*, Cluster*>::iterator iter = hitToClusterAssociationMap.begin(), endIter = hitToClusterAssociationMap.end() ; iter != endIter ; ++iter)
+	for(std::map<CaloHit*, pandora::Cluster*>::iterator iter = hitToClusterAssociationMap.begin(), endIter = hitToClusterAssociationMap.end() ; iter != endIter ; ++iter)
 	{
 		CaloHit *pCaloHit = iter->first;
-		Cluster *pCluster = iter->second;
+		pandora::Cluster *pCluster = iter->second;
 
 		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::AddIsolatedCaloHitToCluster(*this, pCluster, pCaloHit) );
 	}
@@ -110,7 +108,7 @@ StatusCode IsolatedHitMergingAlgorithm::Run()
 
 //---------------------------------------------------------------------------------------------------------------
 
-float IsolatedHitMergingAlgorithm::GetClosestDistanceToCluster(const Cluster *pCluster, const CaloHit *pCaloHit) const
+float IsolatedHitMergingAlgorithm::GetClosestDistanceToCluster(const pandora::Cluster *pCluster, const CaloHit *pCaloHit) const
 {
 
 	const OrderedCaloHitList &orderedCaloHitList(pCluster->GetOrderedCaloHitList());

@@ -33,8 +33,7 @@
 
 #include "Objects/Cluster.h"
 
-
-namespace arborpfa
+namespace arbor
 {
 
 /** 
@@ -105,7 +104,7 @@ class HoughTransformAlgorithm : public ArborAlgorithm
 		/**
 			* @brief Run the algorithm
 			*/
-		pandora::StatusCode Run();
+		pandora::StatusCode RunArborAlgorithm();
 
 		/**
 			* @brief Read settings from Xml handler

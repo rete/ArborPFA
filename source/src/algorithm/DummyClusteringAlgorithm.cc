@@ -30,19 +30,19 @@
 
 using namespace pandora;
 
-namespace arborpfa
+namespace arbor
 {
 
-pandora::StatusCode DummyClusteringAlgorithm::Run()
+pandora::StatusCode DummyClusteringAlgorithm::RunArborAlgorithm()
 {
-	const CaloHitList *pCaloHitList = NULL;
+	const pandora::CaloHitList *pCaloHitList = NULL;
 	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetCurrentCaloHitList(*this, pCaloHitList));
 
-	Cluster *pCluster = NULL;
+	pandora::Cluster *pCluster = NULL;
 
-	for(CaloHitList::const_iterator iter = pCaloHitList->begin() , endIter = pCaloHitList->end() ; endIter != iter ; ++iter)
+	for(pandora::CaloHitList::const_iterator iter = pCaloHitList->begin() , endIter = pCaloHitList->end() ; endIter != iter ; ++iter)
 	{
-		CaloHit *pCaloHit = *iter;
+		pandora::CaloHit *pCaloHit = *iter;
 
 		if(pCaloHit->IsIsolated())
 		{

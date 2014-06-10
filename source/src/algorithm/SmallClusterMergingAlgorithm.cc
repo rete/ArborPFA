@@ -30,24 +30,24 @@
 
 using namespace pandora;
 
-namespace arborpfa
+namespace arbor
 {
 
-pandora::StatusCode SmallClusterMergingAlgorithm::Run()
+pandora::StatusCode SmallClusterMergingAlgorithm::RunArborAlgorithm()
 {
 
-	const ClusterList *pClusterList = NULL;
+	const pandora::ClusterList *pClusterList = NULL;
 	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetCurrentClusterList(*this, pClusterList));
 
 	if(pClusterList->empty())
 		return STATUS_CODE_SUCCESS;
 
-	ClusterList smallClusterList;
-	ClusterList bigClusterList;
+	pandora::ClusterList smallClusterList;
+	pandora::ClusterList bigClusterList;
 
-	for(ClusterList::const_iterator iter = pClusterList->begin() , endIter = pClusterList->end() ; endIter != iter ; ++iter)
+	for(pandora::ClusterList::const_iterator iter = pClusterList->begin() , endIter = pClusterList->end() ; endIter != iter ; ++iter)
 	{
-		Cluster *pCluster = *iter;
+		pandora::Cluster *pCluster = *iter;
 
 		if(m_minimumClusterSizeForMerging > pCluster->GetNCaloHits())
 		{
@@ -60,19 +60,19 @@ pandora::StatusCode SmallClusterMergingAlgorithm::Run()
 	}
 
 	// map for small cluster association
-	ClusterToClusterMap smallToBigClusterMap;
+	std::map<pandora::Cluster*,pandora::Cluster*> smallToBigClusterMap;
 
 	// loop and identify in which big cluster the small cluster has to be merged
-	for(ClusterList::const_iterator smallIter = smallClusterList.begin() , smallEndIter = smallClusterList.end() ; smallEndIter != smallIter ; ++smallIter)
+	for(pandora::ClusterList::const_iterator smallIter = smallClusterList.begin() , smallEndIter = smallClusterList.end() ; smallEndIter != smallIter ; ++smallIter)
 	{
-		Cluster *pSmallCluster = *smallIter;
+		pandora::Cluster *pSmallCluster = *smallIter;
 
 		float closestDistance(std::numeric_limits<float>::max());
-		Cluster *pClosestCluster = NULL;
+		pandora::Cluster *pClosestCluster = NULL;
 
-		for(ClusterList::const_iterator bigIter = bigClusterList.begin() , bigEndIter = bigClusterList.end() ; bigEndIter != bigIter ; ++bigIter)
+		for(pandora::ClusterList::const_iterator bigIter = bigClusterList.begin() , bigEndIter = bigClusterList.end() ; bigEndIter != bigIter ; ++bigIter)
 		{
-			Cluster *pBigCluster = *bigIter;
+			pandora::Cluster *pBigCluster = *bigIter;
 
 			float distance = 0.f;
 			StatusCode statusCode;
@@ -86,7 +86,7 @@ pandora::StatusCode SmallClusterMergingAlgorithm::Run()
 				statusCode = this->GetClosestDistanceBetweenClusters(pSmallCluster, pBigCluster, distance);
 			}
 
-			if(STATUS_CODE_SUCCESS != statusCode)
+			if(pandora::STATUS_CODE_SUCCESS != statusCode)
 				continue;
 
 			if(m_largeDistanceClusterCut < distance)
@@ -110,10 +110,10 @@ pandora::StatusCode SmallClusterMergingAlgorithm::Run()
 	smallClusterList.clear();
 	bigClusterList.clear();
 
-	for(ClusterToClusterMap::iterator iter = smallToBigClusterMap.begin() , endIter = smallToBigClusterMap.end() ; endIter != iter ; ++iter)
+	for(std::map<pandora::Cluster*,pandora::Cluster*>::iterator iter = smallToBigClusterMap.begin() , endIter = smallToBigClusterMap.end() ; endIter != iter ; ++iter)
 	{
-		Cluster *pSmallCluster = iter->first;
-		Cluster *pBigCluster = iter->second;
+		pandora::Cluster *pSmallCluster = iter->first;
+		pandora::Cluster *pBigCluster = iter->second;
 
 		if(NULL == pSmallCluster || NULL == pBigCluster)
 			continue;
@@ -129,7 +129,7 @@ pandora::StatusCode SmallClusterMergingAlgorithm::Run()
 
 //-----------------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode SmallClusterMergingAlgorithm::GetClosestDistanceBetweenClusters(const Cluster *pCluster1, const Cluster *pCluster2, float &closestDistance)
+pandora::StatusCode SmallClusterMergingAlgorithm::GetClosestDistanceBetweenClusters(const pandora::Cluster *pCluster1, const pandora::Cluster *pCluster2, float &closestDistance)
 {
 	if(NULL == pCluster1 || NULL == pCluster2)
 		return STATUS_CODE_INVALID_PARAMETER;
@@ -137,20 +137,20 @@ pandora::StatusCode SmallClusterMergingAlgorithm::GetClosestDistanceBetweenClust
 	if(0 == pCluster1->GetNCaloHits() || 0 == pCluster2->GetNCaloHits())
 		return STATUS_CODE_FAILURE;
 
-	CaloHitList caloHitList1;
-	CaloHitList caloHitList2;
+	pandora::CaloHitList caloHitList1;
+	pandora::CaloHitList caloHitList2;
 	pCluster1->GetOrderedCaloHitList().GetCaloHitList(caloHitList1);
 	pCluster2->GetOrderedCaloHitList().GetCaloHitList(caloHitList2);
 
 	closestDistance = std::numeric_limits<float>::max();
 
-	for(CaloHitList::const_iterator iter1 = caloHitList1.begin() , endIter1 = caloHitList1.end() ; endIter1 != iter1 ; ++iter1)
+	for(pandora::CaloHitList::const_iterator iter1 = caloHitList1.begin() , endIter1 = caloHitList1.end() ; endIter1 != iter1 ; ++iter1)
 	{
-		CaloHit *pCaloHit1 = *iter1;
+		pandora::CaloHit *pCaloHit1 = *iter1;
 
-		for(CaloHitList::const_iterator iter2 = caloHitList2.begin() , endIter2 = caloHitList2.end() ; endIter2 != iter2 ; ++iter2)
+		for(pandora::CaloHitList::const_iterator iter2 = caloHitList2.begin() , endIter2 = caloHitList2.end() ; endIter2 != iter2 ; ++iter2)
 		{
-			CaloHit *pCaloHit2 = *iter2;
+			pandora::CaloHit *pCaloHit2 = *iter2;
 
 			float distance = (pCaloHit1->GetPositionVector() - pCaloHit2->GetPositionVector()).GetMagnitude();
 
@@ -166,7 +166,7 @@ pandora::StatusCode SmallClusterMergingAlgorithm::GetClosestDistanceBetweenClust
 
 //-----------------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode SmallClusterMergingAlgorithm::GetCentroidDistanceBetweenClusters(const Cluster *pCluster1, const Cluster *pCluster2, float &distance)
+pandora::StatusCode SmallClusterMergingAlgorithm::GetCentroidDistanceBetweenClusters(const pandora::Cluster *pCluster1, const pandora::Cluster *pCluster2, float &distance)
 {
 
 	if(NULL == pCluster1 || NULL == pCluster2)
@@ -182,8 +182,8 @@ pandora::StatusCode SmallClusterMergingAlgorithm::GetCentroidDistanceBetweenClus
 	pCluster1->GetOrderedCaloHitList().GetCaloHitList(caloHitList1);
 	pCluster2->GetOrderedCaloHitList().GetCaloHitList(caloHitList2);
 
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, arborpfa::CaloHitHelper::GetCentroid(&caloHitList1, centroid1));
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, arborpfa::CaloHitHelper::GetCentroid(&caloHitList2, centroid2));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, arbor::CaloHitHelper::GetCentroid(&caloHitList1, centroid1));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, arbor::CaloHitHelper::GetCentroid(&caloHitList2, centroid2));
 
  distance = (centroid1 - centroid2).GetMagnitude();
 

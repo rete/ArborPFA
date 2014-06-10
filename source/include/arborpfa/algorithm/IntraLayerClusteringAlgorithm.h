@@ -32,7 +32,7 @@
 #include "arborpfa/algorithm/ArborAlgorithm.h"
 #include "arborpfa/algorithm/ArborAlgorithmFactory.h"
 
-namespace arborpfa
+namespace arbor
 {
 
 /** 
@@ -54,7 +54,7 @@ class IntraLayerClusteringAlgorithm : public ArborAlgorithm
  /**
   * @brief Run the algorithm
   */
- pandora::StatusCode Run();
+ pandora::StatusCode RunArborAlgorithm();
 
  /**
   * @brief Read settings from Xml handler
@@ -85,7 +85,7 @@ protected:
 
 //---------------------------------------------------------------------------------------------------
 
-ArborAlgorithm *IntraLayerClusteringAlgorithm::Factory::CreateArborAlgorithm() const
+inline ArborAlgorithm *IntraLayerClusteringAlgorithm::Factory::CreateArborAlgorithm() const
 {
 	return new IntraLayerClusteringAlgorithm();
 }
