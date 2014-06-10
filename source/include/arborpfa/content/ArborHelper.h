@@ -31,10 +31,13 @@
 // pandora
 #include "Pandora/StatusCodes.h"
 #include "Objects/CartesianVector.h"
+#include "Helpers/ClusterHelper.h"
 
 // std
 #include <utility>
 #include <cstddef>
+
+#include "arborpfa/arbor/ArborTypes.h"
 
 namespace pandora
 {
@@ -42,8 +45,11 @@ namespace pandora
  class CartesianVector;
 }
 
-namespace arborpfa
+namespace arbor
 {
+
+class Object;
+class Connector;
 
 /** 
  * @brief ArborHelper class. </br>
@@ -79,6 +85,65 @@ class ArborHelper
 	  * @param distance the distance of closest approach to receive (by reference)
 	  */
 	 static pandora::StatusCode GetClosestDistanceApproach(const pandora::Cluster *pCluster1, const pandora::Cluster *pCluster2, float &distance);
+
+		/**
+			* @brief Compute the centroid (barycenter) of the cluster.
+			*
+			* @param pCluster the cluster for centroid computation
+			* @param centroid the centroid position to receive (by reference)
+			*/
+	 static pandora::StatusCode GetCentroid(const arbor::Cluster *pCluster, pandora::CartesianVector &centroid);
+
+	 /**
+	  * @brief Compute the distance wrt the cluster centroids. See ArborHelper::GetCentroid() method
+	  *
+	  * @param pCluster1 the first cluster
+	  * @param pCluster2 the second cluster
+	  * @param the distance between centroid to receive (by reference)
+	  */
+	 static pandora::StatusCode GetCentroidDifference(const arbor::Cluster *pCluster1, const arbor::Cluster *pCluster2, float &centroidDifference);
+
+	 /**
+	  * @brief Return the distance of closest approach of the two clusters, i.e, the </br>
+	  * minimum distance between their calo hits
+	  *
+	  * @param pCluster1 the first cluster
+	  * @param pCluster2 the second cluster
+	  * @param distance the distance of closest approach to receive (by reference)
+	  */
+	 static pandora::StatusCode GetClosestDistanceApproach(const arbor::Cluster *pCluster1, const arbor::Cluster *pCluster2, float &distance);
+
+	 /**
+	  *
+	  */
+	 static pandora::StatusCode FitPoints(const pandora::CartesianPointList &pointList, pandora::ClusterHelper::ClusterFitResult &clusterFitResult);
+
+	 /**
+	  *
+	  */
+	 static pandora::StatusCode GetReferenceDirection(const Object *pObject,	float backwardConnectorWeight,
+	 		float forwardConnectorWeight, pandora::CartesianVector &meanBackwardDirection);
+
+	 /**
+	  *
+	  */
+	 static pandora::StatusCode GetReferenceDirection(const Object *pObject,	float backwardConnectorWeight,
+	 		float forwardConnectorWeight, unsigned int depth, unsigned int numberOfForwardLayers, pandora::CartesianVector &meanBackwardDirection);
+
+	 /**
+	  *
+	  */
+	 static pandora::StatusCode GetKappaParameter(const Object *pInnerObject, const Object *pOuterObject, const pandora::CartesianVector &referenceVector,
+	 		float thetaPower, float distancePower, float &kappaParameter);
+
+ private:
+
+	 /**
+	  *
+	  */
+	 static pandora::StatusCode RecursiveReferenceDirection(const Object *pObject,
+	 		float forwardConnectorWeight, unsigned int &currentDepth, unsigned int maxForwardLayer,
+	 		pandora::CartesianVector &meanBackwardDirection);
 
 };
 
