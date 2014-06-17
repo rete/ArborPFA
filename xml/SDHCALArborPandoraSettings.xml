@@ -3,7 +3,7 @@
 <pandora>
 
     <!-- HELPER CLASS SETTINGS -->
-    <IsMonitoringEnabled> false </IsMonitoringEnabled>
+    <IsMonitoringEnabled> true </IsMonitoringEnabled>
     <ShouldDisplayAlgorithmInfo> true </ShouldDisplayAlgorithmInfo>
 
     <!-- CaloHit helper settings -->
@@ -35,12 +35,30 @@
     <algorithm type = "EventPreparation"/>
     
     <algorithm type = "ArborParent">
-      <algorithm type = "SimpleObjectCreation" description = "ObjectFormation"/>
+      <algorithm type = "SimpleObjectCreation" description = "ObjectFormation">
+        <ShouldUseOnlyCaloHitsForObjects> false </ShouldUseOnlyCaloHitsForObjects>
+        <MaximumSizeForClusterSplitting> 4 </MaximumSizeForClusterSplitting>
+        <IntraLayerMaxDistance> 11.f </IntraLayerMaxDistance>
+        <ShouldUseReadoutLayer> false </ShouldUseReadoutLayer>
+        <ShouldSplitClusterInSingleCaloHitClusters> true </ShouldSplitClusterInSingleCaloHitClusters>
+      </algorithm>
+      <ObjectListName>   InputObjects   </ObjectListName>
+      <ReplaceCurrentObjectList>  true  </ReplaceCurrentObjectList>
+    </algorithm>
+    
+<!--     <algorithm type = "IsolationTagging">
+       <MaxNObjectsInSamePseudoLayer> 2 </MaxNObjectsInSamePseudoLayer>
+       <MaxNObjects> 1 </MaxNObjects> 
+       <MaxNeighborDistance> 50.f </MaxNeighborDistance>
+       <MaxIntraLayerNeighborDistance> 18.f </MaxIntraLayerNeighborDistance>
+    </algorithm> -->
+    
+    <algorithm type = "ArborParent">
       <algorithm type = "ArborConnectorClustering" description = "ClusterFormation">
           
           <HcalEnergyResolutionFunctionName>  SDHCALEnergyResolution   </HcalEnergyResolutionFunctionName>
           
-          <!-- Parameters for initial connection and second loop connection -->
+          <!-- Parameters for initial connection connection -->
           <MaximumDistanceForConnectionFine>          10.0    </MaximumDistanceForConnectionFine>
           <MaximumDistanceForConnectionCoarse>        65.5    </MaximumDistanceForConnectionCoarse>
           
@@ -51,20 +69,30 @@
           <OrderParameterDistancePower>               5       </OrderParameterDistancePower>
           
           <ReferenceDirectionDepth>                   2       </ReferenceDirectionDepth>
-          <ReferenceDirectionMaximumForwardLayer>     1000    </ReferenceDirectionMaximumForwardLayer>
+          <ReferenceDirectionMaximumForwardLayer>     2    </ReferenceDirectionMaximumForwardLayer>
           
           <AllowForwardConnectionForIsolatedObjects>  false    </AllowForwardConnectionForIsolatedObjects>
-          <ShouldUseIsolatedObjects>                  true    </ShouldUseIsolatedObjects>
+          <ShouldUseIsolatedObjects>                  false    </ShouldUseIsolatedObjects>
           
           <!-- Display or not the connectors -->
           <ShowConnectors>                            true    </ShowConnectors>
           
       </algorithm>
       <associationAlgorithms>
-        <algorithm type = "TopologicalTrackAssociation"/>
-        <algorithm type = "NeutralTreeMerging"/>
+        <algorithm type = "TopologicalTrackAssociation">
+          <ShouldMergeChargedTrees> true </ShouldMergeChargedTrees>
+          <TrackToClusterDistanceCut> 40.f </TrackToClusterDistanceCut>
+          <TrackToClusterNLayersCut> 2 </TrackToClusterNLayersCut>
+         <!--  <TrackListName>  </TrackListName> -->
+        </algorithm>
+        <algorithm type = "NeutralTreeMerging">
+          <UseClustersWithTrackAssociation> true </UseClustersWithTrackAssociation>
+          <SeedSeparationDistance> 12.5 </SeedSeparationDistance>
+        </algorithm>
         <algorithm type = "SmallNeutralFragmentMerging">
-          <MaximumDaughterNObject> 7 </MaximumDaughterNObject>
+          <MaximumDaughterNObject> 10 </MaximumDaughterNObject>
+          <LargeDistanceCut> 1000.f </LargeDistanceCut>
+          <ShouldUseDistanceToCentroid> false </ShouldUseDistanceToCentroid>
         </algorithm>
       </associationAlgorithms>
       <ObjectListName>   InputObjects   </ObjectListName>
@@ -101,19 +129,20 @@
     </algorithm> 
     
     
-    <algorithm type = "ArborOutput">
-      <RootFileName> ArborOutputFile_single_pi-_20GeV.root </RootFileName>
-    </algorithm>
+<!--     <algorithm type = "ArborOutput">
+      <RootFileName> ArborOutputFile_single_pi-_30GeV.root </RootFileName>
+      <RootTreeName> ArborOutputTree </RootTreeName>
+    </algorithm> -->
     
     <!-- EVE Monitoring -->
     <algorithm type = "VisualMonitoring" description = "display all">
           
-       <DisplayEvent>false</DisplayEvent>
+       <DisplayEvent>true</DisplayEvent>
        
        <ShowMCParticles>            false    </ShowMCParticles>
-       <ShowCurrentCaloHits>        true     </ShowCurrentCaloHits>
+       <ShowCurrentCaloHits>        false     </ShowCurrentCaloHits>
        <ShowCurrentTracks>          false     </ShowCurrentTracks> 
-       <ShowCurrentClusters>        false     </ShowCurrentClusters> 
+       <ShowCurrentClusters>        true     </ShowCurrentClusters> 
        <ShowCurrentPfos>            true     </ShowCurrentPfos>
        <HitColors>                  iterate  </HitColors>
        <ShowOnlyAvailable>          false    </ShowOnlyAvailable>
