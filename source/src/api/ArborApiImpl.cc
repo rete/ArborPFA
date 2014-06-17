@@ -41,6 +41,7 @@
 #include "arborpfa/algorithm/ArborClusterConverterAlgorithm.h"
 #include "arborpfa/algorithm/TopologicalTrackAssociationAlgorithm.h"
 #include "arborpfa/algorithm/SmallNeutralFragmentMergingAlgorithm.h"
+#include "arborpfa/algorithm/IsolationTaggingAlgorithm.h"
 #include "arborpfa/algorithm/ArborOutputAlgorithm.h"
 
 // pandora
@@ -100,6 +101,8 @@ pandora::StatusCode ArborApiImpl::RegisterArborAlgorithms(Arbor &arbor) const
 			  new arbor::SmallNeutralFragmentMergingAlgorithm::Factory));
 	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "ArborOutput",
 				  new arbor::ArborOutputAlgorithm::Factory));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "IsolationTagging",
+				  new arbor::IsolationTaggingAlgorithm::Factory));
 
 	return pandora::STATUS_CODE_SUCCESS;
 }
