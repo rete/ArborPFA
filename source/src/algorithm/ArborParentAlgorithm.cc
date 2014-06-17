@@ -48,8 +48,8 @@ StatusCode ArborParentAlgorithm::RunArborAlgorithm()
 
  if (!m_inputCaloHitListName.empty())
  {
-     PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetCurrentCaloHitListName(*this, originalCaloHitListName));
-     PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::ReplaceCurrentCaloHitList(*this, m_inputCaloHitListName));
+		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetCurrentCaloHitListName(*this, originalCaloHitListName));
+		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::ReplaceCurrentCaloHitList(*this, m_inputCaloHitListName));
  }
 
  if(!m_objectCreationAlgorithmName.empty())
