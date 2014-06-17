@@ -56,9 +56,6 @@ StatusCode SimpleObjectCreationAlgorithm::RunArborAlgorithm()
 
 			Object *pObject = NULL;
 			PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, ArborContentApi::Object::Create(*this, pObject, pCaloHit));
-
-			if(pCaloHit->IsIsolated())
-				pObject->SetFlag(ISOLATED_OBJECT, true);
 		}
 
 		return STATUS_CODE_SUCCESS;
@@ -218,17 +215,9 @@ pandora::StatusCode SimpleObjectCreationAlgorithm::CreateObjectsFromCaloHitList(
 		{
 			Object *pNewObject = NULL;
 			PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, ArborContentApi::Object::Create(*this, pNewObject, pCaloHit));
-
-			if(pCaloHit->IsIsolated())
-				pNewObject->SetFlag(ISOLATED_OBJECT, true);
 		}
 		else
-		{
-			if(pCaloHit->IsIsolated())
-				pObject->SetFlag(ISOLATED_OBJECT, true);
-
 			pObject->AddCaloHit(pCaloHit);
-		}
 	}
 
 	return STATUS_CODE_SUCCESS;
