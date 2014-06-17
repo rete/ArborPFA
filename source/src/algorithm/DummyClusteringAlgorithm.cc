@@ -26,44 +26,38 @@
 
 
 #include "arborpfa/algorithm/DummyClusteringAlgorithm.h"
-#include "arborpfa/arbor/AlgorithmHeaders.h"
 
-using namespace pandora;
+// arbor
+#include "arborpfa/arbor/AlgorithmHeaders.h"
 
 namespace arbor
 {
 
 pandora::StatusCode DummyClusteringAlgorithm::RunArborAlgorithm()
 {
-	const pandora::CaloHitList *pCaloHitList = NULL;
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetCurrentCaloHitList(*this, pCaloHitList));
+	const arbor::ObjectList *pObjectList = NULL;
+	PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, ArborContentApi::GetCurrentObjectList(*this, pObjectList));
 
-	pandora::Cluster *pCluster = NULL;
+	arbor::ClusterList clusterList;
 
-	for(pandora::CaloHitList::const_iterator iter = pCaloHitList->begin() , endIter = pCaloHitList->end() ; endIter != iter ; ++iter)
+	for(arbor::ObjectList::const_iterator iter = pObjectList->begin() , endIter = pObjectList->end() ; endIter != iter ; ++iter)
 	{
-		pandora::CaloHit *pCaloHit = *iter;
+		arbor::Cluster *pCluster = NULL;
 
-		if(pCaloHit->IsIsolated())
+		if((*iter)->GetFlag(ISOLATED_OBJECT))
 		{
-			if(NULL == pCluster)
-			{
-				PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::Cluster::Create(*this, pCaloHit, pCluster));
-			}
-			else
-			{
-				PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::AddCaloHitToCluster(*this, pCluster, pCaloHit));
-			}
+			PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, ArborContentApi::Cluster::Create(*this, pCluster, *iter));
 		}
-
 	}
 
-	return STATUS_CODE_SUCCESS;
+	return pandora::STATUS_CODE_SUCCESS;
 }
+
+//----------------------------------------------------------------------------------------------------
 
 pandora::StatusCode DummyClusteringAlgorithm::ReadSettings(const pandora::TiXmlHandle xmlHandle)
 {
-	return STATUS_CODE_SUCCESS;
+	return pandora::STATUS_CODE_SUCCESS;
 }
 
 } 
