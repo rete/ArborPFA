@@ -24,7 +24,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with ArborPFA.  If not, see <http://www.gnu.org/licenses/>.
 
-
+Based on an original idea from H. Videau.
+First code version implemented by M. Ruan.
+Current implementation by R. Ete
 
 INSTALL:
 =========
@@ -33,5 +35,9 @@ See INSTALL file in the main directory
 for more informations about installation.
 
 
-Please, report bug to <remi.ete@gmail.com> 
+Please, send comments or report bug to :
+
+<remi.ete@gmail.com>
+<manqi.ruan@cern.ch>
+<henri.videau@llr.in2p3.fr>
 

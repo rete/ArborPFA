@@ -24,6 +24,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with ArborPFA.  If not, see <http://www.gnu.org/licenses/>.
 
+Based on an original idea from H. Videau.
+First code version implemented by M. Ruan.
 
 
 REQUIREMENTS:
