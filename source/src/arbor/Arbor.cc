@@ -52,7 +52,10 @@ Arbor::Arbor()
   m_pArborImpl = new ArborImpl(this);
  	m_pObjectManager = new ObjectManager();
  	m_pClusterManager = new ClusterManager();
- 	m_pArborPluginManager = new ArborPluginManager();
+ 	m_pArborPluginManager = new ArborPluginManager(this);
+
+  PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::RegisterSettingsFunction(*m_pPandora, "ArborPlugin",
+  		&ArborPluginManager::ReadSettings));
 
  	PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterResetFunction());
  }
@@ -116,14 +119,14 @@ pandora::StatusCode Arbor::ResetEvent()
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-const ArborApiImpl *Arbor::GetArborApiImpl() const
+ArborApiImpl *Arbor::GetArborApiImpl() const
 {
 	return m_pArborApiImpl;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-const ArborContentApiImpl *Arbor::GetArborContentApiImpl() const
+ArborContentApiImpl *Arbor::GetArborContentApiImpl() const
 {
 	return m_pArborContentApiImpl;
 }

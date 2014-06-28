@@ -69,14 +69,14 @@ class Arbor
    *
    *  @return Address of the arbor api impl
    */
-  const ArborApiImpl *GetArborApiImpl() const;
+  ArborApiImpl *GetArborApiImpl() const;
 
   /**
    *  @brief  Get the arbor content api impl
    *
    *  @return Address of the arbor content api impl
    */
-  const ArborContentApiImpl *GetArborContentApiImpl() const;
+  ArborContentApiImpl *GetArborContentApiImpl() const;
 
   /**
    *
@@ -105,7 +105,6 @@ class Arbor
 		 */
 		pandora::StatusCode ResetEvent();
 
-
 		arbor::ObjectManager        *m_pObjectManager;
 		arbor::ClusterManager       *m_pClusterManager;
 		arbor::ArborPluginManager   *m_pArborPluginManager;
@@ -119,6 +118,7 @@ class Arbor
   friend class ArborContentApiImpl;
   friend class ArborImpl;
   friend class ArborAlgorithm;
+  friend class ArborPluginManager;
 }; 
 
 
