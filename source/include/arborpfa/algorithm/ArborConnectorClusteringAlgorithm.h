@@ -66,8 +66,7 @@ class ArborConnectorClusteringAlgorithm : public ArborAlgorithm
 
 		/**
 		 * @brief Seed the initial connectors. </br>
-		 * Part of them will be removed/sorted/re-weighted in the following part </br>
-		 * Called after arbor object creation
+		 * Part of them will be removed/sorted/re-weighted in the following part
 		 */
 		pandora::StatusCode SeedInitialConnectors();
 
@@ -75,32 +74,15 @@ class ArborConnectorClusteringAlgorithm : public ArborAlgorithm
 		 * @brief Clean the connectors. </br>
 		 * Keep at least one connector in the backward direction (arbor principle) by taking a decision among
 		 * all backward connectors. </br>
-		 * Called after arbor objects creation and connector seeding.
+		 * Called after connector seeding.
 		 */
 		pandora::StatusCode CleanConnectors();
-
-		/**
-		 *
-		 */
-		pandora::StatusCode FirstConnectorCleaning();
-
-		/**
-		 *
-		 */
-		pandora::StatusCode SecondConnectorCleaning();
 
 		/**
 		 * @brief Cluster all the connected arbor objects. </br>
 		 * Called after connector cleaning
 		 */
 		pandora::StatusCode DoClustering();
-
-		/**
-		 * @brief Clear all content, all the objects allocated on the heap.
-		 */
-		pandora::StatusCode ClearContent();
-
-//-----------------------------------------------------------------------------------------------------------------
 
 		/**
 		 *
@@ -114,28 +96,17 @@ class ArborConnectorClusteringAlgorithm : public ArborAlgorithm
 
  protected:
 
-		// list and function names
-		std::string        m_trackListName;  // for track-cluster association
-		std::string        m_hcalEnergyResolutionFunctionName;
-
 		// algorithm tools
 		const ObjectList                            *m_pObjectList;
-		ObjectList                                    m_abjectList;
-		OrderedObjectList                             m_orderedObjectList;
-		ConnectorList                                 m_connectorList;
-		ConnectorList                                 m_secondCleaningConnectors;
-		ClusterList                                   m_clusterList;
 
 		// algorithm parameters
 		unsigned int       m_referenceDirectionDepth;
 		unsigned int       m_referenceDirectionMaximumForwardLayer;
 
-		float               m_maximumDistanceForConnectionCoarse;
 		float               m_maximumDistanceForConnectionFine;
-		float               m_maximumDistanceForConnectionCoarse2;
-		float               m_maximumDistanceForConnectionFine2;
-		float               m_angleForSecondCleaningCoarse;
-		float               m_angleForSecondCleaningFine;
+		float               m_maximumDistanceForConnectionCoarse;
+		float               m_angleForInitialConnectionFine;
+		float               m_angleForInitialConnectionCoarse;
 		float               m_orderParameterAnglePower;
 		float               m_orderParameterDistancePower;
 		float               m_forwardConnectorWeight;
@@ -145,6 +116,7 @@ class ArborConnectorClusteringAlgorithm : public ArborAlgorithm
 		bool                m_showConnectors;
 		bool                m_shouldUseIsolatedObjects;
 		bool                m_shouldRunSecondCleaning;
+		bool                m_shouldSelectNearestObjectWhileCleaning;
 }; 
 
 //--------------------------------------------------------------------------------------------------------------------

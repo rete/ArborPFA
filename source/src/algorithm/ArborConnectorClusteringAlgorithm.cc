@@ -21,6 +21,8 @@
  * along with ArborPFA.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * @author Remi Ete
+ * @author Manqi Ruan
+ * @author Henri Videau
  * @copyright CNRS , IPNL
  */
 
@@ -50,29 +52,15 @@ namespace arbor
 
 pandora::StatusCode ArborConnectorClusteringAlgorithm::RunArborAlgorithm()
 {
-	// process the whole machine !!
 	try
 	{
-//		const pandora::CaloHitList *pCaloHitList = NULL;
-//		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetCurrentCaloHitList(*this, pCaloHitList));
-
-//		std::cout << "pCaloHitList->size() : " << pCaloHitList->size() << std::endl;
-
 		m_pObjectList = NULL;
 		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, ArborContentApi::GetCurrentObjectList(*this, m_pObjectList));
 
-//		unsigned int nCaloHits = 0;
-//		for(ObjectList::iterator iter1 = m_pObjectList->begin() , endIter1 = m_pObjectList->end() ; endIter1 != iter1 ; ++iter1)
-//		{
-//			nCaloHits += (*iter1)->GetCaloHitList().size();
-//		}
-//
-//		std::cout << "nCaloHits : " << nCaloHits << std::endl;
-
-		std::cout << "== Seeding initial connectors ==" << std::endl;
+		ARBOR_PRINT( "== Seeding initial connectors ==" << std::endl );
 		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->SeedInitialConnectors());
 
-		std::cout << "== Cleaning connectors ==" << std::endl;
+		ARBOR_PRINT( "== Cleaning connectors ==" << std::endl );
 		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->CleanConnectors());
 
 		if(m_showConnectors)
@@ -80,19 +68,13 @@ pandora::StatusCode ArborConnectorClusteringAlgorithm::RunArborAlgorithm()
 			PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->DrawConnectors());
 		}
 
-		std::cout << "== Doing clustering ==" << std::endl;
+		ARBOR_PRINT( "== Doing clustering ==" << std::endl );
 		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->DoClustering());
-
 	}
 	catch(StatusCodeException &exception)
 	{
-		std::cout << "== Exception caught ==> CLEARING THE CONTENT ==" << std::endl;
-		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->ClearContent());
 		return exception.GetStatusCode();
 	}
-
-	std::cout << "== Clearing the content ==" << std::endl;
-	PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->ClearContent());
 
 	return STATUS_CODE_SUCCESS;
 }
@@ -129,16 +111,18 @@ pandora::StatusCode ArborConnectorClusteringAlgorithm::SeedInitialConnectors()
 			const CartesianVector objectPosition2 = pObject2->GetPosition();
 
 			const CartesianVector differenceVector = objectPosition2 - objectPosition1;
-			float maximumDistanceForConnection = pObject2->GetGranularity() >= COARSE ? m_maximumDistanceForConnectionCoarse : m_maximumDistanceForConnectionFine;
+			const float openingAngle = objectPosition1.GetOpeningAngle(differenceVector);
+			const float maximumDistanceForConnection = pObject2->GetGranularity() >= COARSE ? m_maximumDistanceForConnectionCoarse : m_maximumDistanceForConnectionFine;
+			const float maximumOpeningAngle = pObject1->GetGranularity() >= COARSE ? m_angleForInitialConnectionCoarse : m_angleForInitialConnectionFine;
 
-			if(differenceVector.GetMagnitude() < maximumDistanceForConnection)
+			if(differenceVector.GetMagnitude() < maximumDistanceForConnection && openingAngle < maximumOpeningAngle)
 			{
 				if(!pObject1->IsConnectedWith(pObject2))
 				{
 					Connector *pConnector = NULL;
 					PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pObject1->ConnectWith(pObject2, FORWARD, pConnector));
 					PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pConnector->SetType(INITIAL_CONNECTOR));
-					m_connectorList.insert(pConnector);
+					PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pConnector->SetWeight(differenceVector.GetMagnitude()));
 				}
 			}
 		}
@@ -150,20 +134,6 @@ pandora::StatusCode ArborConnectorClusteringAlgorithm::SeedInitialConnectors()
 //----------------------------------------------------------------------------------------------------------------------
 
 pandora::StatusCode ArborConnectorClusteringAlgorithm::CleanConnectors()
-{
-	PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->FirstConnectorCleaning());
-
-//	if(m_shouldRunSecondCleaning)
-//	{
-//	 PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->SecondConnectorCleaning());
-//	}
-
-	return STATUS_CODE_SUCCESS;
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-
-pandora::StatusCode ArborConnectorClusteringAlgorithm::FirstConnectorCleaning()
 {
 	unsigned int count = 0;
 
@@ -182,9 +152,13 @@ pandora::StatusCode ArborConnectorClusteringAlgorithm::FirstConnectorCleaning()
 			continue;
 
 		CartesianVector meanBackwardDirection(0.f, 0.f, 0.f);
-		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, ArborHelper::GetReferenceDirection(pObject,
-				m_backwardConnectorWeight, m_forwardConnectorWeight, m_referenceDirectionDepth,
-				m_referenceDirectionMaximumForwardLayer, meanBackwardDirection));
+
+		if(!m_shouldSelectNearestObjectWhileCleaning)
+		{
+			PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, ArborHelper::GetReferenceDirection(pObject,
+					m_backwardConnectorWeight, m_forwardConnectorWeight, m_referenceDirectionDepth,
+					m_referenceDirectionMaximumForwardLayer, meanBackwardDirection));
+		}
 
 		const ConnectorList &connectorList = pObject->GetBackwardConnectorList();
 		const CartesianVector &objectPosition = pObject->GetPosition();
@@ -207,9 +181,17 @@ pandora::StatusCode ArborConnectorClusteringAlgorithm::FirstConnectorCleaning()
 				pOtherObject = pConnector->GetFirst();
 
 			float orderParameter = 0.f;
-			// compute the order parameter wrt the mean backward direction (unit vector)
-			PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, ArborHelper::GetKappaParameter(pObject, pOtherObject,
-					meanBackwardDirection.GetUnitVector(), m_orderParameterAnglePower, m_orderParameterDistancePower, orderParameter));
+
+			if(!m_shouldSelectNearestObjectWhileCleaning)
+			{
+				// compute the order parameter wrt the mean backward direction (unit vector)
+				PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, ArborHelper::GetKappaParameter(pObject, pOtherObject,
+						meanBackwardDirection.GetUnitVector(), m_orderParameterAnglePower, m_orderParameterDistancePower, orderParameter));
+			}
+			else
+			{
+				orderParameter = (pOtherObject->GetPosition() - pObject->GetPosition()).GetMagnitude();
+			}
 
 			if(bestOrderParameter > orderParameter)
 			{
@@ -250,241 +232,19 @@ pandora::StatusCode ArborConnectorClusteringAlgorithm::FirstConnectorCleaning()
 		for(ObjectList::iterator objectIter = pObjectCleaningInfo->m_deleteConnectionList.begin() , objectEndIter = pObjectCleaningInfo->m_deleteConnectionList.end() ; objectEndIter != objectIter ; ++objectIter)
 		{
 			Object *pOtherObject = *objectIter;
-
-			Connector *pCurrentConnector = NULL;
-			PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pObject->FindConnector(pOtherObject, pCurrentConnector));
-			size_t nErase = m_connectorList.erase(pCurrentConnector);
-
-			if(1 != nErase)
-				return STATUS_CODE_FAILURE;
-
 			PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pObject->RemoveConnectionWith(pOtherObject));
 			pOtherObject = NULL;
 		}
 
 		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pObject->SetCurrentBackwardConnector(pObjectCleaningInfo->m_pBestConnector));
 
-		if(!m_shouldRunSecondCleaning)
-		{
 			// Set it as final decision
 			PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pObjectCleaningInfo->m_pBestConnector->SetType(FINAL_DECISION));
-		}
-		else
-		{
-			PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pObjectCleaningInfo->m_pBestConnector->SetType(FIRST_CLEANING));
-		}
 
 		delete pObjectCleaningInfo;
 	}
 
 	objectInfoList.clear();
-
-	return STATUS_CODE_SUCCESS;
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-
-pandora::StatusCode ArborConnectorClusteringAlgorithm::SecondConnectorCleaning()
-{
-	std::map<Object*, CartesianVector> objectToReferenceDirectionMap;
-
-	for(ConnectorList::iterator connectorIter = m_connectorList.begin(), connectorEndIter = m_connectorList.end() ; connectorEndIter != connectorIter ; ++connectorIter)
-	{
-		Connector *pConnector = *connectorIter;
-
-		Object *pObjectFrom = pConnector->GetFirst()->IsBackwardConnector(pConnector) ? pConnector->GetSecond() : pConnector->GetFirst();
-		Object *pObjectTo = pConnector->GetFirst() == pObjectFrom ? pConnector->GetSecond() : pConnector->GetFirst();
-
-		const CartesianVector positionFrom = pObjectFrom->GetPosition();
-		const CartesianVector positionTo   = pObjectTo->GetPosition();
-		const CartesianVector differenceVector = pObjectTo->GetPosition() - pObjectFrom->GetPosition();
-		const PseudoLayer pseudoLayerFrom = pObjectFrom->GetPseudoLayer();
-		const PseudoLayer pseudoLayerTo   = pObjectTo->GetPseudoLayer();
-
-		std::map<Object*, CartesianVector>::iterator findIterFrom = objectToReferenceDirectionMap.find(pObjectFrom);
-		std::map<Object*, CartesianVector>::iterator findIterTo   = objectToReferenceDirectionMap.find(pObjectTo);
-
-		if(findIterFrom == objectToReferenceDirectionMap.end())
-		{
-			objectToReferenceDirectionMap.insert(std::make_pair<Object*,CartesianVector>(pObjectFrom, CartesianVector(0.f, 0.f, 0.f)));
-		}
-
-		if(findIterTo == objectToReferenceDirectionMap.end())
-		{
-			objectToReferenceDirectionMap.insert(std::make_pair<Object*,CartesianVector>(pObjectTo, CartesianVector(0.f, 0.f, 0.f)));
-		}
-
-		findIterFrom->second += differenceVector * - m_forwardConnectorWeight;
-		findIterTo->second   += differenceVector *   m_backwardConnectorWeight;
-	}
-
-	for(ConnectorList::iterator connectorIter = m_connectorList.begin(), connectorEndIter = m_connectorList.end() ; connectorEndIter != connectorIter ; ++connectorIter)
-	{
-		Connector *pConnector = *connectorIter;
-
-		Object *pObjectFrom = pConnector->GetFirst()->IsBackwardConnector(pConnector) ? pConnector->GetSecond() : pConnector->GetFirst();
-		Object *pObjectTo = pConnector->GetFirst() == pObjectFrom ? pConnector->GetSecond() : pConnector->GetFirst();
-
-		const CartesianVector positionFrom = pObjectFrom->GetPosition();
-		const CartesianVector positionTo   = pObjectTo->GetPosition();
-		const CartesianVector differenceVector = pObjectTo->GetPosition() - pObjectFrom->GetPosition();
-		const PseudoLayer pseudoLayerFrom = pObjectFrom->GetPseudoLayer();
-		const PseudoLayer pseudoLayerTo   = pObjectTo->GetPseudoLayer();
-
-		for(ObjectList::const_iterator objIter = m_pObjectList->begin() , objEndIter = m_pObjectList->end() ; objEndIter != objIter ; ++objIter)
-		{
-			Object *pObjectTest = *objIter;
-
-			if(pObjectFrom == pObjectTest || pObjectTo == pObjectTest)
-				continue;
-
-			const CartesianVector objectTestPosition = pObjectTest->GetPosition();
-			const PseudoLayer objectTestPseudoLayer = pObjectTest->GetPseudoLayer();
-			float distanceForConnection = pObjectTest->GetGranularity() >= COARSE ? m_maximumDistanceForConnectionCoarse : m_maximumDistanceForConnectionFine;
-			float distanceForConnection2 = pObjectTest->GetGranularity() >= COARSE ? m_maximumDistanceForConnectionCoarse2 : m_maximumDistanceForConnectionFine2;
-
-			const float testDistance = std::min((objectTestPosition-positionFrom).GetMagnitude(), (objectTestPosition-positionTo).GetMagnitude());
-
-			if(testDistance > distanceForConnection && testDistance < distanceForConnection2)
-			{
-				float forwardAngle = differenceVector.GetOpeningAngle(objectTestPosition-positionTo);
-				float backwardAngle = differenceVector.GetOpeningAngle(positionFrom-objectTestPosition);
-				float angleForSecondCleaning = pObjectTest->GetGranularity() >= COARSE ? m_angleForSecondCleaningCoarse : m_angleForSecondCleaningFine;
-
-				if(forwardAngle < angleForSecondCleaning && objectTestPseudoLayer > pseudoLayerTo && !pObjectTo->IsConnectedWith(pObjectTest))
-				{
-					Connector *pNewConnector = NULL;
-					PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pObjectTo->ConnectWith(pObjectTest, FORWARD, pNewConnector));
-					PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pNewConnector->SetType(SECOND_CLEANING));
-					m_secondCleaningConnectors.insert(pNewConnector);
-				}
-				else if(backwardAngle < angleForSecondCleaning && objectTestPseudoLayer < pseudoLayerFrom && !pObjectFrom->IsConnectedWith(pObjectTest))
-				{
-					Connector *pNewConnector = NULL;
-					PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pObjectFrom->ConnectWith(pObjectTest, BACKWARD, pNewConnector));
-					PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pNewConnector->SetType(SECOND_CLEANING));
-					m_secondCleaningConnectors.insert(pNewConnector);
-				}
-			}
-		}
-	}
-
-	// insert the new connectors in the global list and
-	// clean the new connector list (no longer needed)
-	m_connectorList.insert(m_secondCleaningConnectors.begin(), m_secondCleaningConnectors.end());
-	m_secondCleaningConnectors.clear();
-
-	// clean the new connectors
-	for(ObjectList::const_iterator iter = m_pObjectList->begin() , endIter = m_pObjectList->end() ; endIter != iter ; ++iter)
-	{
-		Object *pObject = *iter;
-
-		if(pObject->GetBackwardConnectorList().empty())
-		{
-			PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pObject->SetCurrentBackwardConnector(NULL));
-			continue;
-		}
-
-		if(1 == pObject->GetBackwardConnectorList().size())
-		{
-			PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pObject->SetCurrentBackwardConnector(*pObject->GetBackwardConnectorList().begin()));
-			continue;
-		}
-
-		std::map<Object*,CartesianVector>::iterator refIter = objectToReferenceDirectionMap.find(pObject);
-
-		CartesianVector referenceDirection(0.f, 0.f, 0.f);
-
-		if(objectToReferenceDirectionMap.end() == refIter || refIter->second == CartesianVector(0.f, 0.f, 0.f))
-		{
-			referenceDirection = pObject->GetPosition() * - m_backwardConnectorWeight;
-		}
-		else
-		{
-			referenceDirection = refIter->second + pObject->GetPosition() * - m_backwardConnectorWeight;
- 	}
-
-		if(referenceDirection == CartesianVector(0.f, 0.f, 0.f))
-		{
-			std::cout << "Problem : Zero vector direction !!!! " << std::endl;
-			continue;
-		}
-
-		referenceDirection = referenceDirection.GetUnitVector();
-
-		float bestOrderParameter(std::numeric_limits<float>::max());
-		Object *pBestObject = NULL;
-		Connector *pBestConnector = NULL;
-		ObjectList deleteConnectionObjects;
-
-		const ConnectorList &connectorList = pObject->GetBackwardConnectorList();
-
-		for(ConnectorList::const_iterator connectorIter = connectorList.begin() , connectorEndIter = connectorList.end() ; connectorEndIter != connectorIter ; ++connectorIter)
-		{
-			Connector *pConnector = *connectorIter;
-
-			Object *pOtherObject = NULL;
-
-			if(pObject == pConnector->GetFirst())
-				pOtherObject = pConnector->GetSecond();
-			else
-				pOtherObject = pConnector->GetFirst();
-
-			float orderParameter = 0.f;
-			// compute the order parameter wrt the mean backward direction (unit vector)
-			PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, ArborHelper::GetKappaParameter(pObject, pOtherObject,
-					referenceDirection, m_orderParameterAnglePower, m_orderParameterDistancePower, orderParameter));
-
-			if(bestOrderParameter > orderParameter)
-			{
-				if(NULL != pBestObject)
-				{
-					deleteConnectionObjects.insert(pBestObject);
-				}
-
-				bestOrderParameter = orderParameter;
-				pBestConnector = pConnector;
-				pBestObject = pOtherObject;
-		 }
-			else
-			{
-				deleteConnectionObjects.insert(pOtherObject);
-			}
-		}
-
-		if(NULL != pBestObject)
-		{
-			// Remove all other connectors and keep only the best one.
-			for(ObjectList::iterator objectIter = deleteConnectionObjects.begin() , objectEndIter = deleteConnectionObjects.end() ; objectEndIter != objectIter ; ++objectIter)
-			{
-				Object *pOtherObject = *objectIter;
-
-				Connector *pCurrentConnector = NULL;
-				PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pObject->FindConnector(pOtherObject, pCurrentConnector));
-
-				size_t nErase = m_connectorList.erase(pCurrentConnector);
-
-				if(1 != nErase)
-					return STATUS_CODE_FAILURE;
-
-				PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pObject->RemoveConnectionWith(pOtherObject));
-			}
-
-			// Set it as final decision
-			PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pBestConnector->SetType(FINAL_DECISION));
-		}
-
-		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pObject->SetCurrentBackwardConnector(pBestConnector));
-	}
-
-	for(ObjectList::const_iterator iter = m_pObjectList->begin() , endIter = m_pObjectList->end() ; endIter != iter ; ++iter)
-	{
-		Object *pObject = *iter;
-		Connector *pBestConnector = pObject->GetCurrentBackwardConnector();
-
-		if(pObject->GetBackwardConnectorList().empty())
-			continue;
-	}
 
 	return STATUS_CODE_SUCCESS;
 }
@@ -497,30 +257,12 @@ pandora::StatusCode ArborConnectorClusteringAlgorithm::DoClustering()
 	{
 		Object *pObject = *objIter;
 
-//		if(pObject->GetFlag(ISOLATED_OBJECT))
-//			std::cout << "building isolated cluster 1" << std::endl;
-
-
-
 		// we use only seed object to build clusters
 		if(NULL != pObject->GetCurrentBackwardConnector())
 			continue;
 
-//		if(pObject->GetFlag(ISOLATED_OBJECT))
-//			std::cout << "building isolated cluster 2" << std::endl;
-
-//		if(pObject->GetConnectorList().empty())
-//			std::cout << "Building cluster with only one non-connected object" << std::endl;
-
 		arbor::Cluster *pCluster = NULL;
 		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, ArborContentApi::Cluster::Create(*this, pCluster, pObject));
-
-		// TODO Deal with branches ...
-
-//		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pCluster->CreateBranches());
-//		const ArborBranchList &branchList = pCluster->GetBranchList();
-
-		m_clusterList.insert(pCluster);
 	}
 
 	return STATUS_CODE_SUCCESS;
@@ -596,44 +338,32 @@ pandora::StatusCode ArborConnectorClusteringAlgorithm::DrawEveArrow(TEveElement 
 
 //----------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode ArborConnectorClusteringAlgorithm::ClearContent()
-{
-	m_orderedObjectList.clear();
-	m_clusterList.clear();
-	m_connectorList.clear();
-
-	return STATUS_CODE_SUCCESS;
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-
 pandora::StatusCode ArborConnectorClusteringAlgorithm::ReadSettings(const pandora::TiXmlHandle xmlHandle)
 {
- m_trackListName = "";
- PANDORA_THROW_RESULT_IF_AND_IF(STATUS_CODE_SUCCESS, STATUS_CODE_NOT_FOUND, !=, XmlHelper::ReadValue(xmlHandle,
-     "TrackListName", m_trackListName));
-
  PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, XmlHelper::ReadValue(xmlHandle,
      "MaximumDistanceForConnectionFine", m_maximumDistanceForConnectionFine));
 
  PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, XmlHelper::ReadValue(xmlHandle,
      "MaximumDistanceForConnectionCoarse", m_maximumDistanceForConnectionCoarse));
 
- m_shouldRunSecondCleaning = false;
+ m_angleForInitialConnectionFine = 3.1415f;
+ PANDORA_THROW_RESULT_IF_AND_IF(STATUS_CODE_SUCCESS, STATUS_CODE_NOT_FOUND, !=, XmlHelper::ReadValue(xmlHandle,
+     "AngleForInitialConnectionFine", m_angleForInitialConnectionFine));
 
- if(m_shouldRunSecondCleaning)
+ if(m_angleForInitialConnectionFine > M_PI || m_angleForInitialConnectionFine < 0.f)
  {
-		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, XmlHelper::ReadValue(xmlHandle,
-						"MaximumDistanceForConnectionFine2", m_maximumDistanceForConnectionFine2));
+ 	std::cerr << "Angle range for initial connection (fine) is between 0 and pi. Given was " << m_angleForInitialConnectionFine << std::endl;
+ 	return STATUS_CODE_INVALID_PARAMETER;
+ }
 
-	 PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, XmlHelper::ReadValue(xmlHandle,
-	     "MaximumDistanceForConnectionCoarse2", m_maximumDistanceForConnectionCoarse2));
+ m_angleForInitialConnectionCoarse = 3.1415f;
+ PANDORA_THROW_RESULT_IF_AND_IF(STATUS_CODE_SUCCESS, STATUS_CODE_NOT_FOUND, !=, XmlHelper::ReadValue(xmlHandle,
+     "AngleForInitialConnectionCoarse", m_angleForInitialConnectionCoarse));
 
-	 PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, XmlHelper::ReadValue(xmlHandle,
-	     "AngleForSecondCleaningCoarse", m_angleForSecondCleaningCoarse));
-
-	 PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, XmlHelper::ReadValue(xmlHandle,
-	     "AngleForSecondCleaningFine", m_angleForSecondCleaningFine));
+ if(m_angleForInitialConnectionCoarse > M_PI || m_angleForInitialConnectionCoarse < 0.f)
+ {
+ 	std::cerr << "Angle range for initial connection (coarse) is between 0 and pi. Given was " << m_angleForInitialConnectionCoarse << std::endl;
+ 	return STATUS_CODE_INVALID_PARAMETER;
  }
 
  PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, XmlHelper::ReadValue(xmlHandle,
@@ -642,11 +372,9 @@ pandora::StatusCode ArborConnectorClusteringAlgorithm::ReadSettings(const pandor
  PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, XmlHelper::ReadValue(xmlHandle,
      "BackwardConnectorWeight", m_backwardConnectorWeight));
 
- PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, XmlHelper::ReadValue(xmlHandle,
+ m_shouldUseIsolatedObjects = true;
+ PANDORA_THROW_RESULT_IF_AND_IF(STATUS_CODE_SUCCESS, STATUS_CODE_NOT_FOUND, !=, XmlHelper::ReadValue(xmlHandle,
  		  "ShouldUseIsolatedObjects", m_shouldUseIsolatedObjects));
-
- PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, XmlHelper::ReadValue(xmlHandle,
- 	     "HcalEnergyResolutionFunctionName", m_hcalEnergyResolutionFunctionName));
 
  m_allowForwardConnectionForIsolatedObjects = false;
  PANDORA_THROW_RESULT_IF_AND_IF(STATUS_CODE_SUCCESS, STATUS_CODE_NOT_FOUND, !=, XmlHelper::ReadValue(xmlHandle,
@@ -671,6 +399,10 @@ pandora::StatusCode ArborConnectorClusteringAlgorithm::ReadSettings(const pandor
  m_referenceDirectionMaximumForwardLayer = 10000;
  PANDORA_THROW_RESULT_IF_AND_IF(STATUS_CODE_SUCCESS, STATUS_CODE_NOT_FOUND, !=, XmlHelper::ReadValue(xmlHandle,
      "ReferenceDirectionMaximumForwardLayer", m_referenceDirectionMaximumForwardLayer));
+
+ m_shouldSelectNearestObjectWhileCleaning = false;
+ PANDORA_THROW_RESULT_IF_AND_IF(STATUS_CODE_SUCCESS, STATUS_CODE_NOT_FOUND, !=, XmlHelper::ReadValue(xmlHandle,
+      "ShouldSelectNearestObjectWhileCleaning", m_shouldSelectNearestObjectWhileCleaning));
 
 	return STATUS_CODE_SUCCESS;
 }
