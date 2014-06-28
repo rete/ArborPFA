@@ -1,4 +1,7 @@
-<!-- Arbor Pandora settings xml file -->
+<!-- 
+Arbor Pandora settings xml file for Arbor algorithms 
+ @author Remi Ete
+-->
 
 <pandora>
 
@@ -8,32 +11,41 @@
 
     <!-- CaloHit helper settings -->
     <CaloHitHelper>
-        <ShouldCalculateDensityWeight>      true  </ShouldCalculateDensityWeight>
-        <ShouldCalculateSurroundingEnergy>  true  </ShouldCalculateSurroundingEnergy>
-        <IsolationCaloHitMaxSeparation>     60    </IsolationCaloHitMaxSeparation>
-        <IsolationNLayers>                   2    </IsolationNLayers>
-        <IsolationCutDistanceFine>          25.0  </IsolationCutDistanceFine>
-        <IsolationCutDistanceCoarse>        30.0  </IsolationCutDistanceCoarse>
-        <IsolationMaxNearbyHits>             2    </IsolationMaxNearbyHits>
+        <ShouldCalculateDensityWeight>      false  </ShouldCalculateDensityWeight>
+        <ShouldCalculateSurroundingEnergy>  false  </ShouldCalculateSurroundingEnergy>
     </CaloHitHelper>
     
-    <HadronicEnergyCorrectionFunctions>
-        SDHCALEnergyCorrection
-    </HadronicEnergyCorrectionFunctions>
     
-    <EnergyResolutionHelper>
-      <SDHCALEnergyResolution>
-        <EnergyFactor>        0.55    </EnergyFactor>
-        <ConstantFactor>      0.081   </ConstantFactor>
-        <EnergySquareFactor>  0.6     </EnergySquareFactor>
-      </SDHCALEnergyResolution>
-    </EnergyResolutionHelper>
-
-    <!-- ARBOR PANDORA ALGORITHM SETTINGS -->
-
-    <!-- Select tracks and hits to use for clustering -->
-    <algorithm type = "EventPreparation"/>
+    <ArborPlugin>
     
+		   <EnergyResolutionFunctions>
+		     <SDHCALEnergyResolution>
+		       <EnergyFactor>        0.55    </EnergyFactor>
+		       <ConstantFactor>      0.081   </ConstantFactor>
+		       <EnergySquareFactor>  0.6     </EnergySquareFactor>
+		     </SDHCALEnergyResolution>
+		   </EnergyResolutionFunctions>
+		   
+		   <EnergyEstimators>
+		     <SDHCALQuadraticEnergyEstimator>
+		       <EnergyConstantParameters>
+		          0.0442674
+					    3.95986e-05
+					    -2.0133e-10
+					    0.0781586
+					    -5.9623e-05
+					    -3.06952e-08
+					    0.115295
+					    1.57508e-05
+					    2.28041e-09
+		       </EnergyConstantParameters>
+		       <ThresholdValues> 0.0406459 0.101952 0.258078 </ThresholdValues>
+		     </SDHCALQuadraticEnergyEstimator>
+		   </EnergyEstimators>
+		   
+		</ArborPlugin>
+
+    <!-- ARBOR PANDORA ALGORITHM SETTINGS -->    
     <algorithm type = "ArborParent">
       <algorithm type = "SimpleObjectCreation" description = "ObjectFormation">
         <ShouldUseOnlyCaloHitsForObjects> false </ShouldUseOnlyCaloHitsForObjects>
@@ -42,48 +54,26 @@
         <ShouldUseReadoutLayer> false </ShouldUseReadoutLayer>
         <ShouldSplitClusterInSingleCaloHitClusters> true </ShouldSplitClusterInSingleCaloHitClusters>
       </algorithm>
-      <ObjectListName>   InputObjects   </ObjectListName>
-      <ReplaceCurrentObjectList>  true  </ReplaceCurrentObjectList>
-    </algorithm>
-    
-<!--     <algorithm type = "IsolationTagging">
-       <MaxNObjectsInSamePseudoLayer> 2 </MaxNObjectsInSamePseudoLayer>
-       <MaxNObjects> 1 </MaxNObjects> 
-       <MaxNeighborDistance> 50.f </MaxNeighborDistance>
-       <MaxIntraLayerNeighborDistance> 18.f </MaxIntraLayerNeighborDistance>
-    </algorithm> -->
-    
-    <algorithm type = "ArborParent">
       <algorithm type = "ArborConnectorClustering" description = "ClusterFormation">
-          
-          <HcalEnergyResolutionFunctionName>  SDHCALEnergyResolution   </HcalEnergyResolutionFunctionName>
-          
-          <!-- Parameters for initial connection connection -->
           <MaximumDistanceForConnectionFine>          10.0    </MaximumDistanceForConnectionFine>
           <MaximumDistanceForConnectionCoarse>        65.5    </MaximumDistanceForConnectionCoarse>
-          
-          <!-- Parameters for connector decision -->
-          <ForwardConnectorWeight>                    2.0     </ForwardConnectorWeight>
-          <BackwardConnectorWeight>                   3.0     </BackwardConnectorWeight>
+          <AngleForInitialConnectionCoarse>           1.5     </AngleForInitialConnectionCoarse>
+          <ForwardConnectorWeight>                    10.0    </ForwardConnectorWeight>
+          <BackwardConnectorWeight>                   1.0     </BackwardConnectorWeight>
           <OrderParameterAnglePower>                  1       </OrderParameterAnglePower>
-          <OrderParameterDistancePower>               5       </OrderParameterDistancePower>
-          
+          <OrderParameterDistancePower>               10      </OrderParameterDistancePower>
           <ReferenceDirectionDepth>                   2       </ReferenceDirectionDepth>
-          <ReferenceDirectionMaximumForwardLayer>     2    </ReferenceDirectionMaximumForwardLayer>
-          
-          <AllowForwardConnectionForIsolatedObjects>  false    </AllowForwardConnectionForIsolatedObjects>
-          <ShouldUseIsolatedObjects>                  false    </ShouldUseIsolatedObjects>
-          
-          <!-- Display or not the connectors -->
-          <ShowConnectors>                            true    </ShowConnectors>
-          
+          <ReferenceDirectionMaximumForwardLayer>     2       </ReferenceDirectionMaximumForwardLayer>
+          <AllowForwardConnectionForIsolatedObjects>  false   </AllowForwardConnectionForIsolatedObjects>
+          <ShouldUseIsolatedObjects>                  true    </ShouldUseIsolatedObjects>
+          <ShouldSelectNearestObjectWhileCleaning>    true    </ShouldSelectNearestObjectWhileCleaning>
+          <ShowConnectors>                            true   </ShowConnectors>
       </algorithm>
       <associationAlgorithms>
         <algorithm type = "TopologicalTrackAssociation">
           <ShouldMergeChargedTrees> true </ShouldMergeChargedTrees>
           <TrackToClusterDistanceCut> 40.f </TrackToClusterDistanceCut>
           <TrackToClusterNLayersCut> 2 </TrackToClusterNLayersCut>
-         <!--  <TrackListName>  </TrackListName> -->
         </algorithm>
         <algorithm type = "NeutralTreeMerging">
           <UseClustersWithTrackAssociation> true </UseClustersWithTrackAssociation>
@@ -99,6 +89,7 @@
       <ClusterListName>  ArborClusters  </ClusterListName>
       <ReplaceCurrentObjectList>  true  </ReplaceCurrentObjectList>
     </algorithm> 
+
     
     <!-- Convert the arbor clusters in the pandora framework  -->
     <algorithm type = "ClusteringParent">
@@ -130,8 +121,9 @@
     
     
 <!--     <algorithm type = "ArborOutput">
-      <RootFileName> ArborOutputFile_single_pi-_30GeV.root </RootFileName>
+      <RootFileName> ArborOutputFile_single_pi-_30GeV_2.root </RootFileName>
       <RootTreeName> ArborOutputTree </RootTreeName>
+      <NCutOnChargedParticle> 2 </NCutOnChargedParticle>
     </algorithm> -->
     
     <!-- EVE Monitoring -->
@@ -142,7 +134,7 @@
        <ShowMCParticles>            false    </ShowMCParticles>
        <ShowCurrentCaloHits>        false     </ShowCurrentCaloHits>
        <ShowCurrentTracks>          false     </ShowCurrentTracks> 
-       <ShowCurrentClusters>        true     </ShowCurrentClusters> 
+       <ShowCurrentClusters>        false     </ShowCurrentClusters> 
        <ShowCurrentPfos>            true     </ShowCurrentPfos>
        <HitColors>                  iterate  </HitColors>
        <ShowOnlyAvailable>          false    </ShowOnlyAvailable>
@@ -153,7 +145,5 @@
        <ShowDetector>           false  </ShowDetector>
           
     </algorithm>
-    
-    
     
 </pandora>
