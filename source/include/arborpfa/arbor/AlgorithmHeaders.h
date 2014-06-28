@@ -42,7 +42,6 @@
 #include "arborpfa/content/Connector.h"
 #include "arborpfa/content/CaloHitHelper.h"
 #include "arborpfa/content/ArborHelper.h"
-#include "arborpfa/content/EnergyResolutionHelper.h"
 
 // std
 #include <algorithm>
