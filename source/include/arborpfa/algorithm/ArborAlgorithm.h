@@ -61,12 +61,12 @@ class ArborAlgorithm : public pandora::Algorithm
 		/**
 		 *
 		 */
-		const Arbor *GetArbor() const;
+		Arbor *GetArbor() const;
 
 		/**
 		 *
 		 */
-		const ArborContentApiImpl *GetArborContentApiImpl() const;
+		ArborContentApiImpl *GetArborContentApiImpl() const;
 
  private:
 

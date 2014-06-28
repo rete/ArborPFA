@@ -48,7 +48,7 @@ ArborAlgorithm::~ArborAlgorithm()
 
 //--------------------------------------------------------------------------------------------------------------------
 
-const Arbor *ArborAlgorithm::GetArbor() const
+Arbor *ArborAlgorithm::GetArbor() const
 {
 	if(NULL == m_pArbor)
 		throw pandora::StatusCodeException(pandora::STATUS_CODE_NOT_INITIALIZED);
@@ -58,7 +58,7 @@ const Arbor *ArborAlgorithm::GetArbor() const
 
 //--------------------------------------------------------------------------------------------------------------------
 
-const ArborContentApiImpl *ArborAlgorithm::GetArborContentApiImpl() const
+ArborContentApiImpl *ArborAlgorithm::GetArborContentApiImpl() const
 {
 	if(NULL == m_pArbor)
 		throw pandora::StatusCodeException(pandora::STATUS_CODE_NOT_INITIALIZED);
@@ -84,7 +84,6 @@ pandora::StatusCode ArborAlgorithm::Run()
 {
 	if(NULL == m_pArbor)
 		return pandora::STATUS_CODE_NOT_INITIALIZED;
-
 
 	PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pArbor->m_pObjectManager->RegisterAlgorithm(this));
 	PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pArbor->m_pClusterManager->RegisterAlgorithm(this));
