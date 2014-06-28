@@ -450,9 +450,14 @@ pandora::StatusCode ArborHelper::GetKappaParameter(const Object *pInnerObject, c
 		return STATUS_CODE_INVALID_PARAMETER;
 
 	const CartesianVector differencePosition = pOuterObject->GetPosition() - pInnerObject->GetPosition();
+	const float angle = differencePosition.GetOpeningAngle(referenceVector);
+	const float projectionDistance = differencePosition.GetMagnitude()*sin(angle);
 
-	kappaParameter = std::pow(differencePosition.GetOpeningAngle(referenceVector), thetaPower)
-	                *std::pow(differencePosition.GetMagnitude(), distancePower);
+//	kappaParameter = std::pow(differencePosition.GetOpeningAngle(referenceVector), thetaPower)
+//	                *std::pow(differencePosition.GetMagnitude(), distancePower);
+
+		kappaParameter = std::pow(projectionDistance, thetaPower)
+		                *std::pow(differencePosition.GetMagnitude(), distancePower);
 
 	return STATUS_CODE_SUCCESS;
 }
