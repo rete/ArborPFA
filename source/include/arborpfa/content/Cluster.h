@@ -75,7 +75,12 @@ class Cluster
 	/**
 	 *
 	 */
-	pandora::StatusCode GetAssociatedTrack(pandora::Track *&pTrack) const;
+	pandora::CaloHitList GetCaloHitList() const;
+
+	/**
+	 *
+	 */
+	pandora::StatusCode GetAssociatedTrack(const pandora::Track *&pTrack) const;
 
 	/**
 	 *
@@ -91,6 +96,11 @@ class Cluster
 	 *
 	 */
 	unsigned int GetNCaloHits() const;
+
+	/**
+	 *
+	 */
+ static bool SORT_BY_SEED_PSEUDO_LAYER(const Cluster *pCluster1, const Cluster *pCluster2);
 
 
  protected:
@@ -123,7 +133,14 @@ class Cluster
 
  friend class pandora::AlgorithmObjectManager<arbor::Cluster>;
  friend class ClusterManager;
-}; 
+};
+
+//--------------------------------------------------------------------------------------------------------------------
+
+inline bool Cluster::SORT_BY_SEED_PSEUDO_LAYER(const Cluster *pCluster1, const Cluster *pCluster2)
+{
+	return pCluster1->GetSeedPseudoLayer() < pCluster2->GetSeedPseudoLayer();
+}
 
 } 
 

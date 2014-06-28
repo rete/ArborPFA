@@ -177,7 +177,23 @@ ObjectList Cluster::GetObjectList() const
 
 //------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode Cluster::GetAssociatedTrack(pandora::Track *&pTrack) const
+pandora::CaloHitList Cluster::GetCaloHitList() const
+{
+	pandora::CaloHitList returnList;
+
+	for(TreeList::const_iterator iter = m_treeList.begin() , endIter = m_treeList.end() ; endIter != iter ; ++iter)
+	{
+		Tree *pTree = *iter;
+		pandora::CaloHitList caloHitList(pTree->GetCaloHitList());
+		returnList.insert(caloHitList.begin(), caloHitList.end());
+	}
+
+	return returnList;
+}
+
+//------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode Cluster::GetAssociatedTrack(const pandora::Track *&pTrack) const
 {
 	pTrack = m_pAssociatedTrack;
 	return pandora::STATUS_CODE_SUCCESS;
