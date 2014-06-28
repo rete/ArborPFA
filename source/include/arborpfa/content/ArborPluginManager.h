@@ -34,10 +34,11 @@
 
 // pandora
 #include "Pandora/StatusCodes.h"
+#include "Helpers/XmlHelper.h"
 
 namespace arbor
 {
-
+class Arbor;
 /** 
  * @brief ArborPlugin class
  */ 
@@ -48,12 +49,14 @@ class ArborPluginManager
 	/**
 	 * @brief Ctor
 	 */
-	ArborPluginManager();
+	ArborPluginManager(Arbor *pArbor);
 
 	/**
 	 * @brief Dtor
 	 */
 	virtual ~ArborPluginManager();
+
+	/* Tree builder related methods */
 
 	/**
 	 * @brief Register a new function to build trees
@@ -75,6 +78,8 @@ class ArborPluginManager
 	 */
 	pandora::StatusCode GetCurrentTreeBuilderName(std::string &treeBuilderName);
 
+	/* Branch builder related methods */
+
 	/**
 	 * @brief Register a new function to build branches
 	 */
@@ -83,7 +88,7 @@ class ArborPluginManager
 	/**
 	 * @brief Set the current branch builder by name. Branch builder should be registered before
 	 */
-	pandora::StatusCode SetCurrentBranchBuilder(const std::string &branchBuilder);
+	pandora::StatusCode SetCurrentBranchBuilder(const std::string &branchBuilderName);
 
 	/**
 	 * @brief Get the current tree builder
@@ -95,14 +100,103 @@ class ArborPluginManager
 	 */
 	pandora::StatusCode GetCurrentBranchBuilderName(std::string &branchBuilderName);
 
-	// members
+	/* Energy estimator related methods */
+
+	/**
+	 * @brief Register a new function to estimate energy
+	 */
+	pandora::StatusCode RegisterEnergyEstimator(const std::string &energyEstimatorName, IEnergyEstimator *pEnergyEstimator);
+
+	/**
+	 * @brief Set the current energy estimator by name. Estimator should be registered before
+	 */
+	pandora::StatusCode SetCurrentEnergyEstimator(const std::string &energyEstimatorName);
+
+	/**
+	 * @brief Get the current energy estimator
+	 */
+	pandora::StatusCode GetCurrentEnergyEstimator(IEnergyEstimator *&pEnergyEstimator);
+
+	/**
+	 * @brief Get the current energy estimator name
+	 */
+	pandora::StatusCode GetCurrentEnergyEstimatorName(std::string &energyEstimatorName);
+
+	/* Energy resolution related methods */
+
+	/**
+	 * @brief Register a new function for detector energy resolution
+	 */
+	pandora::StatusCode RegisterEnergyResolutionFunction(const std::string &energyResolutionFunctionName, IEnergyResolutionFunction *pEnergyResolutionFunction);
+
+	/**
+	 * @brief Set the current energy resolution function by name. Function should be registered before
+	 */
+	pandora::StatusCode SetCurrentEnergyResolutionFunction(const std::string &energyResolutionFunctionName);
+
+	/**
+	 * @brief Get the current energy resolution function
+	 */
+	pandora::StatusCode GetCurrentEnergyResolutionFunction(IEnergyResolutionFunction *&pEnergyResolutionFunction);
+
+	/**
+	 * @brief Get the current energy resolution function name
+	 */
+	pandora::StatusCode GetCurrentEnergyResolutionFunctionName(std::string &energyResolutionFunctionName);
+
+
+	/**
+	 * @brief Read the settings for all of the plugins
+	 */
+	static pandora::StatusCode ReadSettings(const pandora::TiXmlHandle xmlHandle);
+
+	/**
+	 * @brief Read the settings for all of the plugins
+	 */
+	pandora::StatusCode _ReadSettings(const pandora::TiXmlHandle xmlHandle);
+
+	/**
+	 *
+	 */
+	pandora::StatusCode ReadTreeBuilderSettings(const pandora::TiXmlHandle &xmlHandle);
+
+	/**
+	 *
+	 */
+	pandora::StatusCode ReadBranchBuilderSettings(const pandora::TiXmlHandle &xmlHandle);
+
+	/**
+	 *
+	 */
+	pandora::StatusCode ReadEnergyEstimatorSettings(const pandora::TiXmlHandle &xmlHandle);
+
+	/**
+	 *
+	 */
+	pandora::StatusCode ReadEnergyResolutionSettings(const pandora::TiXmlHandle &xmlHandle);
+
+
+	// tree builder members
+	std::string             m_currentTreeBuilderName;
+	ITreeBuilder           *m_pCurrentTreeBuilder;
 	TreeBuilderMap          m_treeBuilderMap;
+
+	// branch builder members
+	std::string             m_currentBranchBuilderName;
+	IBranchBuilder         *m_pCurrentBranchBuilder;
 	BranchBuilderMap        m_branchBuilderMap;
 
-	ITreeBuilder           *m_pCurrentTreeBuilder;
-	IBranchBuilder         *m_pCurrentBranchBuilder;
-	std::string             m_currentTreeBuilderName;
-	std::string             m_currentBranchBuilderName;
+ // energy estimator members
+	std::string             m_currentEnergyEstimatorName;
+	IEnergyEstimator       *m_pCurrentEnergyEstimator;
+	EnergyEstimatorMap      m_energyEstimatorMap;
+
+	// energy resolution members
+	std::string                      m_currentEnergyResolutionFunctionName;
+	IEnergyResolutionFunction       *m_pCurrentEnergyResolutionFunction;
+	EnergyResolutionFunctionMap      m_energyResolutionFunctionMap;
+
+	static arbor::Arbor             *m_pArbor;
 
 	// friendship
 	friend class ArborContentApiImpl;
