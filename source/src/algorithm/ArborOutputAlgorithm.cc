@@ -201,9 +201,12 @@ pandora::StatusCode ArborOutputAlgorithm::RunArborAlgorithm()
  }
 
  if(shouldDisplayAlgorithmInfo)
- {
  	std::cout << "=====================================================================" << std::endl;
- }
+
+ // for overlay study. Number of minimum required tracks to process the event.
+ // do not write the event if not enough tracks
+ if(m_nCutOnChargedParticle > nChargedPfos)
+ 	return pandora::STATUS_CODE_SUCCESS;
 
 	m_pTTreeWrapper->Set(m_rootTreeName, "nPfos", nPfos);
 	m_pTTreeWrapper->Set(m_rootTreeName, "nNeutralPfos", nNeutralPfos);
@@ -250,6 +253,10 @@ pandora::StatusCode ArborOutputAlgorithm::ReadSettings(const pandora::TiXmlHandl
  m_useOnlyHcal = true;
  PANDORA_RETURN_RESULT_IF_AND_IF(pandora::STATUS_CODE_SUCCESS, pandora::STATUS_CODE_NOT_FOUND, !=, pandora::XmlHelper::ReadValue(xmlHandle,
      "UseOnlyHcal", m_useOnlyHcal));
+
+ m_nCutOnChargedParticle = 0;
+ PANDORA_RETURN_RESULT_IF_AND_IF(pandora::STATUS_CODE_SUCCESS, pandora::STATUS_CODE_NOT_FOUND, !=, pandora::XmlHelper::ReadValue(xmlHandle,
+     "NCutOnChargedParticle", m_nCutOnChargedParticle));
 
 	return pandora::STATUS_CODE_SUCCESS;
 }

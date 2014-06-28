@@ -92,6 +92,7 @@ protected:
 	bool            m_firstFill;
 	bool            m_useLcioClasses;
 	bool            m_useOnlyHcal;
+	unsigned int   m_nCutOnChargedParticle;
 
 	TFile                               *m_pRootFile;
 	pandora_monitoring::TTreeWrapper    *m_pTTreeWrapper;
