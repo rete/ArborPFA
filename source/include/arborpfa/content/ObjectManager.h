@@ -31,6 +31,8 @@
 #include "Managers/AlgorithmObjectManager.h"
 #include "Pandora/PandoraInternal.h"
 
+// arbor
+#include "arborpfa/arbor/ArborTypes.h"
 #include "arborpfa/content/Object.h"
 
 
@@ -62,16 +64,48 @@ protected:
   */
  pandora::StatusCode CreateTemporaryListAndSetCurrent(const ArborAlgorithm *pAlgorithm, std::string &temporaryListName);
 
-
  /**
   *
   */
- pandora::StatusCode	ReplaceCurrentAndAlgorithmInputLists(const ArborAlgorithm *algorithm, const std::string &newListName);
+ pandora::StatusCode	ReplaceCurrentAndAlgorithmInputLists(const ArborAlgorithm *pAlgorithm, const std::string &newListName);
 
  /**
   *
   */
  pandora::StatusCode CreateObject(Object *&pObject, pandora::CaloHit *pInputCaloHit);
+
+
+ /* Re-clustering related methods */
+ /**
+  *
+  */
+ pandora::StatusCode InitializeReclustering(const ArborAlgorithm *pAlgorithm, const ClusterList &clusterList,
+ 		const std::string &initialMetaName);
+
+ /**
+  *
+  */
+ pandora::StatusCode EndReclustering(const std::string &finalMetaDataName);
+
+ /**
+  *
+  */
+ pandora::StatusCode PrepareReclusterMetaData(const ArborAlgorithm *pAlgorithm, const std::string &newReclusterMetaData, bool copyInitialMetaData);
+
+ /**
+  *
+  */
+ pandora::StatusCode GetReclusteringObjectList(const ObjectList *&pObjectList, std::string &listName) const;
+
+
+ ReclusterMetaData                  *m_pInitialReclusterMetaData;
+ ReclusterMetaData                  *m_pCurrentReclusterMetaData;
+ ReclusterMetaDataMap                m_reclusterMetaDataMap;
+ ObjectList                         *m_pReclusteringObjectList;
+ bool                               m_reclusteringInitialized;
+ bool                               m_firstReclusteringProcess;
+
+ static const std::string          m_reclusteringListName;
 
  // friend class field
  friend class ArborImpl;
