@@ -69,9 +69,37 @@ pandora::StatusCode ArborApi::RegisterAlgorithmFactory(Arbor &arbor, const std::
 
 //---------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode ArborApi::RegisterEnergyResolutionFunction(const Arbor &arbor, const std::string &energyResolutionFunctionName, EnergyResolutionFunction *pEnergyResolutionFunction)
+pandora::StatusCode ArborApi::RegisterArborPlugins(Arbor &arbor)
 {
-	return arbor.GetArborApiImpl()->RegisterEnergyResolutionFunction(energyResolutionFunctionName, pEnergyResolutionFunction);
+	return arbor.GetArborApiImpl()->RegisterArborPlugins(arbor);
+}
+
+//---------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborApi::RegisterEnergyResolutionFunction(Arbor &arbor, const std::string &energyResolutionFunctionName, IEnergyResolutionFunction *pEnergyResolutionFunction)
+{
+	return arbor.GetArborApiImpl()->RegisterEnergyResolutionFunction(arbor, energyResolutionFunctionName, pEnergyResolutionFunction);
+}
+
+//---------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborApi::RegisterEnergyEstimator(Arbor &arbor, const std::string &energyEstimatorName, IEnergyEstimator *pEnergyEstimator)
+{
+	return arbor.GetArborApiImpl()->RegisterEnergyEstimator(arbor, energyEstimatorName, pEnergyEstimator);
+}
+
+//---------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborApi::RegisterTreeBuilder(Arbor &arbor, const std::string &treeBuilderName, ITreeBuilder *pTreeBuilder)
+{
+	return arbor.GetArborApiImpl()->RegisterTreeBuilder(arbor, treeBuilderName, pTreeBuilder);
+}
+
+//---------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborApi::RegisterBranchBuilder(Arbor &arbor, const std::string &branchBuilderName, IBranchBuilder *pBranchBuilder)
+{
+	return arbor.GetArborApiImpl()->RegisterBranchBuilder(arbor, branchBuilderName, pBranchBuilder);
 }
 
 } 

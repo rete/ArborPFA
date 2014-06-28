@@ -33,7 +33,6 @@
 #include "Pandora/PandoraInputTypes.h"
 
 #include "arborpfa/arbor/ArborTypes.h"
-#include "arborpfa/content/EnergyResolutionHelper.h"
 
 namespace pandora
 {
@@ -78,12 +77,32 @@ class ArborApi
 		/**
 		 *
 		 */
-		static pandora::StatusCode RegisterAlgorithmFactory(Arbor &pArbor, const std::string &factoryName, ArborAlgorithmFactory *pFactory);
+		static pandora::StatusCode RegisterAlgorithmFactory(Arbor &arbor, const std::string &factoryName, ArborAlgorithmFactory *pFactory);
+
+		/**		/**
+		 *
+		 */
+		static pandora::StatusCode RegisterArborPlugins(Arbor &arbor);
+
+	 /**
+	  *
+	  */
+		static pandora::StatusCode RegisterEnergyResolutionFunction(Arbor &arbor, const std::string &energyResolutionFunctionName, IEnergyResolutionFunction *pEnergyResolutionFunction) ;
 
 		/**
 		 *
 		 */
-		static pandora::StatusCode RegisterEnergyResolutionFunction(const Arbor &arbor, const std::string &energyResolutionFunctionName, EnergyResolutionFunction *pEnergyResolutionFunction);
+		static pandora::StatusCode RegisterEnergyEstimator(Arbor &arbor, const std::string &energyEstimatorName, IEnergyEstimator *pEnergyEstimator) ;
+
+		/**
+		 *
+		 */
+		static pandora::StatusCode RegisterTreeBuilder(Arbor &arbor, const std::string &treeBuilderName, ITreeBuilder *pTreeBuilder);
+
+		/**
+		 *
+		 */
+		static pandora::StatusCode RegisterBranchBuilder(Arbor &arbor, const std::string &branchBuilderName, IBranchBuilder *pBranchBuilder);
 
 }; 
 

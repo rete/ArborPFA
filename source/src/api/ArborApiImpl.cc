@@ -29,8 +29,10 @@
 #include "arborpfa/api/ArborApiImpl.h"
 #include "arborpfa/algorithm/ArborAlgorithmFactory.h"
 #include "arborpfa/arbor/Arbor.h"
+#include "arborpfa/content/ArborPluginManager.h"
 #include "arborpfa/content/ObjectManager.h"
 
+// algorithms
 #include "arborpfa/algorithm/IntraLayerClusteringAlgorithm.h"
 #include "arborpfa/algorithm/ArborConnectorClusteringAlgorithm.h"
 #include "arborpfa/algorithm/DummyClusteringAlgorithm.h"
@@ -42,7 +44,14 @@
 #include "arborpfa/algorithm/TopologicalTrackAssociationAlgorithm.h"
 #include "arborpfa/algorithm/SmallNeutralFragmentMergingAlgorithm.h"
 #include "arborpfa/algorithm/IsolationTaggingAlgorithm.h"
+#include "arborpfa/algorithm/ArborReclusteringAlgorithm.h"
 #include "arborpfa/algorithm/ArborOutputAlgorithm.h"
+
+// plugins
+#include "arborpfa/content/SDHCALEnergyResolutionFunction.h"
+#include "arborpfa/content/SDHCALQuadraticEnergyEstimator.h"
+#include "arborpfa/content/SimpleTreeBuilder.h"
+#include "arborpfa/content/SimpleBranchBuilder.h"
 
 // pandora
 #include "Pandora/Pandora.h"
@@ -103,17 +112,65 @@ pandora::StatusCode ArborApiImpl::RegisterArborAlgorithms(Arbor &arbor) const
 				  new arbor::ArborOutputAlgorithm::Factory));
 	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "IsolationTagging",
 				  new arbor::IsolationTaggingAlgorithm::Factory));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "ArborReclustering",
+				  new arbor::ArborReclusteringAlgorithm::Factory));
+
+	return pandora::STATUS_CODE_SUCCESS;
+}
+
+
+pandora::StatusCode ArborApiImpl::RegisterArborPlugins(Arbor &arbor) const
+{
+	// energy resolution function
+ PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->RegisterEnergyResolutionFunction(arbor, "SDHCALEnergyResolution",
+ 		  new SDHCALEnergyResolutionFunction()));
+
+ // energy estimator function
+ PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->RegisterEnergyEstimator(arbor, "SDHCALQuadraticEnergyEstimator",
+ 		  new SDHCALQuadraticEnergyEstimator()));
+
+ // branch builder
+ PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->RegisterBranchBuilder(arbor, "SimpleBranchBuilder",
+ 		  new SimpleBranchBuilder()));
+
+ // tree builder
+ PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->RegisterTreeBuilder(arbor, "SimpleTreeBuilder",
+ 		  new SimpleTreeBuilder()));
+
+	PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, arbor.m_pArborPluginManager->SetCurrentTreeBuilder("SimpleTreeBuilder"));
+	PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, arbor.m_pArborPluginManager->SetCurrentBranchBuilder("SimpleBranchBuilder"));
+	PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, arbor.m_pArborPluginManager->SetCurrentEnergyResolutionFunction("SDHCALEnergyResolution"));
+	PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, arbor.m_pArborPluginManager->SetCurrentEnergyEstimator("SDHCALQuadraticEnergyEstimator"));
 
 	return pandora::STATUS_CODE_SUCCESS;
 }
 
 //---------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode ArborApiImpl::RegisterEnergyResolutionFunction(const std::string &energyResolutionFunctionName, EnergyResolutionFunction *pEnergyResolutionFunction)
+pandora::StatusCode ArborApiImpl::RegisterEnergyResolutionFunction(Arbor &pArbor, const std::string &energyResolutionFunctionName, IEnergyResolutionFunction *pEnergyResolutionFunction) const
 {
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, EnergyResolutionHelper::RegisterEnergyResolutionFunction(energyResolutionFunctionName, pEnergyResolutionFunction));
+	return pArbor.m_pArborPluginManager->RegisterEnergyResolutionFunction(energyResolutionFunctionName, pEnergyResolutionFunction);
+}
 
-	return STATUS_CODE_SUCCESS;
+//---------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborApiImpl::RegisterEnergyEstimator(Arbor &pArbor, const std::string &energyEstimatorName, IEnergyEstimator *pEnergyEstimator) const
+{
+	return pArbor.m_pArborPluginManager->RegisterEnergyEstimator(energyEstimatorName, pEnergyEstimator);
+}
+
+//---------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborApiImpl::RegisterTreeBuilder(Arbor &pArbor, const std::string &treeBuilderName, ITreeBuilder *pTreeBuilder) const
+{
+	return pArbor.m_pArborPluginManager->RegisterTreeBuilder(treeBuilderName, pTreeBuilder);
+}
+
+//---------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborApiImpl::RegisterBranchBuilder(Arbor &pArbor, const std::string &branchBuilderName, IBranchBuilder *pBranchBuilder) const
+{
+	return pArbor.m_pArborPluginManager->RegisterBranchBuilder(branchBuilderName, pBranchBuilder);
 }
 
 //---------------------------------------------------------------------------------------------------------------

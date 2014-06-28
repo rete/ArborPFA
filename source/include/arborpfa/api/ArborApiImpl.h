@@ -32,7 +32,6 @@
 #include "Pandora/PandoraInternal.h"
 
 #include "arborpfa/arbor/ArborTypes.h"
-#include "arborpfa/content/EnergyResolutionHelper.h"
 
 namespace pandora
 {
@@ -57,8 +56,15 @@ class ArborApiImpl
 		 */
 		pandora::StatusCode PrepareEvent() const;
 
-
+		/**
+		 *
+		 */
 		pandora::StatusCode RegisterArborAlgorithms(Arbor &arbor) const;
+
+		/**
+		 *
+		 */
+		pandora::StatusCode RegisterArborPlugins(Arbor &arbor) const;
 
 		/**
 			*
@@ -68,7 +74,22 @@ class ArborApiImpl
 	 /**
 	  *
 	  */
-	 static pandora::StatusCode RegisterEnergyResolutionFunction(const std::string &energyResolutionFunctionName, EnergyResolutionFunction *pEnergyResolutionFunction);
+	 pandora::StatusCode RegisterEnergyResolutionFunction(Arbor &pArbor, const std::string &energyResolutionFunctionName, IEnergyResolutionFunction *pEnergyResolutionFunction) const;
+
+		/**
+		 *
+		 */
+		pandora::StatusCode RegisterEnergyEstimator(Arbor &pArbor, const std::string &energyEstimatorName, IEnergyEstimator *pEnergyEstimator) const;
+
+		/**
+		 *
+		 */
+		pandora::StatusCode RegisterTreeBuilder(Arbor &pArbor, const std::string &treeBuilderName, ITreeBuilder *pTreeBuilder) const;
+
+		/**
+		 *
+		 */
+		pandora::StatusCode RegisterBranchBuilder(Arbor &pArbor, const std::string &branchBuilderName, IBranchBuilder *pBranchBuilder) const;
 
 	 /**
 	  *
