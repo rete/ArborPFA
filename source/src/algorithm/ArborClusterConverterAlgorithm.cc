@@ -86,12 +86,12 @@ pandora::StatusCode ArborClusterConverterAlgorithm::ConvertArborClusters(const a
 		pandora::Cluster *pPandoraCluster = NULL;
 		PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraContentApi::Cluster::Create(*this, &pandoraClusterCaloHitList, pPandoraCluster));
 
-		pandora::Track *pAssociatedTrack = NULL;
+		const pandora::Track *pAssociatedTrack = NULL;
 		PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, pArborCluster->GetAssociatedTrack(pAssociatedTrack));
 
 		if(NULL != pAssociatedTrack)
 		{
-			m_trackToClusterListMap[pAssociatedTrack].insert(pPandoraCluster);
+			m_trackToClusterListMap[(pandora::Track*)pAssociatedTrack].insert(pPandoraCluster);
 		}
 	}
 
