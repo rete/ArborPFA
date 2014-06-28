@@ -48,6 +48,15 @@ Connector::Connector(Object *pObject1, Object *pObject2, const float weight)
 
 //--------------------------------------------------------------------------------------------------------------------
 
+Connector::Connector(const Connector *pConnector)
+{
+	m_objectPair.first  = pConnector->m_objectPair.first;
+	m_objectPair.second = pConnector->m_objectPair.second;
+	m_weight            = pConnector->m_weight;
+}
+
+//--------------------------------------------------------------------------------------------------------------------
+
 Connector::~Connector()
 {
 	m_objectPair.first  = NULL;
