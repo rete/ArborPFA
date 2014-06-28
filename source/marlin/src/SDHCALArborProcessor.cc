@@ -40,7 +40,7 @@
 #include "arborpfa/api/ArborApi.h"
 #include "arborpfa/content/ArborHelper.h"
 #include "arborpfa/content/CaloHitHelper.h"
-#include "arborpfa/content/EnergyResolutionHelper.h"
+#include "arborpfa/content/ArborPluginManager.h"
 
 // lcio
 #include "UTIL/CellIDDecoder.h"
@@ -92,26 +92,6 @@ pandora::PseudoLayer SDHCALPseudoLayerCalculator::GetPseudoLayer(const pandora::
 pandora::PseudoLayer SDHCALPseudoLayerCalculator::GetPseudoLayerAtIp() const
 {
 	return this->GetPseudoLayer(pandora::CartesianVector(0,0,0));
-}
-
-pandora::StatusCode SDHCALEnergyResolutionFunction::GetEnergyResolution(float energy, float &energyResolution) const
-{
-	energyResolution = std::sqrt(m_energyFactor*m_energyFactor/energy + m_constantFactor*m_constantFactor + m_energySquareFactor*m_energySquareFactor/(energy*energy));
-	return pandora::STATUS_CODE_SUCCESS;
-}
-
-pandora::StatusCode SDHCALEnergyResolutionFunction::ReadSettings(const pandora::TiXmlHandle xmlHandle)
-{
- PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, pandora::XmlHelper::ReadValue(xmlHandle,
-     "EnergyFactor", m_energyFactor));
-
- PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, pandora::XmlHelper::ReadValue(xmlHandle,
-     "ConstantFactor", m_constantFactor));
-
- PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, pandora::XmlHelper::ReadValue(xmlHandle,
-     "EnergySquareFactor", m_energySquareFactor));
-
-	return pandora::STATUS_CODE_SUCCESS;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
@@ -182,14 +162,14 @@ void SDHCALArborProcessor::processEvent(LCEvent *pLCEvent)
 
     try
     {
-        streamlog_out(MESSAGE) << "SDHCALArborProcessor, Run " << m_nRun << ", Event " << ++m_nEvent << std::endl;
+        streamlog_out(MESSAGE) << "SDHCALArborProcessor, Run " << pLCEvent->getRunNumber() << ", Event " << pLCEvent->getEventNumber() << std::endl;
+        ++m_nEvent;
 
         PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->CreateCaloHits(pLCEvent));
         PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->CreateTracks(pLCEvent));
         PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, arbor::ArborApi::PrepareEvent(*m_pArbor));
         PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::ProcessEvent(*m_pPandora));
         PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, arbor::ArborApi::Reset(*m_pArbor));
-//        PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->CreateParticleFlowObjects(pLCEvent));
 
         PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::Reset(*m_pPandora));
         this->Reset();
@@ -238,7 +218,6 @@ pandora::StatusCode SDHCALArborProcessor::RegisterUserComponents() const
     // Register content from external pandora libraries
     PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::SetPseudoLayerCalculator(*m_pPandora,
         new SDHCALPseudoLayerCalculator()));
-//    		new FineGranularityPseudoLayerCalculator()));
 
     PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::SetShowerProfileCalculator(*m_pPandora,
         new FineGranularityShowerProfileCalculator()));
@@ -250,19 +229,13 @@ pandora::StatusCode SDHCALArborProcessor::RegisterUserComponents() const
     PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::SetBFieldCalculator(*m_pPandora,
         new SDHCALBFieldCalculator()));
 
-    // register arbor algorithms
+    // register arbor algorithms and plugins
 				PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, arbor::ArborApi::RegisterArborAlgorithms(*m_pArbor));
+				PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, arbor::ArborApi::RegisterArborPlugins(*m_pArbor));
 
 				// energy correction for sdhcal
     PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::RegisterEnergyCorrectionFunction(*m_pPandora,
         "SDHCALEnergyCorrection", pandora::HADRONIC, &SDHCALArborProcessor::SDHCALEnergyCorrectionFunction));
-
-    // energy resolution of sdhcal related to the
-    PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, arbor::ArborApi::RegisterEnergyResolutionFunction(*m_pArbor, "SDHCALEnergyResolution",
-    		  new SDHCALEnergyResolutionFunction()));
-
-    PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::RegisterSettingsFunction(*m_pPandora, "EnergyResolutionHelper",
-    		&arbor::EnergyResolutionHelper::ReadSettings));
 
     return pandora::STATUS_CODE_SUCCESS;
 }
@@ -1048,6 +1021,7 @@ void SDHCALArborProcessor::SDHCALEnergyCorrectionFunctionCaloHitList(const pando
 	energyCorrection = alpha*N1 + beta*N2 + gamma*N3;
 }
 
+//------------------------------------------------------------------------------------------------------------------------------------------
 
 void SDHCALArborProcessor::SDHCALEnergyCorrectionFunctionLCCaloHitVec(const std::vector<CalorimeterHit*> &caloHitVec, float &energyCorrection)
 {

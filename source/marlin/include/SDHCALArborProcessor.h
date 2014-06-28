@@ -21,7 +21,7 @@
 #include "EVENT/CalorimeterHit.h"
 
 // arborpfa
-#include "arborpfa/content/EnergyResolutionHelper.h"
+#include "arborpfa/content/IEnergyResolutionFunction.h"
 
 namespace pandora
 {
@@ -81,24 +81,6 @@ private:
     virtual pandora::PseudoLayer GetPseudoLayer(const pandora::CartesianVector &positionVector) const;
 
     virtual pandora::PseudoLayer GetPseudoLayerAtIp() const;
-};
-
-//------------------------------------------------------------------------------------------------------------------------------------------
-
-class SDHCALEnergyResolutionFunction : public arbor::EnergyResolutionFunction
-{
-	public:
-
-	pandora::StatusCode GetEnergyResolution(float, float &) const;
-
-	pandora::StatusCode ReadSettings(const pandora::TiXmlHandle xmlHandle);
-
-	protected:
-
-	float       m_energyFactor;
-	float       m_constantFactor;
-	float       m_energySquareFactor;
-
 };
 
 //------------------------------------------------------------------------------------------------------------------------------------------
