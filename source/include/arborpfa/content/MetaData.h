@@ -80,7 +80,7 @@ public:
  /**
   * @brief Ctor
   */
- ReclusterMetaData(ObjectList *pObjectList);
+ ReclusterMetaData(const ObjectList *pObjectList);
 
  /**
   * @brief Dtor
@@ -107,14 +107,8 @@ public:
   */
  pandora::StatusCode Clear(bool shouldDelete);
 
- /**
-  *
-  */
- ObjectList *GetObjectList() const;
-
 protected:
 
- ObjectList              *m_pObjectList;
  ObjectMetaDataMap        m_objectMetaDataMap;
 };
 

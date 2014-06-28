@@ -75,12 +75,17 @@ ObjectMetaData::~ObjectMetaData()
 //--------------------------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------------------------
 
-ReclusterMetaData::ReclusterMetaData(ObjectList *pObjectList)
+ReclusterMetaData::ReclusterMetaData(const ObjectList *pObjectList)
 {
 	if(NULL == pObjectList || pObjectList->empty())
 	 throw pandora::StatusCodeException(pandora::STATUS_CODE_INVALID_PARAMETER);
 
-	m_pObjectList = pObjectList;
+	m_objectMetaDataMap.clear();
+
+	for(ObjectList::const_iterator iter = pObjectList->begin() , endIter = pObjectList->end() ; endIter != iter ; ++iter)
+	{
+		m_objectMetaDataMap[*iter] = NULL;
+	}
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------------
@@ -94,10 +99,12 @@ ReclusterMetaData::~ReclusterMetaData()
 
 pandora::StatusCode ReclusterMetaData::SaveMetaData()
 {
-	for(ObjectList::const_iterator iter = m_pObjectList->begin() , endIter = m_pObjectList->end() ; endIter != iter ; ++iter)
+	if(m_objectMetaDataMap.empty())
+		return pandora::STATUS_CODE_NOT_INITIALIZED;
+
+	for(ObjectMetaDataMap::iterator iter = m_objectMetaDataMap.begin() , endIter = m_objectMetaDataMap.end() ; endIter != iter ; ++iter)
 	{
-		Object *pObject = *iter;
-		m_objectMetaDataMap[pObject] = pObject->m_pMetaData;
+		iter->second = iter->first->m_pMetaData;
 	}
 
 	return pandora::STATUS_CODE_SUCCESS;
@@ -110,10 +117,9 @@ pandora::StatusCode ReclusterMetaData::LoadMetaData()
 	if(m_objectMetaDataMap.empty())
 		return pandora::STATUS_CODE_NOT_INITIALIZED;
 
-	for(ObjectList::const_iterator iter = m_pObjectList->begin() , endIter = m_pObjectList->end() ; endIter != iter ; ++iter)
+	for(ObjectMetaDataMap::iterator iter = m_objectMetaDataMap.begin() , endIter = m_objectMetaDataMap.end() ; endIter != iter ; ++iter)
 	{
-		Object *pObject = *iter;
-		pObject->m_pMetaData = m_objectMetaDataMap[pObject];
+		iter->first->m_pMetaData = iter->second;
 	}
 
 	return pandora::STATUS_CODE_SUCCESS;
@@ -123,20 +129,18 @@ pandora::StatusCode ReclusterMetaData::LoadMetaData()
 
 pandora::StatusCode ReclusterMetaData::CreateMetaData(bool copyCurrentMetaData)
 {
-	if(!m_objectMetaDataMap.empty())
-		return pandora::STATUS_CODE_ALREADY_INITIALIZED;
+	if(m_objectMetaDataMap.empty())
+		return pandora::STATUS_CODE_NOT_INITIALIZED;
 
-	for(ObjectList::const_iterator iter = m_pObjectList->begin() , endIter = m_pObjectList->end() ; endIter != iter ; ++iter)
+	for(ObjectMetaDataMap::iterator iter = m_objectMetaDataMap.begin() , endIter = m_objectMetaDataMap.end() ; endIter != iter ; ++iter)
 	{
-		Object *pObject = *iter;
-
 		if(copyCurrentMetaData)
 		{
-			pObject->m_pMetaData = new ObjectMetaData(pObject->m_pMetaData);
+			iter->first->m_pMetaData = new ObjectMetaData(iter->first->m_pMetaData);
 		}
 		else
 		{
-			pObject->m_pMetaData = new ObjectMetaData();
+			iter->first->m_pMetaData = new ObjectMetaData();
 		}
 	}
 
@@ -159,14 +163,6 @@ pandora::StatusCode ReclusterMetaData::Clear(bool shouldDelete)
 
 	return pandora::STATUS_CODE_SUCCESS;
 }
-
-//----------------------------------------------------------------------------------------------------------------------------------------
-
-ObjectList *ReclusterMetaData::GetObjectList() const
-{
-	return m_pObjectList;
-}
-
 
 } 
 
