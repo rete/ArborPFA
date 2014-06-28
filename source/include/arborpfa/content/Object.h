@@ -31,6 +31,7 @@
 
 // arbor
 #include "arborpfa/content/IConnectable.h"
+#include "arborpfa/arbor/ArborTypes.h"
 
 // pandora
 #include "Pandora/StatusCodes.h"
@@ -137,13 +138,8 @@ protected:
 
 
 	// members
-	pandora::CaloHitList                  m_caloHitList;
-
- ConnectorList                m_connectorList;                    ///< All the connector list
- ConnectorList                m_backwardConnectorList;           ///< The backward connector list
- ConnectorList                m_forwardConnectorList;            ///< The forward connector list
- Connector                   *m_pCurrentBackwardConnector;      ///< The backward connector
-
+	pandora::CaloHitList            m_caloHitList;
+	ObjectMetaData                 *m_pMetaData;
  pandora::CartesianVector        m_position;            								   ///< The position of this object
  pandora::Granularity            m_granularity;                   ///< the granularity of the object
  pandora::PseudoLayer            m_pseudoLayer;                   ///< The associated pseudo layer
@@ -151,6 +147,7 @@ protected:
 
 	// friendship class
 	friend class ObjectManager;
+	friend class ReclusterMetaData;
 	friend class pandora::AlgorithmObjectManager<arbor::Object>;
 };
 

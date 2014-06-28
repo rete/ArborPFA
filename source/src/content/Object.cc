@@ -30,6 +30,7 @@
 
 // arbor
 #include "arborpfa/content/Connector.h"
+#include "arborpfa/content/MetaData.h"
 #include "arborpfa/arbor/ArborTypes.h"
 
 // pandora
@@ -48,7 +49,7 @@ Object::Object(pandora::CaloHit *pCaloHit) :
 		m_position(0.f, 0.f, 0.f),
   m_granularity(pandora::COARSE),
   m_pseudoLayer(0),
-  m_pCurrentBackwardConnector(NULL)
+  m_pMetaData(NULL)
 {
 	if(NULL == pCaloHit)
 		throw pandora::StatusCodeException(pandora::STATUS_CODE_INVALID_PARAMETER);
@@ -62,6 +63,8 @@ Object::Object(pandora::CaloHit *pCaloHit) :
 	m_tagFlagMap[MIP_OBJECT]      = false;
 	m_tagFlagMap[NOISE_OBJECT]    = false;
 
+	m_pMetaData = new ObjectMetaData();
+
 	m_caloHitList.insert(pCaloHit);
 }
 
@@ -69,7 +72,7 @@ Object::Object(pandora::CaloHit *pCaloHit) :
 
 Object::~Object() 
 {
-	for(ConnectorList::iterator iter = m_connectorList.begin(), endIter = m_connectorList.end() ; endIter != iter ; ++iter)
+	for(ConnectorList::iterator iter = m_pMetaData->m_connectorList.begin(), endIter = m_pMetaData->m_connectorList.end() ; endIter != iter ; ++iter)
 	{
 		Connector *pConnector = *iter;
 		Object *pOtherObject = NULL;
@@ -88,26 +91,23 @@ Object::~Object()
 	}
 
 	// consistency check ...
-	if(!m_connectorList.empty())
+	if(!m_pMetaData->m_connectorList.empty())
 		throw pandora::StatusCodeException(pandora::STATUS_CODE_FAILURE);
 
+	delete m_pMetaData;
 	m_caloHitList.clear();
-
-	m_connectorList.clear();
-	m_backwardConnectorList.clear();
-	m_forwardConnectorList.clear();
 }
 
 //--------------------------------------------------------------------------------------------------------------------
 
 bool Object::IsConnectedWith(Object *pObject) const
 {
-	if(m_connectorList.empty())
+	if(m_pMetaData->m_connectorList.empty())
 	{
 		return false;
 	}
 
-	for(ConnectorList::const_iterator iter = m_connectorList.begin(), endIter = m_connectorList.end() ; endIter != iter ; iter++)
+	for(ConnectorList::const_iterator iter = m_pMetaData->m_connectorList.begin(), endIter = m_pMetaData->m_connectorList.end() ; endIter != iter ; iter++)
 	{
 		if((*iter)->Contains(pObject))
 			return true;
@@ -120,16 +120,16 @@ bool Object::IsConnectedWith(Object *pObject) const
 
 bool Object::IsBackwardConnector(const Connector *pConnector) const
 {
-	ConnectorList::const_iterator findIter = std::find(m_backwardConnectorList.begin(), m_backwardConnectorList.end(), pConnector);
-	return (m_backwardConnectorList.end() != findIter);
+	ConnectorList::const_iterator findIter = std::find(m_pMetaData->m_backwardConnectorList.begin(), m_pMetaData->m_backwardConnectorList.end(), pConnector);
+	return (m_pMetaData->m_backwardConnectorList.end() != findIter);
 }
 
 //--------------------------------------------------------------------------------------------------------------------
 
 bool Object::IsForwardConnector(const Connector *pConnector) const
 {
-	ConnectorList::const_iterator findIter = std::find(m_forwardConnectorList.begin(), m_forwardConnectorList.end(), pConnector);
-	return (m_forwardConnectorList.end() != findIter);
+	ConnectorList::const_iterator findIter = std::find(m_pMetaData->m_forwardConnectorList.begin(), m_pMetaData->m_forwardConnectorList.end(), pConnector);
+	return (m_pMetaData->m_forwardConnectorList.end() != findIter);
 }
 
 //--------------------------------------------------------------------------------------------------------------------
@@ -142,7 +142,7 @@ pandora::StatusCode Object::FindConnector(const Object *pObject, Connector *&pCo
 	if(NULL == pObject)
 		return pandora::STATUS_CODE_INVALID_PARAMETER;
 
-	for(ConnectorList::const_iterator iter = m_connectorList.begin(), endIter = m_connectorList.end() ; iter != endIter ; ++iter)
+	for(ConnectorList::const_iterator iter = m_pMetaData->m_connectorList.begin(), endIter = m_pMetaData->m_connectorList.end() ; iter != endIter ; ++iter)
 	{
 		if((*iter)->Contains(pObject))
 		{
@@ -176,15 +176,15 @@ pandora::StatusCode Object::ConnectWith(Object *pObject, ConnectorDirection dire
 		PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, pConnector->SetWeight(weight));
 
 		// and add it to the list
-		m_connectorList.insert(pConnector);
+		m_pMetaData->m_connectorList.insert(pConnector);
 
 		if(BACKWARD == direction)
 		{
-			m_backwardConnectorList.insert(pConnector);
+			m_pMetaData->m_backwardConnectorList.insert(pConnector);
 		}
 		else
 		{
-			m_forwardConnectorList.insert(pConnector);
+			m_pMetaData->m_forwardConnectorList.insert(pConnector);
 		}
 	}
 	else
@@ -193,18 +193,18 @@ pandora::StatusCode Object::ConnectWith(Object *pObject, ConnectorDirection dire
 		Connector *pConnector = new Connector(this, pObject, weight);
 
 		// add it to the list
-		m_connectorList.insert(pConnector);
+		m_pMetaData->m_connectorList.insert(pConnector);
 
 		ConnectorDirection retroDirection;
 
 		if(BACKWARD == direction)
 		{
-			m_backwardConnectorList.insert(pConnector);
+			m_pMetaData->m_backwardConnectorList.insert(pConnector);
 			retroDirection = FORWARD;
 		}
 		else
 		{
-			m_forwardConnectorList.insert(pConnector);
+			m_pMetaData->m_forwardConnectorList.insert(pConnector);
 			retroDirection = BACKWARD;
 		}
 
@@ -235,15 +235,15 @@ pandora::StatusCode Object::ConnectWith(Object *pObject, ConnectorDirection dire
 		PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, pConnector->SetWeight( weight ));
 
 		// and add it to the list
-		m_connectorList.insert(pConnector);
+		m_pMetaData->m_connectorList.insert(pConnector);
 
 		if(BACKWARD == direction)
 		{
-			m_backwardConnectorList.insert(pConnector);
+			m_pMetaData->m_backwardConnectorList.insert(pConnector);
 		}
 		else
 		{
-			m_forwardConnectorList.insert(pConnector);
+			m_pMetaData->m_forwardConnectorList.insert(pConnector);
 		}
 	}
 	else
@@ -253,18 +253,18 @@ pandora::StatusCode Object::ConnectWith(Object *pObject, ConnectorDirection dire
 		pConnector = new Connector(this, pObject, weight);
 
 		// add it to the list
-		m_connectorList.insert(pConnector);
+		m_pMetaData->m_connectorList.insert(pConnector);
 
 		ConnectorDirection retroDirection;
 
 		if(BACKWARD == direction)
 		{
-			m_backwardConnectorList.insert(pConnector);
+			m_pMetaData->m_backwardConnectorList.insert(pConnector);
 			retroDirection = FORWARD;
 		}
 		else
 		{
-			m_forwardConnectorList.insert(pConnector);
+			m_pMetaData->m_forwardConnectorList.insert(pConnector);
 			retroDirection = BACKWARD;
 		}
 
@@ -288,35 +288,33 @@ pandora::StatusCode Object::RemoveConnectionWith(Object *pObject)
 	if(this == pObject)
 		return pandora::STATUS_CODE_INVALID_PARAMETER;
 
-	for(ConnectorList::const_iterator iter = m_connectorList.begin(), endIter = m_connectorList.end() ; iter != endIter ; ++iter)
+	for(ConnectorList::const_iterator iter = m_pMetaData->m_connectorList.begin(), endIter = m_pMetaData->m_connectorList.end() ; iter != endIter ; ++iter)
 	{
 		Connector *pConnector = *iter;
 
 		if(!pConnector->Contains(pObject))
-		{
 			continue;
-		}
 
 		if(this->IsBackwardConnector(pConnector))
 		{
-			size_t nErase = m_backwardConnectorList.erase(pConnector);
+			size_t nErase = m_pMetaData->m_backwardConnectorList.erase(pConnector);
 
 			if(1 != nErase)
 				return pandora::STATUS_CODE_FAILURE;
 
-			nErase = pObject->m_forwardConnectorList.erase(pConnector);
+			nErase = pObject->m_pMetaData->m_forwardConnectorList.erase(pConnector);
 
 			if(1 != nErase)
 				return pandora::STATUS_CODE_FAILURE;
 		}
 		else
 		{
-			size_t nErase = m_forwardConnectorList.erase(pConnector);
+			size_t nErase = m_pMetaData->m_forwardConnectorList.erase(pConnector);
 
 			if(1 != nErase)
 				return pandora::STATUS_CODE_FAILURE;
 
-			nErase = pObject->m_backwardConnectorList.erase(pConnector);
+			nErase = pObject->m_pMetaData->m_backwardConnectorList.erase(pConnector);
 
 			if(1 != nErase)
 				return pandora::STATUS_CODE_FAILURE;
@@ -328,8 +326,8 @@ pandora::StatusCode Object::RemoveConnectionWith(Object *pObject)
 		delete pConnector;
 
 		// can't do object->GetConnectors().erase( it ) since iterator 'it' is not from the same vector
-		pObject->m_connectorList.erase(it2);
-		m_connectorList.erase(iter);
+		pObject->m_pMetaData->m_connectorList.erase(it2);
+		m_pMetaData->m_connectorList.erase(iter);
 
 		break;
 	}
@@ -435,14 +433,14 @@ pandora::StatusCode Object::SetCurrentBackwardConnector(Connector *pConnector)
 	// re-initialization case
 	if(NULL == pConnector)
 	{
-		m_pCurrentBackwardConnector = pConnector;
+		m_pMetaData->m_pCurrentBackwardConnector = pConnector;
 		return pandora::STATUS_CODE_SUCCESS;
 	}
 
 	if(!this->IsBackwardConnector(pConnector))
 		return pandora::STATUS_CODE_NOT_ALLOWED;
 
-	m_pCurrentBackwardConnector = pConnector;
+	m_pMetaData->m_pCurrentBackwardConnector = pConnector;
 
 	return pandora::STATUS_CODE_SUCCESS;
 }
@@ -451,28 +449,28 @@ pandora::StatusCode Object::SetCurrentBackwardConnector(Connector *pConnector)
 
 Connector *Object::GetCurrentBackwardConnector() const
 {
-	return m_pCurrentBackwardConnector;
+	return m_pMetaData->m_pCurrentBackwardConnector;
 }
 
 //--------------------------------------------------------------------------------------------------------------------
 
 const ConnectorList &Object::GetConnectorList() const
 {
-	return m_connectorList;
+	return m_pMetaData->m_connectorList;
 }
 
 //--------------------------------------------------------------------------------------------------------------------
 
 const ConnectorList &Object::GetBackwardConnectorList() const
 {
-	return m_backwardConnectorList;
+	return m_pMetaData->m_backwardConnectorList;
 }
 
 //--------------------------------------------------------------------------------------------------------------------
 
 const ConnectorList &Object::GetForwardConnectorList() const
 {
-	return m_forwardConnectorList;
+	return m_pMetaData->m_forwardConnectorList;
 }
 
 //--------------------------------------------------------------------------------------------------------------------
@@ -486,7 +484,7 @@ const pandora::CartesianVector &Object::GetPosition() const
 
 bool Object::IsConnected() const
 {
-	return !m_connectorList.empty();
+	return !m_pMetaData->m_connectorList.empty();
 }
 
 //--------------------------------------------------------------------------------------------------------------------
