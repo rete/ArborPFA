@@ -67,13 +67,20 @@ public:
 
 protected:
 
+	/**
+	 *
+	 */
+	pandora::StatusCode FindClusterAssociatedToTrack(const arbor::ClusterList *pClusterList,
+			const pandora::Track *pAssociatedTrack, const arbor::Cluster *&pAssociatedCluster);
+
 	// algorithm parameters
 	StringVector               m_clusteringAlgorithmList;
-	std::string                m_trackClusterAssociationAlgorithmName;
+	std::string                m_associationAlgorithmName;
 	std::string                m_energyResolutionFunctionName;
 	std::string                m_energyEstimatorName;
 	float                     m_nResolutionTrackClusterComparison;
 	float                     m_contactDistanceThreshold;
+	float                     m_chi2ForAutomaticClusterSelection;
 
 };
 
