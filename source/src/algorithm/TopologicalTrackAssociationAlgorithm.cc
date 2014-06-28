@@ -22,6 +22,9 @@
  * along with ArborPFA.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * @author Remi Ete
+ * @author Manqi Ruan
+ * @author Henri Videau
+ *
  * @copyright CNRS , IPNL
  */
 

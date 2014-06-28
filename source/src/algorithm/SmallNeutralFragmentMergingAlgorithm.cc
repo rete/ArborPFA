@@ -22,6 +22,9 @@
  * along with ArborPFA.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * @author Remi Ete
+ * @author Manqi Ruan
+ * @author Henri Videau
+ *
  * @copyright CNRS , IPNL
  */
 
@@ -51,7 +54,7 @@ pandora::StatusCode SmallNeutralFragmentMergingAlgorithm::RunArborAlgorithm()
 
 		if(m_maximumDaughterNObject > pCluster->GetNObjects())
 		{
-			pandora::Track *pAssociatedTrack = NULL;
+			const pandora::Track *pAssociatedTrack = NULL;
 			PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, pCluster->GetAssociatedTrack(pAssociatedTrack));
 
 			if(NULL == pAssociatedTrack)

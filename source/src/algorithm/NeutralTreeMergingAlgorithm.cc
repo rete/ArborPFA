@@ -22,7 +22,10 @@
  * along with ArborPFA.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * @author Remi Ete
- * @copyright CNRS , IPNL
+ * @author Manqi Ruan
+ * @author Henri Videau
+ *
+ * @copyright CNRS, IPNL
  */
 
 
@@ -53,7 +56,7 @@ pandora::StatusCode NeutralTreeMergingAlgorithm::RunArborAlgorithm()
 	{
 	 arbor::Cluster *pCluster = *clusterIter;
 
-	 pandora::Track *pAssociatedTrack = NULL;
+	 const pandora::Track *pAssociatedTrack = NULL;
 	 PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, pCluster->GetAssociatedTrack(pAssociatedTrack));
 
 	 // examine only neutral clusters
