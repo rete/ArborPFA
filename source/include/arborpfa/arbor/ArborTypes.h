@@ -34,15 +34,23 @@
 #include <map>
 #include <string>
 
+// pandora
+#include "Pandora/PandoraInputTypes.h"
+#include "Pandora/PandoraSettings.h"
+
 namespace arbor
 {
 	class Connector;
+	class ObjectMetaData;
 	class Object;
 	class Cluster;
 	class Branch;
 	class Tree;
 	class ITreeBuilder;
 	class IBranchBuilder;
+	class ReclusterMetaData;
+	class IEnergyEstimator;
+	class IEnergyResolutionFunction;
 
 	/**
 		* @brief ConnectorDirection enum
@@ -106,12 +114,18 @@ namespace arbor
 
 	typedef std::map<std::string, ITreeBuilder*>                     TreeBuilderMap;
 	typedef std::map<std::string, IBranchBuilder*>                   BranchBuilderMap;
+	typedef std::map<std::string, IEnergyEstimator*>                 EnergyEstimatorMap;
+	typedef std::map<std::string, IEnergyResolutionFunction*>        EnergyResolutionFunctionMap;
 
 	typedef std::set<Tree*>                                          TreeList;
 	typedef std::vector<Tree*>                                       TreeVector;
 
 	typedef std::map<Tree*, Cluster*>                                TreeToClusterMap;
 	typedef std::map<Cluster*, Cluster*>                             ClusterToClusterMap;
+
+	typedef std::map<Object*, ObjectMetaData*>                       ObjectMetaDataMap;
+	typedef std::map<std::string, ReclusterMetaData*>                ReclusterMetaDataMap;
+
 
 	/**
 	 * @brief ObjectCleaningInfo class. </br>
@@ -126,6 +140,20 @@ namespace arbor
 	};
 
 	typedef std::set<ObjectCleaningInfo *>                        ObjectCleaningInfoList;
+
+
+	// basic typedefs
+	typedef std::vector<std::string>         StringVector;
+	typedef std::vector<float>              FloatVector;
+	typedef std::vector<int>                IntVector;
+
+
+	// Macro to print message
+#define ARBOR_PRINT( streamableMessage ) \
+{ \
+	if(pandora::PandoraSettings::ShouldDisplayAlgorithmInfo()) \
+	 std::cout << streamableMessage; \
+}
 
 } 
 
