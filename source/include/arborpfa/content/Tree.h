@@ -77,6 +77,11 @@ class Tree
   */
  unsigned int GetNCaloHits() const;
 
+ /**
+  *
+  */
+ pandora::CaloHitList GetCaloHitList() const;
+
 protected:
 
  /**

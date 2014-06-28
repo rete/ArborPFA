@@ -113,6 +113,21 @@ const BranchList &Tree::GetBranchList() const
 
 //------------------------------------------------------------------------------------------------------
 
+pandora::CaloHitList Tree::GetCaloHitList() const
+{
+	pandora::CaloHitList returnList;
+
+	for(ObjectList::const_iterator iter = m_objectList.begin() , endIter = m_objectList.end() ; endIter != iter ; ++iter)
+	{
+		const pandora::CaloHitList &caloHitList((*iter)->GetCaloHitList());
+		returnList.insert(caloHitList.begin(), caloHitList.end());
+	}
+
+	return returnList;
+}
+
+//------------------------------------------------------------------------------------------------------
+
 pandora::StatusCode Tree::AddBranch(Branch *pBranch)
 {
 	if(NULL == pBranch)
@@ -154,11 +169,13 @@ Object *Tree::GetSeedObject() const
 
 unsigned int Tree::GetNCaloHits() const
 {
-	unsigned int nCaloHits = 0;
+	unsigned int nCaloHits(0);
 
 	for(ObjectList::const_iterator iter = m_objectList.begin() , endIter = m_objectList.end() ; endIter != iter ; ++iter)
 	{
-		nCaloHits += (*iter)->GetCaloHitList().size();
+		Object *pObject = *iter;
+		const CaloHitList &caloHitList(pObject->GetCaloHitList());
+		nCaloHits += caloHitList.size();
 	}
 
 	return nCaloHits;
