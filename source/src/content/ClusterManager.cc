@@ -111,7 +111,7 @@ StatusCode Manager<arbor::Cluster>::GetAlgorithmInputList(const Algorithm *const
 //----------------------------------------------------------------------------------------------------------------------------------
 
 template<>
-inline StatusCode Manager<arbor::Cluster>::GetAlgorithmInputListName(const Algorithm *const pAlgorithm, std::string &listName) const
+StatusCode Manager<arbor::Cluster>::GetAlgorithmInputListName(const Algorithm *const pAlgorithm, std::string &listName) const
 {
     AlgorithmInfoMap::const_iterator iter = m_algorithmInfoMap.find(pAlgorithm);
 
