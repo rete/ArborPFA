@@ -191,6 +191,54 @@ class ArborContentApi
   static pandora::StatusCode RunClusterCreationAlgorithm(const ArborAlgorithm &arborAlgorithm, const std::string &arborClusterAlgorithmName,
   		const ClusterList *&pClusterList, std::string &newClusterListName);
 
+  /**
+   * Reclustering related methods
+   */
+
+  /**
+   *
+   */
+  static pandora::StatusCode InitializeReclustering(const ArborAlgorithm &arborAlgorithm, const ClusterList &clusterList, std::string &originalClusterListName);
+
+  /**
+   *
+   */
+  static pandora::StatusCode EndReclustering(const ArborAlgorithm &arborAlgorithm, const std::string &selectedClusterListName);
+
+  /**
+   *
+   */
+ static pandora::StatusCode RunReclusteringAlgorithm(const ArborAlgorithm &arborAlgorithm, const std::string &clusteringAlgorithmName,
+  		const arbor::ClusterList *&pClusterList, std::string &newClusterListName, bool copyInitalClusterList = true);
+
+  /**
+   * Plugin related methods
+   */
+
+  static pandora::StatusCode GetCurrentEnergyEstimatorName(const ArborAlgorithm &arborAlgorithm, std::string &energyEstimatorName);
+
+  static pandora::StatusCode SetCurrentEnergyEstimator(const ArborAlgorithm &arborAlgorithm, const std::string &energyEstimatorName);
+
+  static pandora::StatusCode EstimateEnergy(const ArborAlgorithm &arborAlgorithm, const arbor::Cluster *pCluster,
+  		const std::string energyEstimatorName, float &energy);
+
+  static pandora::StatusCode EstimateEnergy(const ArborAlgorithm &arborAlgorithm, const arbor::Cluster *pCluster,
+  	 float &energy);
+
+  static pandora::StatusCode EstimateEnergy(const ArborAlgorithm &arborAlgorithm, const pandora::CaloHitList *const pCaloHitList,
+  		const std::string energyEstimatorName, float &energy);
+
+  static pandora::StatusCode EstimateEnergy(const ArborAlgorithm &arborAlgorithm, const pandora::CaloHitList *const pCaloHitList,
+  		float &energy);
+
+  static pandora::StatusCode GetCurrentEnergyResolutionFunctionName(const ArborAlgorithm &arborAlgorithm, std::string &energyResolutionFunctionName);
+
+  static pandora::StatusCode SetCurrentEnergyResolutionFunction(const ArborAlgorithm &arborAlgorithm, const std::string &energyResolutionFunctionName);
+
+  static pandora::StatusCode GetEnergyResolution(const ArborAlgorithm &arborAlgorithm, float energy,		float &energyResolution);
+
+  static pandora::StatusCode GetEnergyResolution(const ArborAlgorithm &arborAlgorithm, const std::string &energyResolutionFunctionName, float energy,		float &energyResolution);
+
 }; 
 
 } 

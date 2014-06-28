@@ -287,7 +287,110 @@ pandora::StatusCode ArborContentApi::RunClusterCreationAlgorithm(const ArborAlgo
 	return arborAlgorithm.GetArborContentApiImpl()->RunClusterCreationAlgorithm(arborAlgorithm, arborClusterAlgorithmName, pClusterList, newClusterListName);
 }
 
+//---------------------------------------------------------------------------------------------------------------
 
+/**
+ * Reclustering related methods
+ */
+
+pandora::StatusCode ArborContentApi::InitializeReclustering(const ArborAlgorithm &arborAlgorithm, const ClusterList &clusterList, std::string &originalClusterListName)
+{
+	return arborAlgorithm.GetArborContentApiImpl()->InitializeReclustering(arborAlgorithm, clusterList, originalClusterListName);
+}
+
+//---------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborContentApi::EndReclustering(const ArborAlgorithm &arborAlgorithm, const std::string &selectedClusterListName)
+{
+	return arborAlgorithm.GetArborContentApiImpl()->EndReclustering(arborAlgorithm, selectedClusterListName);
+}
+
+//---------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborContentApi::RunReclusteringAlgorithm(const ArborAlgorithm &arborAlgorithm, const std::string &clusteringAlgorithmName,
+		const arbor::ClusterList *&pClusterList, std::string &newClusterListName, bool copyInitalClusterList)
+{
+	return arborAlgorithm.GetArborContentApiImpl()->RunReclusteringAlgorithm(arborAlgorithm, clusteringAlgorithmName, pClusterList, newClusterListName, copyInitalClusterList);
+}
+
+
+//---------------------------------------------------------------------------------------------------------------
+
+/**
+ * Plugin related methods
+ */
+
+pandora::StatusCode ArborContentApi::GetCurrentEnergyEstimatorName(const ArborAlgorithm &arborAlgorithm, std::string &energyEstimatorName)
+{
+	return arborAlgorithm.GetArborContentApiImpl()->GetCurrentEnergyEstimatorName(energyEstimatorName);
+}
+
+//---------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborContentApi::SetCurrentEnergyEstimator(const ArborAlgorithm &arborAlgorithm, const std::string &energyEstimatorName)
+{
+	return arborAlgorithm.GetArborContentApiImpl()->SetCurrentEnergyEstimator(energyEstimatorName);
+}
+
+//---------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborContentApi::EstimateEnergy(const ArborAlgorithm &arborAlgorithm, const arbor::Cluster *pCluster,
+		const std::string energyEstimatorName, float &energy)
+{
+	return arborAlgorithm.GetArborContentApiImpl()->EstimateEnergy(pCluster, energyEstimatorName, energy);
+}
+
+//---------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborContentApi::EstimateEnergy(const ArborAlgorithm &arborAlgorithm, const arbor::Cluster *pCluster,
+	 float &energy)
+{
+	return arborAlgorithm.GetArborContentApiImpl()->EstimateEnergy(pCluster, energy);
+}
+
+//---------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborContentApi::EstimateEnergy(const ArborAlgorithm &arborAlgorithm, const pandora::CaloHitList *const pCaloHitList,
+		const std::string energyEstimatorName, float &energy)
+{
+	return arborAlgorithm.GetArborContentApiImpl()->EstimateEnergy(pCaloHitList, energyEstimatorName, energy);
+}
+
+//---------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborContentApi::EstimateEnergy(const ArborAlgorithm &arborAlgorithm, const pandora::CaloHitList *const pCaloHitList,
+		float &energy)
+{
+	return arborAlgorithm.GetArborContentApiImpl()->EstimateEnergy(pCaloHitList, energy);
+}
+
+//---------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborContentApi::GetCurrentEnergyResolutionFunctionName(const ArborAlgorithm &arborAlgorithm, std::string &energyResolutionFunctionName)
+{
+	return arborAlgorithm.GetArborContentApiImpl()->GetCurrentEnergyResolutionFunctionName(energyResolutionFunctionName);
+}
+
+//---------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborContentApi::SetCurrentEnergyResolutionFunction(const ArborAlgorithm &arborAlgorithm, const std::string &energyResolutionFunctionName)
+{
+	return arborAlgorithm.GetArborContentApiImpl()->SetCurrentEnergyResolutionFunction(energyResolutionFunctionName);
+}
+
+//---------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborContentApi::GetEnergyResolution(const ArborAlgorithm &arborAlgorithm, float energy,		float &energyResolution)
+{
+	return arborAlgorithm.GetArborContentApiImpl()->GetEnergyResolution(energy, energyResolution);
+}
+
+//---------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborContentApi::GetEnergyResolution(const ArborAlgorithm &arborAlgorithm, const std::string &energyResolutionFunctionName, float energy,		float &energyResolution)
+{
+	return arborAlgorithm.GetArborContentApiImpl()->GetEnergyResolution(energyResolutionFunctionName, energy, energyResolution);
+}
 
 } 
 

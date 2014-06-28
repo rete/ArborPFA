@@ -204,6 +204,54 @@ class ArborContentApiImpl
   pandora::StatusCode RunClusterCreationAlgorithm(const ArborAlgorithm &arborAlgorithm, const std::string &arborClusterAlgorithmName,
   		const arbor::ClusterList *&pClusterList, std::string &newClusterListName) const;
 
+  /**
+   * Reclustering related methods
+   */
+
+  /**
+   *
+   */
+  pandora::StatusCode InitializeReclustering(const ArborAlgorithm &arborAlgorithm, const ClusterList &clusterList, std::string &originalClusterListName);
+
+  /**
+   *
+   */
+  pandora::StatusCode EndReclustering(const ArborAlgorithm &arborAlgorithm, const std::string &selectedClusterListName);
+
+  /**
+   *
+   */
+  pandora::StatusCode RunReclusteringAlgorithm(const ArborAlgorithm &arborAlgorithm, const std::string &clusteringAlgorithmName,
+  		const arbor::ClusterList *&pClusterList, std::string &newClusterListName, bool copyInitalClusterList = true);
+
+  /**
+   * Plugin related methods
+   */
+
+  pandora::StatusCode GetCurrentEnergyEstimatorName(std::string &energyEstimatorName) const;
+
+  pandora::StatusCode SetCurrentEnergyEstimator(const std::string &energyEstimatorName) const;
+
+  pandora::StatusCode EstimateEnergy(const arbor::Cluster *pCluster,
+  		const std::string energyEstimatorName, float &energy) const;
+
+  pandora::StatusCode EstimateEnergy(const arbor::Cluster *pCluster,
+  	 float &energy) const;
+
+  pandora::StatusCode EstimateEnergy(const pandora::CaloHitList *const pCaloHitList,
+  		const std::string energyEstimatorName, float &energy) const;
+
+  pandora::StatusCode EstimateEnergy(const pandora::CaloHitList *const pCaloHitList,
+  		float &energy) const;
+
+  pandora::StatusCode GetCurrentEnergyResolutionFunctionName(std::string &energyResolutionFunctionName) const;
+
+  pandora::StatusCode SetCurrentEnergyResolutionFunction(const std::string &energyResolutionFunctionName) const;
+
+  pandora::StatusCode GetEnergyResolution(float energy,		float &energyResolution) const;
+
+  pandora::StatusCode GetEnergyResolution(const std::string &energyResolutionFunctionName, float energy,		float &energyResolution) const;
+
  private:
 
 		/**
@@ -212,6 +260,8 @@ class ArborContentApiImpl
 		ArborContentApiImpl(Arbor *pArbor);
 
 		Arbor       *m_pArbor;
+		bool        m_reclusteringInitialized;
+		bool        m_runningReclusterAlgorithm;
 
 		friend class Arbor;
 }; 
