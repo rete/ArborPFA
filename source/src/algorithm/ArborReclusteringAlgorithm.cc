@@ -115,7 +115,9 @@ pandora::StatusCode ArborReclusteringAlgorithm::RunArborAlgorithm()
 				continue;
 
 			float contactDistance(0.f);
-			PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, ArborHelper::GetClosestDistanceApproach(pCluster, pNearbyCluster, contactDistance));
+
+			if(pandora::STATUS_CODE_SUCCESS != ArborHelper::GetClosestDistanceApproach(pCluster, pNearbyCluster, contactDistance))
+				continue;
 
 			if(m_contactDistanceThreshold > contactDistance)
 				continue;
@@ -148,7 +150,7 @@ pandora::StatusCode ArborReclusteringAlgorithm::RunArborAlgorithm()
 
   std::string bestReclusteringListName(originalClustersListName);
   float bestReclusteringChi2(chi2);
-  unsigned int bestNReclusteringClusters = reclusterClusterList.size();
+//  unsigned int bestNReclusteringClusters = reclusterClusterList.size();
 
   for(StringVector::iterator algoIter = m_clusteringAlgorithmList.begin() , algoEndIter = m_clusteringAlgorithmList.end() ;
   		algoEndIter != algoIter ; ++algoIter)
@@ -185,23 +187,11 @@ pandora::StatusCode ArborReclusteringAlgorithm::RunArborAlgorithm()
   	ARBOR_PRINT( "bestNReclusteringClusters : " << bestNReclusteringClusters << std::endl );
   	ARBOR_PRINT( "pReclusterList->size() : " << pReclusterList->size() << std::endl );
 
-  	if(inResolutionRange)
-  	{
-  		if(pReclusterList->size() < bestNReclusteringClusters)
-  		{
-  			bestReclusteringListName = reclusterListName;
-  			bestNReclusteringClusters = pReclusterList->size();
-  			bestReclusteringChi2 = chi2;
-  		}
-  		else if(pReclusterList->size() == bestNReclusteringClusters)
-  		{
-  			if(chi2 < bestReclusteringChi2)
-  			{
-   			bestReclusteringListName = reclusterListName;
-   			bestReclusteringChi2 = chi2;
-  			}
-  		}
-  	}
+			if(chi2 < bestReclusteringChi2)
+			{
+				bestReclusteringListName = reclusterListName;
+				bestReclusteringChi2 = chi2;
+			}
   	else
   	{
   		continue;
@@ -218,7 +208,6 @@ pandora::StatusCode ArborReclusteringAlgorithm::RunArborAlgorithm()
   PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, ArborContentApi::EndReclustering(*this,
   		bestReclusteringListName));
 	}
-
 
 	// restore the original functions if they are different
 	if(originalEnergyResolutionFunctionName != m_energyResolutionFunctionName)
