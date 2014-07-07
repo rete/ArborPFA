@@ -184,7 +184,6 @@ pandora::StatusCode ArborReclusteringAlgorithm::RunArborAlgorithm()
 
   	ARBOR_PRINT( "newEstimatedClusterEnergy : " << newEstimatedClusterEnergy << std::endl );
   	ARBOR_PRINT( "current chi2 : " << chi2 << std::endl );
-  	ARBOR_PRINT( "bestNReclusteringClusters : " << bestNReclusteringClusters << std::endl );
   	ARBOR_PRINT( "pReclusterList->size() : " << pReclusterList->size() << std::endl );
 
 			if(chi2 < bestReclusteringChi2)
