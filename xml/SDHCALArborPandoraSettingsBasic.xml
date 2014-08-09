@@ -44,40 +44,54 @@ Arbor Pandora settings xml file for Arbor algorithms
 		   </EnergyEstimators>
 		   
 		</ArborPlugin>
+		
+	  <algorithm type = "ArborParent">
+      <algorithm type = "SimpleObjectCreation" description = "ObjectFormation">
+        <ShouldUseOnlyCaloHitsForObjectsInEcal> true </ShouldUseOnlyCaloHitsForObjectsInEcal>
+        <ShouldUseReadoutLayerInEcal> false </ShouldUseReadoutLayerInEcal>
+        <ShouldUseOnlyCaloHitsForObjectsInHcal> false </ShouldUseOnlyCaloHitsForObjectsInHcal>
+        <MaximumSizeForClusterSplittingInHcal> 4 </MaximumSizeForClusterSplittingInHcal>
+        <IntraLayerMaxDistanceInHcal> 11.f </IntraLayerMaxDistanceInHcal>
+        <ShouldUseReadoutLayerInHcal> false </ShouldUseReadoutLayerInHcal>
+        <ShouldSplitClusterInSingleCaloHitClustersInHcal> true </ShouldSplitClusterInSingleCaloHitClustersInHcal>
+      </algorithm>
+      <ObjectListName>   InputObjects   </ObjectListName>
+      <ReplaceCurrentObjectList>  true  </ReplaceCurrentObjectList>
+    </algorithm>
+    
+    <algorithm type = "IsolationTagging">
+       <MaxNObjectsInSamePseudoLayer> 3 </MaxNObjectsInSamePseudoLayer>
+       <MaxNObjects> 1 </MaxNObjects> 
+       <MaxNeighborDistance> 50.f </MaxNeighborDistance>
+       <MaxIntraLayerNeighborDistance> 18.f </MaxIntraLayerNeighborDistance>
+    </algorithm>
 
     <!-- ARBOR PANDORA ALGORITHM SETTINGS -->    
     <algorithm type = "ArborParent">
-      <algorithm type = "SimpleObjectCreation" description = "ObjectFormation">
-        <ShouldUseOnlyCaloHitsForObjects> false </ShouldUseOnlyCaloHitsForObjects>
-        <MaximumSizeForClusterSplitting> 4 </MaximumSizeForClusterSplitting>
-        <IntraLayerMaxDistance> 11.f </IntraLayerMaxDistance>
-        <ShouldUseReadoutLayer> false </ShouldUseReadoutLayer>
-        <ShouldSplitClusterInSingleCaloHitClusters> true </ShouldSplitClusterInSingleCaloHitClusters>
-      </algorithm>
       <algorithm type = "ArborConnectorClustering" description = "ClusterFormation">
           <MaximumDistanceForConnectionFine>          10.0    </MaximumDistanceForConnectionFine>
           <MaximumDistanceForConnectionCoarse>        65.5    </MaximumDistanceForConnectionCoarse>
-          <AngleForInitialConnectionCoarse>           1.5     </AngleForInitialConnectionCoarse>
+          <AngleForInitialConnectionCoarse>           3.14     </AngleForInitialConnectionCoarse>
           <ForwardConnectorWeight>                    10.0    </ForwardConnectorWeight>
           <BackwardConnectorWeight>                   1.0     </BackwardConnectorWeight>
           <OrderParameterAnglePower>                  1       </OrderParameterAnglePower>
-          <OrderParameterDistancePower>               10      </OrderParameterDistancePower>
+          <OrderParameterDistancePower>               3      </OrderParameterDistancePower>
           <ReferenceDirectionDepth>                   2       </ReferenceDirectionDepth>
-          <ReferenceDirectionMaximumForwardLayer>     2       </ReferenceDirectionMaximumForwardLayer>
+          <ReferenceDirectionMaximumForwardLayer>     3       </ReferenceDirectionMaximumForwardLayer>
           <AllowForwardConnectionForIsolatedObjects>  false   </AllowForwardConnectionForIsolatedObjects>
           <ShouldUseIsolatedObjects>                  true    </ShouldUseIsolatedObjects>
-          <ShouldSelectNearestObjectWhileCleaning>    true    </ShouldSelectNearestObjectWhileCleaning>
+          <ShouldSelectNearestObjectWhileCleaning>    false    </ShouldSelectNearestObjectWhileCleaning>
           <ShowConnectors>                            true   </ShowConnectors>
       </algorithm>
       <associationAlgorithms>
         <algorithm type = "TopologicalTrackAssociation">
           <ShouldMergeChargedTrees> true </ShouldMergeChargedTrees>
-          <TrackToClusterDistanceCut> 40.f </TrackToClusterDistanceCut>
+          <TrackToClusterDistanceCut> 50.f </TrackToClusterDistanceCut>
           <TrackToClusterNLayersCut> 2 </TrackToClusterNLayersCut>
         </algorithm>
         <algorithm type = "NeutralTreeMerging">
           <UseClustersWithTrackAssociation> true </UseClustersWithTrackAssociation>
-          <SeedSeparationDistance> 12.5 </SeedSeparationDistance>
+          <SeedSeparationDistance> 25.0 </SeedSeparationDistance>
         </algorithm>
         <algorithm type = "SmallNeutralFragmentMerging">
           <MaximumDaughterNObject> 10 </MaximumDaughterNObject>
@@ -133,7 +147,7 @@ Arbor Pandora settings xml file for Arbor algorithms
        
        <ShowMCParticles>            false    </ShowMCParticles>
        <ShowCurrentCaloHits>        false     </ShowCurrentCaloHits>
-       <ShowCurrentTracks>          false     </ShowCurrentTracks> 
+       <ShowCurrentTracks>          true     </ShowCurrentTracks> 
        <ShowCurrentClusters>        false     </ShowCurrentClusters> 
        <ShowCurrentPfos>            true     </ShowCurrentPfos>
        <HitColors>                  iterate  </HitColors>
@@ -141,7 +155,7 @@ Arbor Pandora settings xml file for Arbor algorithms
        
        <TransparencyThresholdE>   -1   </TransparencyThresholdE>
        <EnergyScaleThresholdE>    1.0  </EnergyScaleThresholdE>
-       <BlackBackground>        true  </BlackBackground>
+       <BlackBackground>        false  </BlackBackground>
        <ShowDetector>           false  </ShowDetector>
           
     </algorithm>
