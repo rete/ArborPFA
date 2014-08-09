@@ -547,6 +547,8 @@ pandora::StatusCode SDHCALArborProcessor::CreateTracks(EVENT::LCEvent *pLCEvent)
    trackParameters.m_trackStateAtEnd = pandora::TrackState(trackPositionAtEnd, trackMomemtumAtEnd);
    trackParameters.m_trackStateAtCalorimeter = trackParameters.m_trackStateAtEnd.Get();
 
+   std::cout << "track state at calo (processor) : " << trackParameters.m_trackStateAtCalorimeter.Get() << std::endl;
+
    trackParameters.m_timeAtCalorimeter = 0.f;     // don't care ...
    trackParameters.m_isProjectedToEndCap = true; // SDHCAL is a fake end cap
    trackParameters.m_reachesCalorimeter = true;  // No ecal here, the track reaches the Hcal end cap
