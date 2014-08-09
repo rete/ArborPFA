@@ -66,23 +66,45 @@ class SimpleObjectCreationAlgorithm : public ArborAlgorithm
 
 protected:
 
+	/**
+	 *
+	 */
 	pandora::StatusCode CreateReadoutLayerMap(const pandora::CaloHitList *pCaloHitList, pandora::OrderedCaloHitList &orderedCaloHitList) const;
 
+	/**
+	 *
+	 */
+	pandora::StatusCode RecursiveClustering(const pandora::CaloHitList *pInputCaloHitList, pandora::CaloHitList &outputCaloHitList, pandora::CaloHitList &alreadyUsedCaloHitList, pandora::CaloHit *pCaloHitToLookAround, float maxSeparationDistance) const;
 
-	pandora::StatusCode RecursiveClustering(const pandora::CaloHitList *pInputCaloHitList, pandora::CaloHitList &outputCaloHitList, pandora::CaloHitList &alreadyUsedCaloHitList, pandora::CaloHit *pCaloHitToLookAround) const;
-
-
+	/**
+	 *
+	 */
 	pandora::StatusCode CreateObjectsFromCaloHitList(const pandora::CaloHitList &caloHitList, bool shouldSplit) const;
+
+	/**
+	 *
+	 */
+	pandora::StatusCode CreateEcalObjects(const pandora::CaloHitList &ecalCaloHitList);
+
+	/**
+	 *
+	 */
+	pandora::StatusCode CreateHcalObjects(const pandora::CaloHitList &hcalCaloHitList);
+
 
 
 	// algorithm members
-	bool          m_shouldSplitClusterInSingleCaloHitClusters;
-	bool          m_shouldUseOnlyCaloHitsForObjects;
-	bool          m_shouldUseReadoutLayer;
+	bool            m_shouldSplitClusterInSingleCaloHitClustersInEcal;
+	bool            m_shouldUseOnlyCaloHitsForObjectsInEcal;
+	bool            m_shouldUseReadoutLayerInEcal;
+	unsigned int   m_maximumSizeForClusterSplittingInEcal;
+	float           m_intraLayerMaxDistanceInEcal;
 
-	unsigned int       m_maximumSizeForClusterSplitting;
-
-	float               m_intraLayerMaxDistance;
+	bool            m_shouldSplitClusterInSingleCaloHitClustersInHcal;
+	bool            m_shouldUseOnlyCaloHitsForObjectsInHcal;
+	bool            m_shouldUseReadoutLayerInHcal;
+	unsigned int   m_maximumSizeForClusterSplittingInHcal;
+	float           m_intraLayerMaxDistanceInHcal;
 };
 
 //--------------------------------------------------------------------------------------------------------------------

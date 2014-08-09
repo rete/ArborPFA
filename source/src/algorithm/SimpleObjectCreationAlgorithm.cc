@@ -42,12 +42,35 @@ namespace arbor
 
 StatusCode SimpleObjectCreationAlgorithm::RunArborAlgorithm()
 {
-	const CaloHitList *pCaloHitList = NULL;
-	PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetCurrentCaloHitList(*this, pCaloHitList));
+	const pandora::CaloHitList *pCaloHitList = NULL;
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetCurrentCaloHitList(*this, pCaloHitList));
 
-	if(m_shouldUseOnlyCaloHitsForObjects)
+	pandora::CaloHitList ecalCaloHitList;
+	pandora::CaloHitList hcalCaloHitList;
+
+	for(CaloHitList::const_iterator iter = pCaloHitList->begin(), endIter = pCaloHitList->end() ; iter != endIter ; ++iter)
 	{
-		for(CaloHitList::const_iterator iter = pCaloHitList->begin(), endIter = pCaloHitList->end() ; iter != endIter ; ++iter)
+		CaloHit *pCaloHit = *iter;
+
+		if(ECAL == pCaloHit->GetHitType())
+			ecalCaloHitList.insert(pCaloHit);
+		if(HCAL == pCaloHit->GetHitType())
+			hcalCaloHitList.insert(pCaloHit);
+	}
+
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->CreateEcalObjects(ecalCaloHitList));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->CreateHcalObjects(hcalCaloHitList));
+
+	return STATUS_CODE_SUCCESS;
+}
+
+//--------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode SimpleObjectCreationAlgorithm::CreateEcalObjects(const pandora::CaloHitList &ecalCaloHitList)
+{
+	if(m_shouldUseOnlyCaloHitsForObjectsInEcal)
+	{
+		for(CaloHitList::const_iterator iter = ecalCaloHitList.begin(), endIter = ecalCaloHitList.end() ; iter != endIter ; ++iter)
 		{
 			CaloHit *pCaloHit = *iter;
 
@@ -57,20 +80,18 @@ StatusCode SimpleObjectCreationAlgorithm::RunArborAlgorithm()
 			Object *pObject = NULL;
 			PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, ArborContentApi::Object::Create(*this, pObject, pCaloHit));
 		}
-
 		return STATUS_CODE_SUCCESS;
 	}
 
-
 	OrderedCaloHitList orderedCaloHitList;
 
-	if(m_shouldUseReadoutLayer)
+	if(m_shouldUseReadoutLayerInEcal)
 	{
-		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->CreateReadoutLayerMap(pCaloHitList, orderedCaloHitList));
+		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->CreateReadoutLayerMap(&ecalCaloHitList, orderedCaloHitList));
 	}
 	else
 	{
-		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, orderedCaloHitList.Add(*pCaloHitList));
+		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, orderedCaloHitList.Add(ecalCaloHitList));
 	}
 
 	// loop over layers and build small groups of calo hit representing
@@ -96,19 +117,80 @@ StatusCode SimpleObjectCreationAlgorithm::RunArborAlgorithm()
 			alreadyUsedCaloHitList.insert(pCaloHit);
 			objectCaloHitList.insert(pCaloHit);
 
-			PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RecursiveClustering(pLayerCaloHitList, objectCaloHitList, alreadyUsedCaloHitList, pCaloHit));
+			PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RecursiveClustering(pLayerCaloHitList, objectCaloHitList, alreadyUsedCaloHitList, pCaloHit, m_intraLayerMaxDistanceInEcal));
 
-			bool shouldSplit = m_shouldSplitClusterInSingleCaloHitClusters && m_maximumSizeForClusterSplitting < objectCaloHitList.size();
+			bool shouldSplit = m_shouldSplitClusterInSingleCaloHitClustersInEcal && m_maximumSizeForClusterSplittingInEcal < objectCaloHitList.size();
 			PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->CreateObjectsFromCaloHitList(objectCaloHitList, shouldSplit));
 		}
 	}
 
-	const ObjectList *pCurrentObjectList = NULL;
-	PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, ArborContentApi::GetCurrentObjectList(*this, pCurrentObjectList));
+	return STATUS_CODE_SUCCESS;
+}
+
+//--------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode SimpleObjectCreationAlgorithm::CreateHcalObjects(const pandora::CaloHitList &hcalCaloHitList)
+{
+	if(m_shouldUseOnlyCaloHitsForObjectsInHcal)
+	{
+		for(CaloHitList::const_iterator iter = hcalCaloHitList.begin(), endIter = hcalCaloHitList.end() ; iter != endIter ; ++iter)
+		{
+			CaloHit *pCaloHit = *iter;
+
+			if(!PandoraContentApi::IsCaloHitAvailable(*this, pCaloHit))
+				continue;
+
+			Object *pObject = NULL;
+			PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, ArborContentApi::Object::Create(*this, pObject, pCaloHit));
+		}
+		return STATUS_CODE_SUCCESS;
+	}
+
+	OrderedCaloHitList orderedCaloHitList;
+
+	if(m_shouldUseReadoutLayerInHcal)
+	{
+		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->CreateReadoutLayerMap(&hcalCaloHitList, orderedCaloHitList));
+	}
+	else
+	{
+		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, orderedCaloHitList.Add(hcalCaloHitList));
+	}
+
+	// loop over layers and build small groups of calo hit representing
+	// objects to be connected together
+	for(OrderedCaloHitList::iterator iter = orderedCaloHitList.begin(), iterEnd = orderedCaloHitList.end(); iter != iterEnd; ++iter)
+	{
+		PseudoLayer layer = iter->first;
+		CaloHitList *pLayerCaloHitList = iter->second;
+		CaloHitList alreadyUsedCaloHitList;
+
+		// loop over calo hits in one layer
+		for(CaloHitList::iterator caloHitIter = pLayerCaloHitList->begin(), caloHitEndIter = pLayerCaloHitList->end() ; caloHitIter != caloHitEndIter ; ++caloHitIter)
+		{
+			CaloHit *pCaloHit = *caloHitIter;
+			CaloHitList objectCaloHitList;
+
+			if(!PandoraContentApi::IsCaloHitAvailable(*this, pCaloHit))
+				continue;
+
+			if(std::find(alreadyUsedCaloHitList.begin(), alreadyUsedCaloHitList.end(), pCaloHit) != alreadyUsedCaloHitList.end())
+				continue;
+
+			alreadyUsedCaloHitList.insert(pCaloHit);
+			objectCaloHitList.insert(pCaloHit);
+
+			PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RecursiveClustering(pLayerCaloHitList, objectCaloHitList, alreadyUsedCaloHitList, pCaloHit, m_intraLayerMaxDistanceInHcal));
+
+			bool shouldSplit = m_shouldSplitClusterInSingleCaloHitClustersInHcal && m_maximumSizeForClusterSplittingInHcal < objectCaloHitList.size();
+			PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->CreateObjectsFromCaloHitList(objectCaloHitList, shouldSplit));
+		}
+	}
 
 	return STATUS_CODE_SUCCESS;
 }
 
+//--------------------------------------------------------------------------------------------------------------------
 
 StatusCode SimpleObjectCreationAlgorithm::CreateReadoutLayerMap(const CaloHitList *pCaloHitList, OrderedCaloHitList &orderedCaloHitList) const
 {
@@ -153,7 +235,9 @@ StatusCode SimpleObjectCreationAlgorithm::CreateReadoutLayerMap(const CaloHitLis
 
 
 
-StatusCode SimpleObjectCreationAlgorithm::RecursiveClustering(const CaloHitList *pInputCaloHitList, CaloHitList &outputCaloHitList, CaloHitList &alreadyUsedCaloHitList, CaloHit *pCaloHitToLookAround) const
+StatusCode SimpleObjectCreationAlgorithm::RecursiveClustering(const CaloHitList *pInputCaloHitList,
+		CaloHitList &outputCaloHitList, CaloHitList &alreadyUsedCaloHitList, CaloHit *pCaloHitToLookAround,
+		float maxSeparationDistance) const
 {
 	if(NULL == pCaloHitToLookAround)
 		return STATUS_CODE_INVALID_PARAMETER;
@@ -175,7 +259,7 @@ StatusCode SimpleObjectCreationAlgorithm::RecursiveClustering(const CaloHitList 
 		const CartesianVector otherHitPosition(pOtherCaloHit->GetPositionVector());
 		const float separationDistance = (hitPosition - otherHitPosition).GetMagnitude();
 
-		if(separationDistance > m_intraLayerMaxDistance)
+		if(separationDistance > maxSeparationDistance)
 			continue;
 
 		if(std::find(alreadyUsedCaloHitList.begin(), alreadyUsedCaloHitList.end(), pOtherCaloHit) != alreadyUsedCaloHitList.end())
@@ -184,7 +268,7 @@ StatusCode SimpleObjectCreationAlgorithm::RecursiveClustering(const CaloHitList 
 		outputCaloHitList.insert(pOtherCaloHit);       // calo hit list is enlarged
 		alreadyUsedCaloHitList.insert(pOtherCaloHit);  // to avoid double count
 
-		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RecursiveClustering(pInputCaloHitList, outputCaloHitList, alreadyUsedCaloHitList, pOtherCaloHit));
+		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RecursiveClustering(pInputCaloHitList, outputCaloHitList, alreadyUsedCaloHitList, pOtherCaloHit, maxSeparationDistance));
 	}
 
 	return STATUS_CODE_SUCCESS;
@@ -227,25 +311,47 @@ pandora::StatusCode SimpleObjectCreationAlgorithm::CreateObjectsFromCaloHitList(
 
 StatusCode SimpleObjectCreationAlgorithm::ReadSettings(const pandora::TiXmlHandle xmlHandle)
 {
- m_shouldUseOnlyCaloHitsForObjects = false;
+	// ecal parameters
+ m_shouldUseOnlyCaloHitsForObjectsInEcal = true;
  PANDORA_THROW_RESULT_IF_AND_IF(STATUS_CODE_SUCCESS, STATUS_CODE_NOT_FOUND, !=, XmlHelper::ReadValue(xmlHandle,
-       "ShouldUseOnlyCaloHitsForObjects", m_shouldUseOnlyCaloHitsForObjects));
+       "ShouldUseOnlyCaloHitsForObjectsInEcal", m_shouldUseOnlyCaloHitsForObjectsInEcal));
 
- m_maximumSizeForClusterSplitting = 4;
+ m_maximumSizeForClusterSplittingInEcal = 1;
 	PANDORA_THROW_RESULT_IF_AND_IF(STATUS_CODE_SUCCESS, STATUS_CODE_NOT_FOUND, !=, XmlHelper::ReadValue(xmlHandle,
-	     "MaximumSizeForClusterSplitting", m_maximumSizeForClusterSplitting));
+	     "MaximumSizeForClusterSplittingInEcal", m_maximumSizeForClusterSplittingInEcal));
 
-	m_intraLayerMaxDistance = 11.f;
+	m_intraLayerMaxDistanceInEcal = 7.5f;
 	PANDORA_THROW_RESULT_IF_AND_IF(STATUS_CODE_SUCCESS, STATUS_CODE_NOT_FOUND, !=, XmlHelper::ReadValue(xmlHandle,
-	     "IntraLayerMaxDistance", m_intraLayerMaxDistance));
+	     "IntraLayerMaxDistanceInEcal", m_intraLayerMaxDistanceInEcal));
 
-	m_shouldUseReadoutLayer = false;
+	m_shouldUseReadoutLayerInEcal = false;
 	PANDORA_THROW_RESULT_IF_AND_IF(STATUS_CODE_SUCCESS, STATUS_CODE_NOT_FOUND, !=, XmlHelper::ReadValue(xmlHandle,
-	     "ShouldUseReadoutLayer", m_shouldUseReadoutLayer));
+	     "ShouldUseReadoutLayerInEcal", m_shouldUseReadoutLayerInEcal));
 
-	m_shouldSplitClusterInSingleCaloHitClusters = true;
+	m_shouldSplitClusterInSingleCaloHitClustersInEcal = false;
 	PANDORA_THROW_RESULT_IF_AND_IF(STATUS_CODE_SUCCESS, STATUS_CODE_NOT_FOUND, !=, XmlHelper::ReadValue(xmlHandle,
-	     "ShouldSplitClusterInSingleCaloHitClusters", m_shouldSplitClusterInSingleCaloHitClusters));
+	     "ShouldSplitClusterInSingleCaloHitClustersInEcal", m_shouldSplitClusterInSingleCaloHitClustersInEcal));
+
+	// hcal parameters
+ m_shouldUseOnlyCaloHitsForObjectsInHcal = false;
+ PANDORA_THROW_RESULT_IF_AND_IF(STATUS_CODE_SUCCESS, STATUS_CODE_NOT_FOUND, !=, XmlHelper::ReadValue(xmlHandle,
+       "ShouldUseOnlyCaloHitsForObjectsInHcal", m_shouldUseOnlyCaloHitsForObjectsInHcal));
+
+ m_maximumSizeForClusterSplittingInEcal = 4;
+	PANDORA_THROW_RESULT_IF_AND_IF(STATUS_CODE_SUCCESS, STATUS_CODE_NOT_FOUND, !=, XmlHelper::ReadValue(xmlHandle,
+	     "MaximumSizeForClusterSplittingInHcal", m_maximumSizeForClusterSplittingInHcal));
+
+	m_intraLayerMaxDistanceInHcal = 11.f;
+	PANDORA_THROW_RESULT_IF_AND_IF(STATUS_CODE_SUCCESS, STATUS_CODE_NOT_FOUND, !=, XmlHelper::ReadValue(xmlHandle,
+	     "IntraLayerMaxDistanceInHcal", m_intraLayerMaxDistanceInHcal));
+
+	m_shouldUseReadoutLayerInHcal = false;
+	PANDORA_THROW_RESULT_IF_AND_IF(STATUS_CODE_SUCCESS, STATUS_CODE_NOT_FOUND, !=, XmlHelper::ReadValue(xmlHandle,
+	     "ShouldUseReadoutLayerInHcal", m_shouldUseReadoutLayerInHcal));
+
+	m_shouldSplitClusterInSingleCaloHitClustersInHcal = true;
+	PANDORA_THROW_RESULT_IF_AND_IF(STATUS_CODE_SUCCESS, STATUS_CODE_NOT_FOUND, !=, XmlHelper::ReadValue(xmlHandle,
+	     "ShouldSplitClusterInSingleCaloHitClustersInHcal", m_shouldSplitClusterInSingleCaloHitClustersInHcal));
 
 	return STATUS_CODE_SUCCESS;
 }
