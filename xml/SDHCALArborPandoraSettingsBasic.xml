@@ -6,8 +6,8 @@ Arbor Pandora settings xml file for Arbor algorithms
 <pandora>
 
     <!-- HELPER CLASS SETTINGS -->
-    <IsMonitoringEnabled> true </IsMonitoringEnabled>
-    <ShouldDisplayAlgorithmInfo> true </ShouldDisplayAlgorithmInfo>
+    <IsMonitoringEnabled> false </IsMonitoringEnabled>
+    <ShouldDisplayAlgorithmInfo> false </ShouldDisplayAlgorithmInfo>
 
     <!-- CaloHit helper settings -->
     <CaloHitHelper>
@@ -45,6 +45,8 @@ Arbor Pandora settings xml file for Arbor algorithms
 		   
 		</ArborPlugin>
 		
+		<!-- ARBOR PANDORA ALGORITHM SETTINGS -->   
+		    
 	  <algorithm type = "ArborParent">
       <algorithm type = "SimpleObjectCreation" description = "ObjectFormation">
         <ShouldUseOnlyCaloHitsForObjectsInEcal> true </ShouldUseOnlyCaloHitsForObjectsInEcal>
@@ -66,18 +68,20 @@ Arbor Pandora settings xml file for Arbor algorithms
        <MaxIntraLayerNeighborDistance> 18.f </MaxIntraLayerNeighborDistance>
     </algorithm>
 
-    <!-- ARBOR PANDORA ALGORITHM SETTINGS -->    
     <algorithm type = "ArborParent">
       <algorithm type = "ArborConnectorClustering" description = "ClusterFormation">
           <MaximumDistanceForConnectionFine>          10.0    </MaximumDistanceForConnectionFine>
           <MaximumDistanceForConnectionCoarse>        65.5    </MaximumDistanceForConnectionCoarse>
-          <AngleForInitialConnectionCoarse>           3.14     </AngleForInitialConnectionCoarse>
-          <ForwardConnectorWeight>                    10.0    </ForwardConnectorWeight>
-          <BackwardConnectorWeight>                   1.0     </BackwardConnectorWeight>
+          <AngleForInitialConnectionCoarse>           1.2     </AngleForInitialConnectionCoarse>
+          
+          <ForwardConnectorWeight>                    10    </ForwardConnectorWeight>
+          <BackwardConnectorWeight>                   1     </BackwardConnectorWeight>
+          
           <OrderParameterAnglePower>                  1       </OrderParameterAnglePower>
-          <OrderParameterDistancePower>               3      </OrderParameterDistancePower>
+          <OrderParameterDistancePower>               5      </OrderParameterDistancePower>
+          
           <ReferenceDirectionDepth>                   2       </ReferenceDirectionDepth>
-          <ReferenceDirectionMaximumForwardLayer>     3       </ReferenceDirectionMaximumForwardLayer>
+          <ReferenceDirectionMaximumForwardLayer>     2       </ReferenceDirectionMaximumForwardLayer>
           <AllowForwardConnectionForIsolatedObjects>  false   </AllowForwardConnectionForIsolatedObjects>
           <ShouldUseIsolatedObjects>                  true    </ShouldUseIsolatedObjects>
           <ShouldSelectNearestObjectWhileCleaning>    false    </ShouldSelectNearestObjectWhileCleaning>
@@ -96,7 +100,7 @@ Arbor Pandora settings xml file for Arbor algorithms
         <algorithm type = "SmallNeutralFragmentMerging">
           <MaximumDaughterNObject> 10 </MaximumDaughterNObject>
           <LargeDistanceCut> 1000.f </LargeDistanceCut>
-          <ShouldUseDistanceToCentroid> false </ShouldUseDistanceToCentroid>
+          <ShouldUseDistanceToCentroid> true </ShouldUseDistanceToCentroid>
         </algorithm>
       </associationAlgorithms>
       <ObjectListName>   InputObjects   </ObjectListName>
@@ -122,7 +126,6 @@ Arbor Pandora settings xml file for Arbor algorithms
         <CandidateListNames>  OutputClusters  </CandidateListNames>
     </algorithm>
 
-    PFO Creation
     <algorithm type = "PfoCreation">
       <OutputPfoListName> ArborPFOs </OutputPfoListName>
       <ShouldCreateTrackBasedPfos> true </ShouldCreateTrackBasedPfos>
@@ -132,13 +135,14 @@ Arbor Pandora settings xml file for Arbor algorithms
       <MinHitsInCluster> 0 </MinHitsInCluster>
       <AllowSingleLayerClusters> false </AllowSingleLayerClusters>
     </algorithm> 
+   
     
-    
-<!--     <algorithm type = "ArborOutput">
-      <RootFileName> ArborOutputFile_single_pi-_30GeV_2.root </RootFileName>
-      <RootTreeName> ArborOutputTree </RootTreeName>
-      <NCutOnChargedParticle> 2 </NCutOnChargedParticle>
-    </algorithm> -->
+   <algorithm type = "ArborOutput">
+      <!-- <RootFileName> PandoraOutputFile_OverlayEvent_30_GeV_neutral_50_GeV_charged_10_cm_PandoraPFA_MC.root </RootFileName> -->
+      <RootFileName> ArborOutputFile_OverlayEvent_30_GeV_neutral_50_GeV_charged_10_cm_ArborPFA_MC_cleaning_version_1.root </RootFileName>
+      <RootTreeName> PandoraOutputTree </RootTreeName>
+      <NCutOnChargedParticle> 1 </NCutOnChargedParticle>
+    </algorithm>
     
     <!-- EVE Monitoring -->
     <algorithm type = "VisualMonitoring" description = "display all">
