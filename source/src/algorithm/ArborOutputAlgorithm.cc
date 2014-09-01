@@ -184,8 +184,6 @@ pandora::StatusCode ArborOutputAlgorithm::RunArborAlgorithm()
    }
  	}
 
- 	// TODO ecrire les hit type LCIO venant de chaque cluster pour efficacité et pureté
-
   if(shouldDisplayAlgorithmInfo)
   {
   	std::string type = particleType.back() == 0 ? "charged" : "neutral";
