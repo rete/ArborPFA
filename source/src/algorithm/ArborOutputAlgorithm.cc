@@ -76,6 +76,7 @@ pandora::StatusCode ArborOutputAlgorithm::RunArborAlgorithm()
  std::vector<int>   pfoHitType1;
  std::vector<int>   pfoHitType2;
  std::vector<int>   pfoHitType3;
+ std::vector<int>   pfoNHit;
  float totalTrackClusterChi2 = 0.f;
  float totalChargedEnergy = 0.f;
  float totalNeutralEnergy = 0.f;
@@ -164,11 +165,13 @@ pandora::StatusCode ArborOutputAlgorithm::RunArborAlgorithm()
   	pfoHitType1.push_back(0);
   	pfoHitType2.push_back(0);
   	pfoHitType3.push_back(0);
+  	pfoNHit.push_back(0);
 
    for (pandora::ClusterAddressList::const_iterator itCluster = clusterAddressList.begin(), itClusterEnd = clusterAddressList.end();
        itCluster != itClusterEnd; ++itCluster)
    {
    	unsigned int nHitsInCluster((*itCluster).size());
+   	pfoNHit.back() += nHitsInCluster;
 
     for (unsigned int iHit = 0; iHit < nHitsInCluster; ++iHit)
     {
@@ -215,6 +218,7 @@ pandora::StatusCode ArborOutputAlgorithm::RunArborAlgorithm()
 	m_pTTreeWrapper->Set(m_rootTreeName, "pfoTrackClusterChi2", &pfoTrackClusterChi2List);
 	m_pTTreeWrapper->Set(m_rootTreeName, "pfoTrackMomentum", &pfoTrackMomentum);
 	m_pTTreeWrapper->Set(m_rootTreeName, "particleType", &particleType);
+	m_pTTreeWrapper->Set(m_rootTreeName, "pfoNHit", &pfoNHit);
 	m_pTTreeWrapper->Set(m_rootTreeName, "pfoHitType1", &pfoHitType1);
 	m_pTTreeWrapper->Set(m_rootTreeName, "pfoHitType2", &pfoHitType2);
 	m_pTTreeWrapper->Set(m_rootTreeName, "pfoHitType3", &pfoHitType3);
