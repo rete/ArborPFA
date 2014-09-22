@@ -79,6 +79,11 @@ public:
 	virtual pandora::Granularity GetGranularity() const;
 
 	/**
+	 * @brief Returns the object type (ECAL, HCAL, MUON, etc...)
+	 */
+	virtual pandora::HitType GetObjectType() const;
+
+	/**
 	 * @brief Return the pseudo-layer associated to this object
 	 */
 	virtual pandora::PseudoLayer GetPseudoLayer() const;
@@ -143,6 +148,7 @@ protected:
  pandora::CartesianVector        m_position;            								   ///< The position of this object
  pandora::Granularity            m_granularity;                   ///< the granularity of the object
  pandora::PseudoLayer            m_pseudoLayer;                   ///< The associated pseudo layer
+ pandora::HitType                m_objectType;                    ///< The associated object type
  TagFlagMap                      m_tagFlagMap;                    ///< The tag flag map
 
 	// friendship class

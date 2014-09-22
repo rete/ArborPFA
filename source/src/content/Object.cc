@@ -57,6 +57,7 @@ Object::Object(pandora::CaloHit *pCaloHit) :
 	m_granularity = pandora::GeometryHelper::GetHitTypeGranularity(pCaloHit->GetHitType());
 	m_position = pCaloHit->GetPositionVector();
 	m_pseudoLayer = pCaloHit->GetPseudoLayer();
+	m_objectType = pCaloHit->GetHitType();
 
 	m_tagFlagMap[CORE_OBJECT]     = false;
 	m_tagFlagMap[ISOLATED_OBJECT] = false;
@@ -356,6 +357,9 @@ pandora::StatusCode Object::AddCaloHit(pandora::CaloHit *pCaloHit)
 	if(NULL == pCaloHit)
 		return pandora::STATUS_CODE_INVALID_PARAMETER;
 
+	if(pCaloHit->GetHitType() != m_objectType)
+		return pandora::STATUS_CODE_NOT_ALLOWED;
+
 	bool inserted = m_caloHitList.insert(pCaloHit).second;
 
 	if(!inserted)
@@ -492,6 +496,13 @@ bool Object::IsConnected() const
 pandora::Granularity Object::GetGranularity() const
 {
 	return m_granularity;
+}
+
+//--------------------------------------------------------------------------------------------------------------------
+
+pandora::HitType Object::GetObjectType() const
+{
+	return m_objectType;
 }
 
 //--------------------------------------------------------------------------------------------------------------------
