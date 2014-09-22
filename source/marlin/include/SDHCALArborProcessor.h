@@ -15,7 +15,6 @@
 // pandora
 #include "Utilities/BFieldCalculator.h"
 #include "Utilities/PseudoLayerCalculator.h"
-//#include "PfoCreator.h"
 
 // lcio
 #include "EVENT/CalorimeterHit.h"
@@ -74,13 +73,11 @@ public:
 	static float         m_hCalEndCapInnerZ;
 	static float         m_hCalEndCapLayerThickness;
 
-private:
+ void InitializeGeometry() {}
 
-    void InitializeGeometry() {}
+ virtual pandora::PseudoLayer GetPseudoLayer(const pandora::CartesianVector &positionVector) const;
 
-    virtual pandora::PseudoLayer GetPseudoLayer(const pandora::CartesianVector &positionVector) const;
-
-    virtual pandora::PseudoLayer GetPseudoLayerAtIp() const;
+ virtual pandora::PseudoLayer GetPseudoLayerAtIp() const;
 };
 
 //------------------------------------------------------------------------------------------------------------------------------------------
@@ -184,11 +181,6 @@ private:
     /**
      *
      */
-    pandora::StatusCode CreateParticleFlowObjects(EVENT::LCEvent *pLCEvent);
-
-    /**
-     *
-     */
     pandora::StatusCode FillRootTree();
 
     /**
@@ -231,7 +223,7 @@ private:
     static EVENT::LCEvent          *m_pLcioEvent;                  ///< Address of the current lcio event
 
     // global settings
-    Settings                        m_settings;                     ///< The settings for the pandora pfa new processor
+    Settings                        m_settings;                     ///< The settings for the arbor pfa processor
     unsigned int                    m_nRun;                         ///< The run number
     unsigned int                    m_nEvent;                       ///< The event number
     static FloatVector             m_sdhcalEnergyFactors;
@@ -248,8 +240,7 @@ private:
     std::string                     m_rootTreeName;
 
     // file and tree
-    TFile                          *m_rootFile;
-//    TTree                          *m_pPFOTuple;
+    TFile                            *m_rootFile;
     pandora_monitoring::TTreeWrapper *m_pTTreeWrapper;
 
     // branch variables
@@ -272,8 +263,6 @@ private:
     // event members
     std::string                     m_hCalCaloHitCollection;
     std::string                     m_genericObjectTrackInfoCollection;
-    std::string                     m_clusterCollectionName;
-    std::string                     m_pfoCollectionName;
     std::string                     m_detectorName;                 ///< The detector name
 
     std::vector<EVENT::CalorimeterHit *>   m_caloHitVec;
@@ -289,6 +278,8 @@ private:
     int                             m_NCells0;
     int                             m_NCells1;
 
+
+    SDHCALPseudoLayerCalculator *m_pPseudoLayerCalculator;
 };
 
 //------------------------------------------------------------------------------------------------------------------------------------------
