@@ -40,7 +40,6 @@
 #include "arborpfa/content/Branch.h"
 #include "arborpfa/content/Tree.h"
 #include "arborpfa/content/Connector.h"
-#include "arborpfa/content/CaloHitHelper.h"
 #include "arborpfa/content/ArborHelper.h"
 
 // std
