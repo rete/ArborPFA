@@ -349,60 +349,6 @@ pandora::StatusCode ArborContentApiImpl::RunClusterCreationAlgorithm(const Arbor
 
 //-----------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode ArborContentApiImpl::InitializeReclustering(const ArborAlgorithm &arborAlgorithm, const ClusterList &clusterList, std::string &originalClusterListName)
-{
-	if(m_reclusteringInitialized)
-		return pandora::STATUS_CODE_ALREADY_INITIALIZED;
-
- std::string inputClusterListName;
-
- PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pClusterManager->GetAlgorithmInputListName((const pandora::Algorithm *)&arborAlgorithm, inputClusterListName));
- PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pClusterManager->MoveObjectsToTemporaryListAndSetCurrent((const pandora::Algorithm *)&arborAlgorithm, inputClusterListName, originalClusterListName, clusterList));
-
- PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pObjectManager->InitializeReclustering(&arborAlgorithm, clusterList, originalClusterListName));
-
-	m_reclusteringInitialized = true;
-
-	return pandora::STATUS_CODE_SUCCESS;
-}
-
-//-----------------------------------------------------------------------------------------------------------------------
-
-pandora::StatusCode ArborContentApiImpl::EndReclustering(const ArborAlgorithm &arborAlgorithm, const std::string &selectedClusterListName)
-{
-	if(!m_reclusteringInitialized)
-		return pandora::STATUS_CODE_NOT_INITIALIZED;
-
-	std::string inputClusterListName;
- PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pClusterManager->GetAlgorithmInputListName((const pandora::Algorithm *)&arborAlgorithm, inputClusterListName));
- PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pClusterManager->SaveObjects(inputClusterListName, selectedClusterListName));
- PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pObjectManager->ResetAlgorithmInfo((const pandora::Algorithm *)&arborAlgorithm, false));
- PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pClusterManager->ResetAlgorithmInfo((const pandora::Algorithm *)&arborAlgorithm, false));
- PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pObjectManager->EndReclustering(selectedClusterListName));
-
- m_reclusteringInitialized = false;
-
-	return pandora::STATUS_CODE_SUCCESS;
-}
-
-//-----------------------------------------------------------------------------------------------------------------------
-
-pandora::StatusCode ArborContentApiImpl::RunReclusteringAlgorithm(const ArborAlgorithm &arborAlgorithm, const std::string &clusteringAlgorithmName,
-		const arbor::ClusterList *&pClusterList, std::string &newClusterListName, bool copyInitalClusterList)
-{
-	if(!m_reclusteringInitialized)
-		return pandora::STATUS_CODE_NOT_INITIALIZED;
-
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pClusterManager->CreateTemporaryListAndSetCurrent(&arborAlgorithm, newClusterListName));
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pObjectManager->PrepareReclusterMetaData(&arborAlgorithm, newClusterListName, copyInitalClusterList));
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::RunDaughterAlgorithm((const pandora::Algorithm &)arborAlgorithm, clusteringAlgorithmName));
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pClusterManager->GetCurrentList(pClusterList, newClusterListName));
-
-	return pandora::STATUS_CODE_SUCCESS;
-}
-
-//-----------------------------------------------------------------------------------------------------------------------
-
 pandora::StatusCode ArborContentApiImpl::GetCurrentEnergyEstimatorName(std::string &energyEstimatorName) const
 {
 	return m_pArbor->m_pArborPluginManager->GetCurrentEnergyEstimatorName(energyEstimatorName);

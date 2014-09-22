@@ -205,26 +205,6 @@ class ArborContentApiImpl
   		const arbor::ClusterList *&pClusterList, std::string &newClusterListName) const;
 
   /**
-   * Reclustering related methods
-   */
-
-  /**
-   *
-   */
-  pandora::StatusCode InitializeReclustering(const ArborAlgorithm &arborAlgorithm, const ClusterList &clusterList, std::string &originalClusterListName);
-
-  /**
-   *
-   */
-  pandora::StatusCode EndReclustering(const ArborAlgorithm &arborAlgorithm, const std::string &selectedClusterListName);
-
-  /**
-   *
-   */
-  pandora::StatusCode RunReclusteringAlgorithm(const ArborAlgorithm &arborAlgorithm, const std::string &clusteringAlgorithmName,
-  		const arbor::ClusterList *&pClusterList, std::string &newClusterListName, bool copyInitalClusterList = true);
-
-  /**
    * Plugin related methods
    */
 

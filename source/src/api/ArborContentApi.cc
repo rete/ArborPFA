@@ -290,33 +290,6 @@ pandora::StatusCode ArborContentApi::RunClusterCreationAlgorithm(const ArborAlgo
 //---------------------------------------------------------------------------------------------------------------
 
 /**
- * Reclustering related methods
- */
-
-pandora::StatusCode ArborContentApi::InitializeReclustering(const ArborAlgorithm &arborAlgorithm, const ClusterList &clusterList, std::string &originalClusterListName)
-{
-	return arborAlgorithm.GetArborContentApiImpl()->InitializeReclustering(arborAlgorithm, clusterList, originalClusterListName);
-}
-
-//---------------------------------------------------------------------------------------------------------------
-
-pandora::StatusCode ArborContentApi::EndReclustering(const ArborAlgorithm &arborAlgorithm, const std::string &selectedClusterListName)
-{
-	return arborAlgorithm.GetArborContentApiImpl()->EndReclustering(arborAlgorithm, selectedClusterListName);
-}
-
-//---------------------------------------------------------------------------------------------------------------
-
-pandora::StatusCode ArborContentApi::RunReclusteringAlgorithm(const ArborAlgorithm &arborAlgorithm, const std::string &clusteringAlgorithmName,
-		const arbor::ClusterList *&pClusterList, std::string &newClusterListName, bool copyInitalClusterList)
-{
-	return arborAlgorithm.GetArborContentApiImpl()->RunReclusteringAlgorithm(arborAlgorithm, clusteringAlgorithmName, pClusterList, newClusterListName, copyInitalClusterList);
-}
-
-
-//---------------------------------------------------------------------------------------------------------------
-
-/**
  * Plugin related methods
  */
 
