@@ -99,7 +99,10 @@ pandora::StatusCode SmallNeutralFragmentMergingAlgorithm::RunArborAlgorithm()
 			}
 
 			if(pandora::STATUS_CODE_SUCCESS != statusCode)
+			{
+				ARBOR_PRINT("Couldn't merge");
 				continue;
+			}
 
 			if(m_largeDistanceCut < distance)
 				continue;
