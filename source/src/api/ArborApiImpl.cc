@@ -32,19 +32,23 @@
 #include "arborpfa/content/ArborPluginManager.h"
 #include "arborpfa/content/ObjectManager.h"
 
-// algorithms
-#include "arborpfa/algorithm/IntraLayerClusteringAlgorithm.h"
-#include "arborpfa/algorithm/ArborConnectorClusteringAlgorithm.h"
+// parent algorithms
+#include "arborpfa/algorithm/ObjectCreationParentAlgorithm.h"
+//#include "arborpfa/algorithm/ArborParentAlgorithm.h"
+#include "arborpfa/algorithm/ConnectorParentAlgorithm.h"
+#include "arborpfa/algorithm/ConnectorClusteringParentAlgorithm.h"
 #include "arborpfa/algorithm/DummyClusteringAlgorithm.h"
-#include "arborpfa/algorithm/SmallClusterMergingAlgorithm.h"
-#include "arborpfa/algorithm/ArborParentAlgorithm.h"
+
+// impl algorithms
 #include "arborpfa/algorithm/SimpleObjectCreationAlgorithm.h"
-#include "arborpfa/algorithm/NeutralTreeMergingAlgorithm.h"
-#include "arborpfa/algorithm/ArborClusterConverterAlgorithm.h"
-#include "arborpfa/algorithm/TopologicalTrackAssociationAlgorithm.h"
-#include "arborpfa/algorithm/SmallNeutralFragmentMergingAlgorithm.h"
 #include "arborpfa/algorithm/IsolationTaggingAlgorithm.h"
-#include "arborpfa/algorithm/ArborReclusteringAlgorithm.h"
+#include "arborpfa/algorithm/ConnectorSeedingAlgorithm.h"
+#include "arborpfa/algorithm/KappaConnectorCleaningAlgorithm.h"
+#include "arborpfa/algorithm/TreeClusteringAlgorithm.h"
+#include "arborpfa/algorithm/TopologicalTrackAssociationAlgorithm.h"
+#include "arborpfa/algorithm/NeutralTreeMergingAlgorithm.h"
+#include "arborpfa/algorithm/SmallNeutralFragmentMergingAlgorithm.h"
+#include "arborpfa/algorithm/ArborClusterConverterAlgorithm.h"
 #include "arborpfa/algorithm/ArborOutputAlgorithm.h"
 
 // plugins
@@ -88,32 +92,46 @@ pandora::StatusCode ArborApiImpl::RegisterAlgorithmFactory(Arbor &arbor, const s
 
 pandora::StatusCode ArborApiImpl::RegisterArborAlgorithms(Arbor &arbor) const
 {
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "IntraLayerClustering",
-			  new arbor::IntraLayerClusteringAlgorithm::Factory));
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "ArborConnectorClustering",
-			  new arbor::ArborConnectorClusteringAlgorithm::Factory));
+	// parent algorithms
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "ObjectCreationParent",
+			  new arbor::ObjectCreationParentAlgorithm::Factory));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "ConnectorClusteringParent",
+			  new arbor::ConnectorClusteringParentAlgorithm::Factory));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "ConnectorParent",
+			  new arbor::ConnectorParentAlgorithm::Factory));
+
 	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "DummyClustering",
 			  new arbor::DummyClusteringAlgorithm::Factory));
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "SmallClusterMerging",
-			  new arbor::SmallClusterMergingAlgorithm::Factory));
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "ArborParent",
-			  new arbor::ArborParentAlgorithm::Factory));
+
+	// object creation algorithm
 	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "SimpleObjectCreation",
 			  new arbor::SimpleObjectCreationAlgorithm::Factory));
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "ArborClusterConverter",
-			  new arbor::ArborClusterConverterAlgorithm::Factory));
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "NeutralTreeMerging",
-			  new arbor::NeutralTreeMergingAlgorithm::Factory));
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "TopologicalTrackAssociation",
-			  new arbor::TopologicalTrackAssociationAlgorithm::Factory));
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "SmallNeutralFragmentMerging",
-			  new arbor::SmallNeutralFragmentMergingAlgorithm::Factory));
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "ArborOutput",
-				  new arbor::ArborOutputAlgorithm::Factory));
+
+	// additional event preparation algorithms
 	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "IsolationTagging",
 				  new arbor::IsolationTaggingAlgorithm::Factory));
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "ArborReclustering",
-				  new arbor::ArborReclusteringAlgorithm::Factory));
+
+	// connector algorithms
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "ConnectorSeeding",
+				  new arbor::ConnectorSeedingAlgorithm::Factory));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "KappaConnectorCleaning",
+				  new arbor::KappaConnectorCleaningAlgorithm::Factory));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "TreeClustering",
+					  new arbor::TreeClusteringAlgorithm::Factory));
+
+	// associations algorithms
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "TopologicalTrackAssociation",
+			  new arbor::TopologicalTrackAssociationAlgorithm::Factory));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "NeutralTreeMerging",
+			  new arbor::NeutralTreeMergingAlgorithm::Factory));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "SmallNeutralFragmentMerging",
+			  new arbor::SmallNeutralFragmentMergingAlgorithm::Factory));
+
+	// additional algorithms
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "ArborClusterConverter",
+			  new arbor::ArborClusterConverterAlgorithm::Factory));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "ArborOutput",
+				  new arbor::ArborOutputAlgorithm::Factory));
 
 	return pandora::STATUS_CODE_SUCCESS;
 }
