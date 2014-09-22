@@ -136,6 +136,16 @@ class ArborHelper
 	 static pandora::StatusCode GetKappaParameter(const Object *pInnerObject, const Object *pOuterObject, const pandora::CartesianVector &referenceVector,
 	 		float thetaPower, float distancePower, float &kappaParameter);
 
+	 /**
+	  *
+	  */
+	 static pandora::StatusCode BuildOrderedObjectList(const ObjectList &objectList, OrderedObjectList &orderedObjectList);
+
+	 /**
+	  *
+	  */
+	 static pandora::StatusCode GetConnectedObjects(Object *pSeedObject, ObjectList &connectedObjectList);
+
  private:
 
 	 /**

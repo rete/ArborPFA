@@ -65,7 +65,6 @@ pandora::StatusCode ArborHelper::GetCentroid(const pandora::Cluster *pCluster, p
 
 pandora::StatusCode ArborHelper::GetCentroidDifference(const pandora::Cluster *pCluster1, const pandora::Cluster *pCluster2, float &centroidDifference)
 {
-
 	CartesianVector centroid1(0.f, 0.f, 0.f);
 	CartesianVector centroid2(0.f, 0.f, 0.f);
 
@@ -462,6 +461,58 @@ pandora::StatusCode ArborHelper::GetKappaParameter(const Object *pInnerObject, c
 
 //			kappaParameter = std::pow(angle, thetaPower)
 //			                *std::pow(cosDistance, distancePower);
+
+	return STATUS_CODE_SUCCESS;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborHelper::BuildOrderedObjectList(const ObjectList &objectList, OrderedObjectList &orderedObjectList)
+{
+	if(objectList.empty())
+		return STATUS_CODE_INVALID_PARAMETER;
+
+	for(ObjectList::const_iterator iter = objectList.begin() , endIter = objectList.end() ;
+			endIter != iter ; ++iter)
+	{
+		PseudoLayer pseudoLayer = (*iter)->GetPseudoLayer();
+		orderedObjectList[pseudoLayer].insert(*iter);
+	}
+
+	return STATUS_CODE_SUCCESS;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborHelper::GetConnectedObjects(Object *pSeedObject, ObjectList &connectedObjectList)
+{
+	if(NULL == pSeedObject)
+		return STATUS_CODE_INVALID_PARAMETER;
+
+	const ConnectorList &forwardConnectorList = pSeedObject->GetForwardConnectorList();
+
+	connectedObjectList.insert(pSeedObject);
+
+	if(forwardConnectorList.empty())
+		return STATUS_CODE_SUCCESS;
+
+	for(ConnectorList::const_iterator iter = forwardConnectorList.begin() , endIter = forwardConnectorList.end() ;
+			endIter != iter ; ++iter)
+	{
+		Connector *pConnector = *iter;
+		Object *pOtherObject = NULL;
+
+		if(pConnector->GetFirst() == pSeedObject)
+			pOtherObject = pConnector->GetSecond();
+		else
+			pOtherObject = pConnector->GetFirst();
+
+		// test if already present
+		if(!connectedObjectList.insert(pOtherObject).second)
+			continue;
+
+		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, GetConnectedObjects(pOtherObject, connectedObjectList));
+	}
 
 	return STATUS_CODE_SUCCESS;
 }
