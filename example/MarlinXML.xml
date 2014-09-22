@@ -19,7 +19,7 @@
 
 	<processor name="MyMarlinArbor" type="SDHCALArborProcessor">
 	
-	<parameter name="PandoraSettingsXmlFile" type="String"> ./example/ArborSettingsReclustering.xml</parameter>   
+	<parameter name="PandoraSettingsXmlFile" type="String"> ./example/ArborSettingsBasic.xml</parameter>   
 	
 	  <!-- Collection names -->
 	  <parameter name="HCalCaloHitCollection" type="String"> HCALBarrel </parameter>

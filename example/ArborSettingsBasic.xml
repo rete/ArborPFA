@@ -1,7 +1,4 @@
-<!-- 
-Arbor Pandora settings xml file for Arbor algorithms 
- @author Remi Ete
--->
+<!-- Arbor Pandora settings xml file -->
 
 <pandora>
 
@@ -11,87 +8,113 @@ Arbor Pandora settings xml file for Arbor algorithms
 
     <!-- CaloHit helper settings -->
     <CaloHitHelper>
-        <ShouldCalculateDensityWeight>      false  </ShouldCalculateDensityWeight>
-        <ShouldCalculateSurroundingEnergy>  false  </ShouldCalculateSurroundingEnergy>
+        <ShouldCalculateDensityWeight>true</ShouldCalculateDensityWeight>
+        <ShouldCalculateSurroundingEnergy>true</ShouldCalculateSurroundingEnergy>
+        
+        <IsolationCaloHitMaxSeparation>     60    </IsolationCaloHitMaxSeparation>
+        <IsolationNLayers>                   2    </IsolationNLayers>
+        <IsolationCutDistanceFine>          25.0  </IsolationCutDistanceFine>
+        <IsolationCutDistanceCoarse>        30.0  </IsolationCutDistanceCoarse>
+        <IsolationMaxNearbyHits>             2    </IsolationMaxNearbyHits>
     </CaloHitHelper>
-    
-    
-    <ArborPlugin>
-    
-		   <EnergyResolutionFunctions>
-		     <SDHCALEnergyResolution>
-		       <EnergyFactor>        0.55    </EnergyFactor>
-		       <ConstantFactor>      0.081   </ConstantFactor>
-		       <EnergySquareFactor>  0.6     </EnergySquareFactor>
-		     </SDHCALEnergyResolution>
-		   </EnergyResolutionFunctions>
-		   
-		   <EnergyEstimators>
-		     <SDHCALQuadraticEnergyEstimator>
-		       <EnergyConstantParameters>
-		          0.0442674
-					    3.95986e-05
-					    -2.0133e-10
-					    0.0781586
-					    -5.9623e-05
-					    -3.06952e-08
-					    0.115295
-					    1.57508e-05
-					    2.28041e-09
-		       </EnergyConstantParameters>
-		       <ThresholdValues> 0.0406459 0.101952 0.258078 </ThresholdValues>
-		     </SDHCALQuadraticEnergyEstimator>
-		   </EnergyEstimators>
-		   
-		</ArborPlugin>
 
-    <!-- ARBOR PANDORA ALGORITHM SETTINGS -->    
-    <algorithm type = "ArborParent">
-      <algorithm type = "SimpleObjectCreation" description = "ObjectFormation">
-        <ShouldUseOnlyCaloHitsForObjects> false </ShouldUseOnlyCaloHitsForObjects>
-        <MaximumSizeForClusterSplitting> 4 </MaximumSizeForClusterSplitting>
-        <IntraLayerMaxDistance> 11.f </IntraLayerMaxDistance>
-        <ShouldUseReadoutLayer> false </ShouldUseReadoutLayer>
-        <ShouldSplitClusterInSingleCaloHitClusters> true </ShouldSplitClusterInSingleCaloHitClusters>
+    <!-- ARBOR PANDORA ALGORITHM SETTINGS -->
+
+    <!-- Select tracks and hits to use for clustering -->
+    <algorithm type = "EventPreparation"/>
+    
+    
+    <!-- Create objects to cluster before starting anything -->
+    <algorithm type="ObjectCreationParent">
+      <algorithm type="SimpleObjectCreation" description="ObjectFormation">
+        <ShouldUseOnlyCaloHitsForObjectsInEcal> true </ShouldUseOnlyCaloHitsForObjectsInEcal>
+        <ShouldUseReadoutLayerInEcal> false </ShouldUseReadoutLayerInEcal>
+        <ShouldUseOnlyCaloHitsForObjectsInHcal> false </ShouldUseOnlyCaloHitsForObjectsInHcal>
+        <MaximumSizeForClusterSplittingInHcal> 4 </MaximumSizeForClusterSplittingInHcal>
+        <IntraLayerMaxDistanceInHcal> 11.f </IntraLayerMaxDistanceInHcal>
+        <ShouldUseReadoutLayerInHcal> false </ShouldUseReadoutLayerInHcal>
+        <ShouldSplitClusterInSingleCaloHitClustersInHcal> true </ShouldSplitClusterInSingleCaloHitClustersInHcal>
       </algorithm>
-      <algorithm type = "ArborConnectorClustering" description = "ClusterFormation">
-          <MaximumDistanceForConnectionFine>          10.0    </MaximumDistanceForConnectionFine>
-          <MaximumDistanceForConnectionCoarse>        65.5    </MaximumDistanceForConnectionCoarse>
-          <AngleForInitialConnectionCoarse>           1.5     </AngleForInitialConnectionCoarse>
-          <ForwardConnectorWeight>                    10.0    </ForwardConnectorWeight>
-          <BackwardConnectorWeight>                   1.0     </BackwardConnectorWeight>
-          <OrderParameterAnglePower>                  1       </OrderParameterAnglePower>
-          <OrderParameterDistancePower>               10      </OrderParameterDistancePower>
-          <ReferenceDirectionDepth>                   2       </ReferenceDirectionDepth>
-          <ReferenceDirectionMaximumForwardLayer>     2       </ReferenceDirectionMaximumForwardLayer>
-          <AllowForwardConnectionForIsolatedObjects>  false   </AllowForwardConnectionForIsolatedObjects>
-          <ShouldUseIsolatedObjects>                  true    </ShouldUseIsolatedObjects>
-          <ShouldSelectNearestObjectWhileCleaning>    true    </ShouldSelectNearestObjectWhileCleaning>
-          <ShowConnectors>                            false   </ShowConnectors>
-      </algorithm>
-      <associationAlgorithms>
-        <algorithm type = "TopologicalTrackAssociation">
-          <ShouldMergeChargedTrees> true </ShouldMergeChargedTrees>
-          <TrackToClusterDistanceCut> 40.f </TrackToClusterDistanceCut>
-          <TrackToClusterNLayersCut> 2 </TrackToClusterNLayersCut>
-        </algorithm>
-        <algorithm type = "NeutralTreeMerging">
-          <UseClustersWithTrackAssociation> true </UseClustersWithTrackAssociation>
-          <SeedSeparationDistance> 12.5 </SeedSeparationDistance>
-        </algorithm>
-        <algorithm type = "SmallNeutralFragmentMerging">
-          <MaximumDaughterNObject> 10 </MaximumDaughterNObject>
-          <LargeDistanceCut> 1000.f </LargeDistanceCut>
-          <ShouldUseDistanceToCentroid> false </ShouldUseDistanceToCentroid>
-        </algorithm>
-      </associationAlgorithms>
       <ObjectListName>   InputObjects   </ObjectListName>
-      <ClusterListName>  ArborClusters  </ClusterListName>
       <ReplaceCurrentObjectList>  true  </ReplaceCurrentObjectList>
-    </algorithm> 
-
+    </algorithm>
     
-    <!-- Convert the arbor clusters in the pandora framework  -->
+    
+    <!-- Tag some objects as isolated -->
+    <algorithm type = "IsolationTagging">
+       <MaxNObjectsInSamePseudoLayer> 3 </MaxNObjectsInSamePseudoLayer>
+       <MaxNObjects> 1 </MaxNObjects> 
+       <MaxNeighborDistance> 80.f </MaxNeighborDistance>
+       <MaxIntraLayerNeighborDistance> 18.f </MaxIntraLayerNeighborDistance>
+    </algorithm>
+    
+    
+    <!-- Create clusters by connecting objects in an oriented tree topology -->
+    <algorithm type="ConnectorClusteringParent">
+    
+      <!-- Create connectors and clean them multiple time if needed -->
+      <algorithm type="ConnectorParent" description="ConnectorIteration">
+      
+        <connectorAlgorithms>
+          <!-- Seed connectors everywhere in neighborhood -->
+          <algorithm type="ConnectorSeeding">
+            <MaxForwardPseudoLayer> 3 </MaxForwardPseudoLayer>
+            <EcalConnectionDistance> 25.0 </EcalConnectionDistance>
+            <HcalConnectionDistance> 85.0 </HcalConnectionDistance>
+            <AllowForwardConnectionForIsolatedObjects> false </AllowForwardConnectionForIsolatedObjects>
+            <UseOnlyTrackSeedingStrategy> false </UseOnlyTrackSeedingStrategy>            
+          </algorithm>
+          
+          <!-- Clean connector lists using the kappa parameter, in order to create a tree structure -->
+          <algorithm type="KappaConnectorCleaning">
+            <BackwardConnectorWeight> 10 </BackwardConnectorWeight>    
+            <ForwardConnectorWeight> 0.0001 </ForwardConnectorWeight>
+            <OrderParameterAnglePower> 1 </OrderParameterAnglePower>
+            <OrderParameterDistancePower> 5 </OrderParameterDistancePower>
+            <ReferenceDirectionDepth> 1 </ReferenceDirectionDepth>
+            <ReferenceDirectionMaximumForwardLayer> 5 </ReferenceDirectionMaximumForwardLayer>
+          </algorithm>
+        </connectorAlgorithms>
+        
+      </algorithm>
+      
+      <!-- Create trees from connected objects -->
+      <algorithm type="TreeClustering" description="ClusterFormation"/>
+      
+      <!-- Make topological associations between trees and clusters -->
+      <algorithm type="TopologicalAssociationParent" description="TopologicalAssociation">
+        <associationAlgorithms>
+        
+          <!-- Create track to cluster associations -->
+          <algorithm type = "TopologicalTrackAssociation">
+            <ShouldMergeChargedTrees> true </ShouldMergeChargedTrees>
+            <TrackToClusterDistanceCut> 45.f </TrackToClusterDistanceCut>
+            <TrackToClusterNLayersCut> 2 </TrackToClusterNLayersCut>
+          </algorithm>
+          
+          <!-- Merge neutral trees that have close-by seeds -->
+          <algorithm type = "NeutralTreeMerging">
+            <UseClustersWithTrackAssociation> true </UseClustersWithTrackAssociation>
+            <SeedSeparationDistance> 25.0 </SeedSeparationDistance>
+          </algorithm>
+          
+          <!-- Associate small neutral fragments to their closest cluster -->
+          <algorithm type = "SmallNeutralFragmentMerging">
+            <MaximumDaughterNObject> 10 </MaximumDaughterNObject>
+            <LargeDistanceCut> 1000.f </LargeDistanceCut>
+            <ShouldUseDistanceToCentroid> false </ShouldUseDistanceToCentroid>
+          </algorithm>
+          
+        </associationAlgorithms>
+      
+      </algorithm>
+      
+      <ClusterListName>            ArborClusters    </ClusterListName>
+      <ReplaceCurrentClusterList>  true             </ReplaceCurrentClusterList>
+    </algorithm>
+    
+    
+    <!-- ARBOR-to-PANDORA cluster conversion -->
     <algorithm type = "ClusteringParent">
       <algorithm type = "ArborClusterConverter" description = "ClusterFormation">
         <ArborClusterListNames>    ArborClusters    </ArborClusterListNames>
@@ -99,44 +122,27 @@ Arbor Pandora settings xml file for Arbor algorithms
       <ClusterListName>            OutputClusters    </ClusterListName>
       <ReplaceCurrentClusterList>  true             </ReplaceCurrentClusterList>
     </algorithm>
-    
-    <algorithm type = "TrackPreparation">
-      <ShouldMakeAssociations>  false  </ShouldMakeAssociations>
-    </algorithm>
-    
-    <algorithm type = "ClusterPreparation">
-        <CandidateListNames>  OutputClusters  </CandidateListNames>
-    </algorithm>
 
-    PFO Creation
-    <algorithm type = "PfoCreation">
-      <OutputPfoListName> ArborPFOs </OutputPfoListName>
-      <ShouldCreateTrackBasedPfos> true </ShouldCreateTrackBasedPfos>
-      <ShouldCreateNeutralPfos> true </ShouldCreateNeutralPfos>
-      <MinClusterHadronicEnergy> 0.f </MinClusterHadronicEnergy>
-      <MinClusterElectromagneticEnergy> 0.f </MinClusterElectromagneticEnergy>
-      <MinHitsInCluster> 0 </MinHitsInCluster>
-      <AllowSingleLayerClusters> false </AllowSingleLayerClusters>
-    </algorithm> 
-    
+
     <!-- EVE Monitoring -->
     <algorithm type = "VisualMonitoring" description = "display all">
-          
        <DisplayEvent>true</DisplayEvent>
        
-       <ShowMCParticles>            false    </ShowMCParticles>
-       <ShowCurrentCaloHits>        false     </ShowCurrentCaloHits>
-       <ShowCurrentTracks>          false     </ShowCurrentTracks> 
-       <ShowCurrentClusters>        false     </ShowCurrentClusters> 
-       <ShowCurrentPfos>            true     </ShowCurrentPfos>
-       <HitColors>                  iterate  </HitColors>
-       <ShowOnlyAvailable>          false    </ShowOnlyAvailable>
+       <ShowMCParticles>false</ShowMCParticles>
+       <ShowCurrentCaloHits>true</ShowCurrentCaloHits>
+       <ShowCurrentTracks>true</ShowCurrentTracks> 
+       <ShowCurrentClusters>true</ShowCurrentClusters> 
+       <ShowCurrentPfos>false</ShowCurrentPfos>
+       <HitColors> iterate </HitColors>
+       <ShowOnlyAvailable>false</ShowOnlyAvailable>
        
-       <TransparencyThresholdE>   -1   </TransparencyThresholdE>
-       <EnergyScaleThresholdE>    1.0  </EnergyScaleThresholdE>
-       <BlackBackground>        true  </BlackBackground>
-       <ShowDetector>           false  </ShowDetector>
+       <TransparencyThresholdE>-1.</TransparencyThresholdE>
+       <EnergyScaleThresholdE>1.</EnergyScaleThresholdE> 
+       <BlackBackground>true</BlackBackground>
+       <ShowDetector>false</ShowDetector>
           
     </algorithm>
+    
+    
     
 </pandora>
