@@ -38,15 +38,43 @@ pandora::StatusCode DummyClusteringAlgorithm::RunArborAlgorithm()
 	const arbor::ObjectList *pObjectList = NULL;
 	PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, ArborContentApi::GetCurrentObjectList(*this, pObjectList));
 
-	arbor::ClusterList clusterList;
+	pandora::Cluster *pCluster = NULL;
 
 	for(arbor::ObjectList::const_iterator iter = pObjectList->begin() , endIter = pObjectList->end() ; endIter != iter ; ++iter)
 	{
-		arbor::Cluster *pCluster = NULL;
-
 		if((*iter)->GetFlag(ISOLATED_OBJECT))
 		{
-			PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, ArborContentApi::Cluster::Create(*this, pCluster, *iter));
+			if(NULL == pCluster)
+			{
+				pandora::CaloHitList clusterHitList((*iter)->GetCaloHitList());
+
+				for(pandora::CaloHitList::iterator hitIter = clusterHitList.begin(), hitEndIter = clusterHitList.end() ; hitEndIter != hitIter ; ++hitIter)
+				{
+					if(PandoraContentApi::IsCaloHitAvailable(*this, *hitIter))
+					{
+						if(NULL == pCluster)
+						{
+							PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraContentApi::Cluster::Create(*this, *hitIter, pCluster));
+						}
+						else
+						{
+							PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraContentApi::AddCaloHitToCluster(*this, pCluster, *hitIter));
+						}
+					}
+				}
+			}
+			else
+			{
+				pandora::CaloHitList clusterHitList((*iter)->GetCaloHitList());
+
+				for(pandora::CaloHitList::iterator hitIter = clusterHitList.begin(), hitEndIter = clusterHitList.end() ; hitEndIter != hitIter ; ++hitIter)
+				{
+					if(PandoraContentApi::IsCaloHitAvailable(*this, *hitIter))
+					{
+						PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraContentApi::AddCaloHitToCluster(*this, pCluster, *hitIter));
+					}
+				}
+			}
 		}
 	}
 
