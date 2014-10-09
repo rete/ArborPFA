@@ -32,6 +32,8 @@
 #include "arborpfa/algorithm/ArborAlgorithm.h"
 #include "arborpfa/algorithm/ArborAlgorithmFactory.h"
 
+#include "TH1D.h"
+
 namespace arbor
 {
 
@@ -61,6 +63,17 @@ pandora::StatusCode RunArborAlgorithm();
 	*/
 pandora::StatusCode ReadSettings(const pandora::TiXmlHandle xmlHandle);
 
+/**
+ *
+ */
+pandora::StatusCode GlobalCleaning(const ObjectList *const pObjectList);
+
+/**
+ *
+ */
+pandora::StatusCode OrderedCleaning(const ObjectList *const pObjectList);
+
+
 protected:
 
 	float          m_backwardConnectorWeight;
@@ -69,7 +82,13 @@ protected:
 	float          m_orderParameterDistancePower;
 	unsigned int  m_referenceDirectionDepth;
 	unsigned int  m_referenceDirectionMaximumForwardLayer;
+	int            m_cleaningStrategy;
+	float          m_orderParameterCut;
 
+	float          m_kappaNormFactor;
+
+	TH1 *m_pOrderParameterHisto;
+	TH1 *m_pBestOrderParameterHisto;
 };
 
 //--------------------------------------------------------------------------------------------------------------------

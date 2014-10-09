@@ -32,6 +32,9 @@
 #include "arborpfa/algorithm/ArborAlgorithm.h"
 #include "arborpfa/algorithm/ArborAlgorithmFactory.h"
 
+class TH1;
+class TH1D;
+
 namespace arbor
 {
 
@@ -41,6 +44,11 @@ namespace arbor
 class ConnectorSeedingAlgorithm : public ArborAlgorithm 
 {
 public:
+
+	/**
+	 * @brief Destructor
+	 */
+	~ConnectorSeedingAlgorithm();
 
 /**
 	* @brief Factory class for instantiating algorithm
@@ -64,11 +72,6 @@ pandora::StatusCode ReadSettings(const pandora::TiXmlHandle xmlHandle);
 /**
  *
  */
-pandora::StatusCode ConnectWithTrackStrategy(const OrderedObjectList &orderedObjectList);
-
-/**
- *
- */
 pandora::StatusCode ConnectAll(const OrderedObjectList &orderedObjectList);
 
 /**
@@ -76,15 +79,30 @@ pandora::StatusCode ConnectAll(const OrderedObjectList &orderedObjectList);
  */
 pandora::StatusCode ConnectWithForwardObjects(Object *pObject, const OrderedObjectList &orderedObjectList);
 
+/**
+ *
+ */
+pandora::StatusCode ConnectBackward(Object *pObject, const OrderedObjectList &orderedObjectList);
+
+/**
+ *
+ */
+pandora::StatusCode AlignementConnect(const OrderedObjectList &orderedObjectList);
+
 protected:
 
 	unsigned int         m_maxForwardPseudoLayer;
 	float                 m_ecalConnectionDistance;
 	float                 m_hcalConnectionDistance;
 	bool                  m_allowForwardConnectionForIsolatedObjects;
-	bool                  m_useOnlyTrackSeedingStrategy;
-	unsigned int         m_nPseudoLayerTrackConnection;
-	float                 m_trackObjectConnectionDistance;
+	int                   m_connectionStrategy;
+	float                 m_ecalConnectionAngle;
+	float                 m_hcalConnectionAngle;
+
+
+	TH1D                 *m_pConnectorLengthHisto;
+	TH1D                 *m_pConnectorAngleHisto;
+	std::vector<TH1 *>    m_histogramPool;
 };
 
 //--------------------------------------------------------------------------------------------------------------------

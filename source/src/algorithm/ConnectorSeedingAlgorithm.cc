@@ -34,14 +34,30 @@
 // arborpfa
 #include "arborpfa/api/ArborContentApi.h"
 #include "arborpfa/arbor/AlgorithmHeaders.h"
+#include "arborpfa/api/ArborMonitoring.h"
+
+// -- root headers
+#include "TH1.h"
+#include "TH1D.h"
 
 namespace arbor
 {
+
+ConnectorSeedingAlgorithm::~ConnectorSeedingAlgorithm()
+{
+//	for(unsigned int h=0 ; h<m_histogramPool.size() ; h++)
+//		delete m_histogramPool.at(h);
+//
+//	m_pConnectorLengthHisto = NULL;
+//	m_pConnectorAngleHisto = NULL;
+}
 
 //--------------------------------------------------------------------------------------------------------------------------
 
 pandora::StatusCode ConnectorSeedingAlgorithm::RunArborAlgorithm()
 {
+//	ARBOR_MONITORING_API(ResetHistograms(this->GetAlgorithmType()));
+
 	const ObjectList *pObjectList = NULL;
 	PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, ArborContentApi::GetCurrentObjectList(*this, pObjectList));
 
@@ -51,18 +67,19 @@ pandora::StatusCode ConnectorSeedingAlgorithm::RunArborAlgorithm()
 	OrderedObjectList orderedObjectList;
 	PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, ArborHelper::BuildOrderedObjectList(*pObjectList, orderedObjectList));
 
-	if(m_useOnlyTrackSeedingStrategy)
+	if(0 == m_connectionStrategy || 1 == m_connectionStrategy || 3 == m_connectionStrategy)
 	{
-		PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->ConnectWithTrackStrategy(orderedObjectList));
+	 PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->ConnectAll(orderedObjectList));
 	}
-	else
+	else if(2 == m_connectionStrategy)
 	{
-		PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->ConnectAll(orderedObjectList));
+		PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->AlignementConnect(orderedObjectList));
 	}
 
 	return pandora::STATUS_CODE_SUCCESS;
 }
 
+//--------------------------------------------------------------------------------------------------------------------------
 
 pandora::StatusCode ConnectorSeedingAlgorithm::ConnectAll(const OrderedObjectList &orderedObjectList)
 {
@@ -87,7 +104,19 @@ pandora::StatusCode ConnectorSeedingAlgorithm::ConnectAll(const OrderedObjectLis
 			if(pObject1->GetFlag(ISOLATED_OBJECT) && !m_allowForwardConnectionForIsolatedObjects)
 				continue;
 
-			PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->ConnectWithForwardObjects(pObject1, orderedObjectList));
+			// forward alignment connection strategy (1) assumes a first seeding and cleaning of connectors before
+			if(1 == m_connectionStrategy && NULL == pObject1->GetCurrentBackwardConnector())
+				continue;
+
+			if(3 == m_connectionStrategy)
+			{
+				PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->ConnectBackward(pObject1, orderedObjectList));
+			}
+			else
+			{
+				PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->ConnectWithForwardObjects(pObject1, orderedObjectList));
+			}
+
 
 		} // object1 loop
 
@@ -109,7 +138,7 @@ pandora::StatusCode ConnectorSeedingAlgorithm::ConnectWithForwardObjects(Object 
 		return pandora::STATUS_CODE_SUCCESS;
 
 	// look in next pseudo layers for objects to connect
-	for(pandora::PseudoLayer pl = pseudoLayer+1 , endPl = pseudoLayer + m_maxForwardPseudoLayer;
+	for(pandora::PseudoLayer pl = pseudoLayer+1 , endPl = pseudoLayer + m_maxForwardPseudoLayer+1;
 			endPl != pl ; ++pl)
 	{
 		OrderedObjectList::const_iterator findIter = orderedObjectList.find(pl);
@@ -132,23 +161,56 @@ pandora::StatusCode ConnectorSeedingAlgorithm::ConnectWithForwardObjects(Object 
 				continue;
 
 			const pandora::CartesianVector differenceVector = objectPosition2 - objectPosition;
-			const float openingAngle = objectPosition.GetOpeningAngle(differenceVector);
 			float maximumDistanceForConnection(std::numeric_limits<float>::max());
+			float maximumAngleForConnection(std::numeric_limits<float>::max());
 
 			if(objectType == pandora::ECAL)
+			{
 				maximumDistanceForConnection = m_ecalConnectionDistance;
+				maximumAngleForConnection = m_ecalConnectionAngle;
+			}
 			else if(objectType == pandora::HCAL)
+			{
 				maximumDistanceForConnection = m_hcalConnectionDistance;
+				maximumAngleForConnection = m_hcalConnectionAngle;
+			}
 			else
 				continue;
 
-			if(differenceVector.GetMagnitude() < maximumDistanceForConnection
-			&& !pObject->IsConnectedWith(pObject2))
+			bool shouldConnect = false;
+
+			if(0 == m_connectionStrategy)
+			{
+				shouldConnect = differenceVector.GetMagnitude() < maximumDistanceForConnection
+						&& !pObject->IsConnectedWith(pObject2);
+			}
+			else if(1 == m_connectionStrategy)
+			{
+				// get the backward connector previously cleaned
+				const Connector *pCurrentBackwardConnector = pObject->GetCurrentBackwardConnector();
+
+				// get the backward object linked to this connector
+				Object *pBackwardObject = pCurrentBackwardConnector->GetFirst() == pObject ?
+						pCurrentBackwardConnector->GetSecond() : pCurrentBackwardConnector->GetFirst();
+
+				// get the connector direction
+				pandora::CartesianVector connectorDirection = pObject->GetPosition()-pBackwardObject->GetPosition();
+
+				// compute the angle between the connector direction and
+				// the candidate object for the new connection
+				const float openingAngle = connectorDirection.GetOpeningAngle(differenceVector);
+
+				shouldConnect = openingAngle < maximumAngleForConnection
+						&& differenceVector.GetMagnitude() < maximumDistanceForConnection
+						&& !pObject->IsConnectedWith(pObject2);
+			}
+
+			if(shouldConnect)
 			{
 				Connector *pConnector = NULL;
 				PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, pObject->ConnectWith(pObject2, FORWARD, pConnector));
-				PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, pConnector->SetType(INITIAL_CONNECTOR));
 				PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, pConnector->SetWeight(differenceVector.GetMagnitude()));
+				PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, pConnector->SetNormalizedDistance(differenceVector.GetMagnitude()/maximumDistanceForConnection));
 			}
 
 		} // object2 loop
@@ -158,46 +220,239 @@ pandora::StatusCode ConnectorSeedingAlgorithm::ConnectWithForwardObjects(Object 
 	return pandora::STATUS_CODE_SUCCESS;
 }
 
+//--------------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode ConnectorSeedingAlgorithm::ConnectWithTrackStrategy(const OrderedObjectList &orderedObjectList)
+pandora::StatusCode ConnectorSeedingAlgorithm::AlignementConnect(const OrderedObjectList &orderedObjectList)
 {
-//	const pandora::TrackList *pTrackList = NULL;
-//	PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetCurrentTrackList(*this, pTrackList));
-//
-//	for(pandora::TrackList::const_iterator trackIter = pTrackList->begin() , trackEndIter = pTrackList->end() ;
-//			trackEndIter != trackIter ; ++trackIter)
-//	{
-//		pandora::Track *pPataTrack = *trackIter;
-//		const pandora::CartesianVector trackCaloProjection(pPataTrack->GetTrackStateAtCalorimeter()->GetPosition());
-//
-//		for(pandora::PseudoLayer pseudoLayer = 1 , endPseudoLayer = m_nPseudoLayerTrackConnection ;
-//				endPseudoLayer != pseudoLayer ; ++pseudoLayer)
-//		{
-//			OrderedObjectList::const_iterator findIter = orderedObjectList.find(pseudoLayer);
-//
-//			if(orderedObjectList.end() == findIter)
-//				continue;
-//
-//			for(ObjectList::iterator objIter = findIter->second.begin(), objEndIter = findIter->second.end() ;
-//					objEndIter != objIter ; ++objIter)
-//			{
-//				Object *pObject = *objIter;
-//				const pandora::CartesianVector objectPosition(pObject->GetPosition());
-//
-//				if(m_trackObjectConnectionDistance < (trackCaloProjection-objectPosition).GetMagnitude())
-//				{
-//					// we found an object close to this track.
-//					// we need to create recursively connections in forward direction
-//
-//
-//				}
-//
-//			} // object loop
-//
-//		} // pseudo layer loop
-//
-//	} // track loop
+	ConnectorList currentBackWardConnectorList;
 
+	// get the backward connector list of all the objects
+	for(OrderedObjectList::const_iterator iter = orderedObjectList.begin() , endIter = orderedObjectList.end() ;
+			endIter != iter ; ++iter)
+	{
+		for(ObjectList::const_iterator objIter = iter->second.begin() , objEndIter = iter->second.end() ;
+				objEndIter != objIter ; ++objIter)
+		{
+			Object *pObject = *objIter;
+
+			if(!pObject->GetBackwardConnectorList().empty())
+				currentBackWardConnectorList.insert(pObject->GetBackwardConnectorList().begin(), pObject->GetBackwardConnectorList().end());
+		}
+	}
+
+	for(ConnectorList::const_iterator coIter = currentBackWardConnectorList.begin() , coEndIter = currentBackWardConnectorList.end() ;
+			coEndIter != coIter ; ++coIter)
+	{
+		Connector *pConnector = *coIter;
+
+		Object *fromObject = pConnector->GetFirst();
+		Object *toObject   = pConnector->GetSecond();
+
+		if(fromObject->GetPseudoLayer() > toObject->GetPseudoLayer())
+			std::swap(fromObject, toObject);
+
+		const pandora::CartesianVector connectorDirection(toObject->GetPosition() - fromObject->GetPosition());
+
+		const pandora::PseudoLayer fromPseudoLayer(fromObject->GetPseudoLayer());
+		const pandora::PseudoLayer toPseudoLayer(toObject->GetPseudoLayer());
+
+		const pandora::HitType fromObjectType(fromObject->GetObjectType());
+		const pandora::HitType toObjectType(toObject->GetObjectType());
+
+		float connectionDistance(0.f);
+		float connectionAngle(0.f);
+
+		if(pandora::ECAL == toObjectType)
+		{
+			connectionDistance = m_ecalConnectionDistance;
+			connectionAngle = m_ecalConnectionAngle;
+		}
+		else if(pandora::HCAL == toObjectType)
+		{
+			connectionDistance = m_hcalConnectionDistance;
+			connectionAngle = m_hcalConnectionAngle;
+		}
+		else
+		{
+			continue;
+		}
+
+		// look for forward objects to connect
+		for(pandora::PseudoLayer pseudoLayer = toPseudoLayer+1 , endPseudoLayer = toPseudoLayer+m_maxForwardPseudoLayer ;
+				endPseudoLayer != pseudoLayer ; ++pseudoLayer)
+		{
+			OrderedObjectList::const_iterator findIter = orderedObjectList.find(pseudoLayer);
+
+			if(orderedObjectList.end() == findIter)
+				continue;
+
+			for(ObjectList::const_iterator objIter = findIter->second.begin() , objEndIter = findIter->second.end() ;
+					objEndIter != objIter ; ++objIter)
+			{
+				Object *pObject = *objIter;
+				const pandora::CartesianVector objectPosition(pObject->GetPosition());
+				const pandora::HitType objectType(pObject->GetObjectType());
+
+				if(objectType != toObjectType)
+					continue;
+
+				const pandora::CartesianVector differenceVector(objectPosition - toObject->GetPosition());
+
+				if(connectionDistance < differenceVector.GetMagnitude()                            // cut on distance
+				|| connectionAngle    < connectorDirection.GetOpeningAngle(differenceVector))      // cut on angle
+					continue;
+
+				if(toObject->IsConnectedWith(pObject))
+					continue;
+
+				Connector *pNewConnector = NULL;
+				PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, toObject->ConnectWith(pObject, FORWARD, pNewConnector));
+				PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, pNewConnector->SetWeight(differenceVector.GetMagnitude()));
+				PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, pNewConnector->SetNormalizedDistance(differenceVector.GetMagnitude()/connectionDistance));
+			}
+		}
+
+		if(0 == fromPseudoLayer)
+			continue;
+
+		if(pandora::ECAL == fromObjectType)
+		{
+			connectionDistance = m_ecalConnectionDistance;
+			connectionAngle = m_ecalConnectionAngle;
+		}
+		else if(pandora::HCAL == fromObjectType)
+		{
+			connectionDistance = m_hcalConnectionDistance;
+			connectionAngle = m_hcalConnectionAngle;
+		}
+		else
+		{
+			continue;
+		}
+
+		// look for backward objects to connect
+		for(pandora::PseudoLayer pseudoLayer = fromPseudoLayer-1 ,
+				endPseudoLayer = fromPseudoLayer < m_maxForwardPseudoLayer ? 0 : fromPseudoLayer-m_maxForwardPseudoLayer ;
+				endPseudoLayer != pseudoLayer ; --pseudoLayer)
+		{
+			OrderedObjectList::const_iterator findIter = orderedObjectList.find(pseudoLayer);
+
+			if(orderedObjectList.end() == findIter)
+				continue;
+
+			for(ObjectList::const_iterator objIter = findIter->second.begin() , objEndIter = findIter->second.end() ;
+					objEndIter != objIter ; ++objIter)
+			{
+				Object *pObject = *objIter;
+				const pandora::CartesianVector objectPosition(pObject->GetPosition());
+				const pandora::HitType objectType(pObject->GetObjectType());
+
+				if(objectType != fromObjectType)
+					continue;
+
+				const pandora::CartesianVector differenceVector(objectPosition - fromObject->GetPosition());
+
+				if(connectionDistance < differenceVector.GetMagnitude()                            // cut on distance
+				|| connectionAngle    < (connectorDirection * -1.f).GetOpeningAngle(differenceVector))      // cut on angle
+					continue;
+
+				if(fromObject->IsConnectedWith(pObject))
+					continue;
+
+				Connector *pNewConnector = NULL;
+				PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, pObject->ConnectWith(fromObject, FORWARD, pNewConnector));
+				PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, pNewConnector->SetWeight(differenceVector.GetMagnitude()));
+				PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, pNewConnector->SetNormalizedDistance(differenceVector.GetMagnitude()/connectionDistance));
+			}
+		}
+	}
+
+	return pandora::STATUS_CODE_SUCCESS;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ConnectorSeedingAlgorithm::ConnectBackward(Object *pObject, const OrderedObjectList &orderedObjectList)
+{
+	const pandora::PseudoLayer pseudoLayer(pObject->GetPseudoLayer());
+	const pandora::CartesianVector objectPosition = pObject->GetPosition();
+	const pandora::HitType objectType = pObject->GetObjectType();
+
+	// connections only in ecal and hcal
+	if(objectType != pandora::ECAL && objectType != pandora::HCAL)
+		return pandora::STATUS_CODE_SUCCESS;
+
+	if(pseudoLayer <= 1)
+		return pandora::STATUS_CODE_SUCCESS;
+
+	if(pObject->GetForwardConnectorList().empty())
+		return pandora::STATUS_CODE_SUCCESS;
+
+ // get the mean forward direction
+ pandora::CartesianVector meanForwardDirection(0.f, 0.f, 0.f);
+ PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, ArborHelper::GetMeanDirection(pObject, FORWARD, meanForwardDirection));
+
+	// look in previous pseudo layers for objects to connect
+	for(pandora::PseudoLayer pl = pseudoLayer-1 , endPl = pseudoLayer < m_maxForwardPseudoLayer+1 ? 0 : pseudoLayer - m_maxForwardPseudoLayer-1;
+			endPl != pl ; --pl)
+	{
+		OrderedObjectList::const_iterator findIter = orderedObjectList.find(pl);
+
+		if(orderedObjectList.end() == findIter)
+			continue;
+
+		// loop over objects in the current next pseudo layer
+		for(ObjectList::iterator objIter2 = findIter->second.begin() , objEndIter2 = findIter->second.end() ;
+				objEndIter2 != objIter2 ; ++objIter2)
+		{
+			Object *pObject2 = *objIter2;
+			const pandora::PseudoLayer pseudoLayer2 = pObject2->GetPseudoLayer();
+			const pandora::CartesianVector objectPosition2 = pObject2->GetPosition();
+			const pandora::HitType objectType2 = pObject2->GetObjectType();
+
+			// do not connect objects in different sub detectors.
+			// TODO Think about how to handle sub detectors gap connections
+			if(objectType != objectType2)
+				continue;
+
+			const pandora::CartesianVector differenceVector = objectPosition2 - objectPosition;
+			float maximumDistanceForConnection(std::numeric_limits<float>::max());
+			float maximumAngleForConnection(std::numeric_limits<float>::max());
+
+			if(objectType == pandora::ECAL)
+			{
+				maximumDistanceForConnection = m_ecalConnectionDistance;
+				maximumAngleForConnection = m_ecalConnectionAngle;
+			}
+			else if(objectType == pandora::HCAL)
+			{
+				maximumDistanceForConnection = m_hcalConnectionDistance;
+				maximumAngleForConnection = m_hcalConnectionAngle;
+			}
+			else
+				continue;
+
+			bool shouldConnect = false;
+
+//			std::cout << "differenceVector : " << differenceVector << std::endl;
+//			std::cout << "meanForwardDirection : " << meanForwardDirection << std::endl;
+			const float openingAngle = differenceVector.GetOpeningAngle(meanForwardDirection * -1.f);
+
+			shouldConnect = openingAngle < maximumAngleForConnection
+					&& differenceVector.GetMagnitude() < maximumDistanceForConnection
+					&& !pObject->IsConnectedWith(pObject2);
+
+			if(shouldConnect)
+			{
+				Connector *pConnector = NULL;
+				PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, pObject2->ConnectWith(pObject, FORWARD, pConnector));
+				PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, pConnector->SetWeight(differenceVector.GetMagnitude()));
+				PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, pConnector->SetNormalizedDistance(differenceVector.GetMagnitude()/maximumDistanceForConnection));
+			}
+
+		} // object2 loop
+
+	} // next pseudo layer loop
 	return pandora::STATUS_CODE_SUCCESS;
 }
 
@@ -221,9 +476,33 @@ pandora::StatusCode ConnectorSeedingAlgorithm::ReadSettings(const pandora::TiXml
 	PANDORA_RETURN_RESULT_IF_AND_IF(pandora::STATUS_CODE_SUCCESS, pandora::STATUS_CODE_NOT_FOUND, !=, pandora::XmlHelper::ReadValue(xmlHandle,
 					"AllowForwardConnectionForIsolatedObjects", m_allowForwardConnectionForIsolatedObjects));
 
-	m_useOnlyTrackSeedingStrategy = false;
+	m_connectionStrategy = 0;
 	PANDORA_RETURN_RESULT_IF_AND_IF(pandora::STATUS_CODE_SUCCESS, pandora::STATUS_CODE_NOT_FOUND, !=, pandora::XmlHelper::ReadValue(xmlHandle,
-					"UseOnlyTrackSeedingStrategy", m_useOnlyTrackSeedingStrategy));
+					"ConnectionStrategy", m_connectionStrategy));
+
+	if(0 != m_connectionStrategy && 1 != m_connectionStrategy && 2 != m_connectionStrategy && 3 != m_connectionStrategy)
+	{
+		std::cout << "ConnectorSeedingAlgorithm::ReadSettings(): connection strategy should be 0, 1, 2 or 3. "
+				"Check your xml settings file!" << std::endl;
+	 return pandora::STATUS_CODE_INVALID_PARAMETER;
+	}
+
+	if(1 == m_connectionStrategy || 2 == m_connectionStrategy || 3 == m_connectionStrategy)
+	{
+		m_ecalConnectionAngle = 3.14f;
+		PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, pandora::XmlHelper::ReadValue(xmlHandle,
+						"EcalConnectionAngle", m_ecalConnectionAngle));
+
+		m_hcalConnectionAngle = 3.14f;
+		PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, pandora::XmlHelper::ReadValue(xmlHandle,
+						"HcalConnectionAngle", m_hcalConnectionAngle));
+	}
+
+//	m_pConnectorLengthHisto = new TH1D("ConnectorLengthHisto", "ConnectorLengthHisto", round(m_hcalConnectionDistance), 0, m_hcalConnectionDistance);
+//	m_pConnectorAngleHisto = new TH1D("ConnectorAngleHisto", "ConnectorAngleHisto", 100, 0, M_PI);
+//
+//	ARBOR_MONITORING_API(AddHistogram(this->GetAlgorithmType(), m_pConnectorLengthHisto));
+//	ARBOR_MONITORING_API(AddHistogram(this->GetAlgorithmType(), m_pConnectorAngleHisto));
 
 	return pandora::STATUS_CODE_SUCCESS;
 }

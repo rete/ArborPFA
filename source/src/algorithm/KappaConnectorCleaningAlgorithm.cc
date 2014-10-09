@@ -30,10 +30,12 @@
 
 // pandora
 #include "Api/PandoraContentApi.h"
+#include "Pandora/PandoraInternal.h"
 
 // arborpfa
 #include "arborpfa/api/ArborContentApi.h"
 #include "arborpfa/arbor/AlgorithmHeaders.h"
+#include "arborpfa/api/ArborMonitoring.h"
 
 namespace arbor
 {
@@ -42,7 +44,7 @@ namespace arbor
 
 pandora::StatusCode KappaConnectorCleaningAlgorithm::RunArborAlgorithm()
 {
-	unsigned int count = 0;
+//	ARBOR_MONITORING_API(ResetHistograms(this->GetAlgorithmType()+"_"+TypeToString(this)));
 
 	const ObjectList *pObjectList = NULL;
 	PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, ArborContentApi::GetCurrentObjectList(*this, pObjectList));
@@ -50,6 +52,22 @@ pandora::StatusCode KappaConnectorCleaningAlgorithm::RunArborAlgorithm()
 	if(pObjectList->empty())
 		return pandora::STATUS_CODE_SUCCESS;
 
+	if(0 == m_cleaningStrategy)
+	{
+		PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->GlobalCleaning(pObjectList));
+	}
+	else if(1 == m_cleaningStrategy)
+	{
+		PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->OrderedCleaning(pObjectList));
+	}
+
+	return pandora::STATUS_CODE_SUCCESS;
+}
+
+//--------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode KappaConnectorCleaningAlgorithm::GlobalCleaning(const ObjectList *const pObjectList)
+{
 	ObjectCleaningInfoList objectInfoList;
 
 	// loop over objects
@@ -90,11 +108,21 @@ pandora::StatusCode KappaConnectorCleaningAlgorithm::RunArborAlgorithm()
 			else
 				pOtherObject = pConnector->GetFirst();
 
+			const pandora::CartesianVector differencePosition = pOtherObject->GetPosition() - pObject->GetPosition();
+			const float angle = differencePosition.GetOpeningAngle(meanBackwardDirection);
 			float orderParameter = 0.f;
 
-			// compute the order parameter wrt the mean backward direction (unit vector)
-			PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, ArborHelper::GetKappaParameter(pObject, pOtherObject,
-					meanBackwardDirection.GetUnitVector(), m_orderParameterAnglePower, m_orderParameterDistancePower, orderParameter));
+			// get the kappa parameter for a given distance and angle
+//			PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, ArborHelper::GetKappaParameter(pObject, pOtherObject,
+//					meanBackwardDirection.GetUnitVector(), m_orderParameterAnglePower, m_orderParameterDistancePower, orderParameter));
+
+			PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, ArborHelper::GetKappaParameter(pConnector->GetNormalizedDistance(),
+					angle/M_PI, m_orderParameterDistancePower, m_orderParameterAnglePower, orderParameter));
+
+			if(orderParameter < 0.f || orderParameter > 1.f)
+			 std::cout << "orderParameter : " << orderParameter << std::endl;
+
+//			m_pOrderParameterHisto->Fill(orderParameter);
 
 			if(bestOrderParameter > orderParameter)
 			{
@@ -112,13 +140,12 @@ pandora::StatusCode KappaConnectorCleaningAlgorithm::RunArborAlgorithm()
 
 		} // end of connector loop
 
-		PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, pObject->SetCurrentBackwardConnector(NULL));
-
 		if(NULL != pBestObject)
 		{
 			ObjectCleaningInfo *objectInfo = new ObjectCleaningInfo();
 			objectInfo->m_pObject = pObject;
 			objectInfo->m_pBestConnector = pBestConnector;
+			objectInfo->m_bestOrderParameter = bestOrderParameter;
 			objectInfo->m_deleteConnectionList = deleteConnectionObjects;
 
 			objectInfoList.insert(objectInfo);
@@ -141,6 +168,8 @@ pandora::StatusCode KappaConnectorCleaningAlgorithm::RunArborAlgorithm()
 
 		PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, pObject->SetCurrentBackwardConnector(pObjectCleaningInfo->m_pBestConnector));
 
+//		m_pBestOrderParameterHisto->Fill(pObjectCleaningInfo->m_bestOrderParameter);
+
 			// Set it as final decision
 			PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, pObjectCleaningInfo->m_pBestConnector->SetType(FINAL_DECISION));
 
@@ -148,6 +177,23 @@ pandora::StatusCode KappaConnectorCleaningAlgorithm::RunArborAlgorithm()
 	}
 
 	objectInfoList.clear();
+
+	return pandora::STATUS_CODE_SUCCESS;
+}
+
+//--------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode KappaConnectorCleaningAlgorithm::OrderedCleaning(const ObjectList *const pObjectList)
+{
+	OrderedObjectList orderedObjectList;
+	PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, ArborHelper::BuildOrderedObjectList(*pObjectList, orderedObjectList));
+
+	// loop from outer to inner pseudo layer
+	for(OrderedObjectList::const_reverse_iterator riter = orderedObjectList.rbegin() , riterEnd = orderedObjectList.rend() ;
+			riterEnd != riter ; ++riter)
+	{
+		PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->GlobalCleaning(&riter->second));
+	}
 
 	return pandora::STATUS_CODE_SUCCESS;
 }
@@ -179,6 +225,30 @@ pandora::StatusCode KappaConnectorCleaningAlgorithm::ReadSettings(const pandora:
  m_referenceDirectionMaximumForwardLayer = 3;
  PANDORA_RETURN_RESULT_IF_AND_IF(pandora::STATUS_CODE_SUCCESS, pandora::STATUS_CODE_NOT_FOUND, !=, pandora::XmlHelper::ReadValue(xmlHandle,
      "ReferenceDirectionMaximumForwardLayer", m_referenceDirectionMaximumForwardLayer));
+
+ m_orderParameterCut = 42.f;
+ PANDORA_RETURN_RESULT_IF_AND_IF(pandora::STATUS_CODE_SUCCESS, pandora::STATUS_CODE_NOT_FOUND, !=, pandora::XmlHelper::ReadValue(xmlHandle,
+     "OrderParameterCut", m_orderParameterCut));
+
+ m_cleaningStrategy = 0;
+ PANDORA_RETURN_RESULT_IF_AND_IF(pandora::STATUS_CODE_SUCCESS, pandora::STATUS_CODE_NOT_FOUND, !=, pandora::XmlHelper::ReadValue(xmlHandle,
+     "CleaningStrategy", m_cleaningStrategy));
+
+ if(m_cleaningStrategy != 0 && m_cleaningStrategy != 1)
+ 	return pandora::STATUS_CODE_INVALID_PARAMETER;
+
+// m_kappaNormFactor = M_PI * std::pow(10, m_orderParameterDistancePower);
+// std::cout << "m_kappaNormFactor : " << m_kappaNormFactor << std::endl;
+//
+// std::stringstream ss;
+// ss << "OrderParameterHisto_" << this->GetAlgorithmType()+"_"+TypeToString(this);
+//	m_pOrderParameterHisto = new TH1D(ss.str().c_str(), "OrderParameterHisto", 100, 0, 1);
+//	ss.str("");
+// ss << "BestOrderParameterHisto" << this->GetAlgorithmType()+"_"+TypeToString(this);
+//	m_pBestOrderParameterHisto = new TH1D(ss.str().c_str(), "BestOrderParameterHisto", 100, 0, 1);
+//
+//	ARBOR_MONITORING_API(AddHistogram(this->GetAlgorithmType()+"_"+TypeToString(this), m_pOrderParameterHisto));
+//	ARBOR_MONITORING_API(AddHistogram(this->GetAlgorithmType()+"_"+TypeToString(this), m_pBestOrderParameterHisto));
 
 	return pandora::STATUS_CODE_SUCCESS;
 }
