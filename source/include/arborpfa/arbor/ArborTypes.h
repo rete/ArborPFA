@@ -136,6 +136,7 @@ namespace arbor
 	 public:
 			Object        *m_pObject;
 			Connector     *m_pBestConnector;
+			float         m_bestOrderParameter;
 			ObjectList     m_deleteConnectionList;
 	};
 
