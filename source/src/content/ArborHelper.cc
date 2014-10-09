@@ -40,79 +40,6 @@ using namespace pandora;
 namespace arbor
 {
 
-pandora::StatusCode ArborHelper::GetCentroid(const pandora::Cluster *pCluster, pandora::CartesianVector &centroid)
-{
-
-	if(NULL == pCluster)
-		return STATUS_CODE_FAILURE;
-
-	const OrderedCaloHitList &clusterCaloHitList = pCluster->GetOrderedCaloHitList();
-	centroid.SetValues(0.f, 0.f, 0.f);
-	unsigned int normalizationFactor = 0;
-
-	for(OrderedCaloHitList::const_iterator iter = clusterCaloHitList.begin() , endIter = clusterCaloHitList.end() ; endIter != iter ; ++iter)
-	{
-		centroid += pCluster->GetCentroid(iter->first);
-		normalizationFactor++;
-	}
-
-	centroid = centroid * (1.0/normalizationFactor);
-
-	return STATUS_CODE_SUCCESS;
-}
-
-//--------------------------------------------------------------------------------------------------------------------
-
-pandora::StatusCode ArborHelper::GetCentroidDifference(const pandora::Cluster *pCluster1, const pandora::Cluster *pCluster2, float &centroidDifference)
-{
-	CartesianVector centroid1(0.f, 0.f, 0.f);
-	CartesianVector centroid2(0.f, 0.f, 0.f);
-
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, ArborHelper::GetCentroid(pCluster1, centroid1));
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, ArborHelper::GetCentroid(pCluster2, centroid2));
-
-	centroidDifference = (centroid1 - centroid2).GetMagnitude();
-
-	return STATUS_CODE_SUCCESS;
-}
-
-//--------------------------------------------------------------------------------------------------------------------
-
-pandora::StatusCode ArborHelper::GetClosestDistanceApproach(const pandora::Cluster *pCluster1, const pandora::Cluster *pCluster2, float &closestDistance)
-{
-	if(NULL == pCluster1 || NULL == pCluster2)
-		return STATUS_CODE_INVALID_PARAMETER;
-
-	if(0 == pCluster1->GetNCaloHits() || 0 == pCluster2->GetNCaloHits())
-		return STATUS_CODE_FAILURE;
-
-	CaloHitList caloHitList1;
-	CaloHitList caloHitList2;
-	pCluster1->GetOrderedCaloHitList().GetCaloHitList(caloHitList1);
-	pCluster2->GetOrderedCaloHitList().GetCaloHitList(caloHitList2);
-
-	closestDistance = std::numeric_limits<float>::max();
-
-	for(CaloHitList::const_iterator iter1 = caloHitList1.begin() , endIter1 = caloHitList1.end() ; endIter1 != iter1 ; ++iter1)
-	{
-		CaloHit *pCaloHit1 = *iter1;
-
-		for(CaloHitList::const_iterator iter2 = caloHitList2.begin() , endIter2 = caloHitList2.end() ; endIter2 != iter2 ; ++iter2)
-		{
-			CaloHit *pCaloHit2 = *iter2;
-
-			float distance = (pCaloHit1->GetPositionVector() - pCaloHit2->GetPositionVector()).GetMagnitude();
-
-			if(closestDistance > distance)
-			{
-				closestDistance = distance;
-			}
-		}
-	}
-
-	return STATUS_CODE_SUCCESS;
-}
-
 //-----------------------------------------------------------------------------------------------------------------------------
 
 pandora::StatusCode ArborHelper::GetCentroid(const arbor::Cluster *pCluster, pandora::CartesianVector &centroid)
@@ -252,7 +179,7 @@ pandora::StatusCode ArborHelper::FitPoints(const CartesianPointList &pointList, 
  }
  catch (StatusCodeException &statusCodeException)
  {
-     std::cout << "ArborHelper: linear fit on object list failed. " << std::endl;
+     std::cout << "ArborHelper: linear fit failed. " << std::endl;
      clusterFitResult.SetSuccessFlag(false);
      return statusCodeException.GetStatusCode();
  }
@@ -346,7 +273,7 @@ pandora::StatusCode ArborHelper::GetReferenceDirection(const Object *pObject,	fl
 		}
 
 		CartesianVector differencePosition = pOtherObject->GetPosition() - objectPosition;
-		meanBackwardDirection += differencePosition * - forwardConnectorWeight;
+		meanBackwardDirection += differencePosition * backwardConnectorWeight;
 	}
 
 	CartesianVector meanForwardDirection(0.f, 0.f, 0.f);
@@ -371,7 +298,7 @@ pandora::StatusCode ArborHelper::GetReferenceDirection(const Object *pObject,	fl
 			continue;
 
 		CartesianVector differencePosition = pOtherObject->GetPosition() - objectPosition;
-		meanForwardDirection += differencePosition * - forwardConnectorWeight;
+		meanForwardDirection += differencePosition * forwardConnectorWeight;
 
 		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, ArborHelper::RecursiveReferenceDirection(pOtherObject, forwardConnectorWeight,
 				startingDepth, maxForwardLayer, meanForwardDirection));
@@ -380,10 +307,7 @@ pandora::StatusCode ArborHelper::GetReferenceDirection(const Object *pObject,	fl
 	if(meanForwardDirection == CartesianVector(0.f, 0.f, 0.f))
 		return STATUS_CODE_SUCCESS;
 
-	if(meanForwardDirection == meanBackwardDirection)
-		return STATUS_CODE_SUCCESS;
-
-	meanForwardDirection += meanForwardDirection;
+	meanBackwardDirection += meanForwardDirection * -1.f;
 
 	if(meanBackwardDirection == CartesianVector(0.f, 0.f, 0.f))
 		return STATUS_CODE_FAILURE;
@@ -394,7 +318,7 @@ pandora::StatusCode ArborHelper::GetReferenceDirection(const Object *pObject,	fl
 //----------------------------------------------------------------------------------------------------------------------
 
 pandora::StatusCode ArborHelper::RecursiveReferenceDirection(const Object *pObject,	float forwardConnectorWeight,
-		unsigned int &currentDepth, unsigned int maxForwardLayer, pandora::CartesianVector &meanBackwardDirection)
+		unsigned int &currentDepth, unsigned int maxForwardLayer, pandora::CartesianVector &meanForwardDirection)
 {
 	// stop iteration if the maximum depth is reached
 	if(currentDepth == 0)
@@ -431,10 +355,10 @@ pandora::StatusCode ArborHelper::RecursiveReferenceDirection(const Object *pObje
 			continue;
 
 		CartesianVector differencePosition = pOtherObject->GetPosition() - objectPosition;
-		meanBackwardDirection += differencePosition * - forwardConnectorWeight;
+		meanForwardDirection += differencePosition * forwardConnectorWeight;
 
 		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, ArborHelper::RecursiveReferenceDirection(pOtherObject, forwardConnectorWeight,
-				currentRecursiveDepth, maxForwardLayer, meanBackwardDirection));
+				currentRecursiveDepth, maxForwardLayer, meanForwardDirection));
 	}
 
 	return STATUS_CODE_SUCCESS;
@@ -442,25 +366,10 @@ pandora::StatusCode ArborHelper::RecursiveReferenceDirection(const Object *pObje
 
 //----------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode ArborHelper::GetKappaParameter(const Object *pInnerObject, const Object *pOuterObject, const CartesianVector &referenceVector,
-		float thetaPower, float distancePower, float &kappaParameter)
+pandora::StatusCode ArborHelper::GetKappaParameter(float distance, float angle,
+		float distancePower, float anglePower, float &kappaParameter)
 {
-	if(NULL == pInnerObject || NULL == pOuterObject || pInnerObject == pOuterObject)
-		return STATUS_CODE_INVALID_PARAMETER;
-
-	const CartesianVector differencePosition = pOuterObject->GetPosition() - pInnerObject->GetPosition();
-	const float angle = differencePosition.GetOpeningAngle(referenceVector);
-	const float sinDistance = differencePosition.GetMagnitude()*sin(angle);
-	const float cosDistance = differencePosition.GetMagnitude()*cos(angle);
-
-	kappaParameter = std::pow(angle, thetaPower)
-	                *std::pow(differencePosition.GetMagnitude(), distancePower);
-
-//		kappaParameter = std::pow(angle, thetaPower)
-//		                *std::pow(sinDistance, distancePower);
-
-//			kappaParameter = std::pow(angle, thetaPower)
-//			                *std::pow(cosDistance, distancePower);
+	kappaParameter = std::pow(angle, anglePower) * std::pow(distance, distancePower);
 
 	return STATUS_CODE_SUCCESS;
 }
@@ -484,34 +393,103 @@ pandora::StatusCode ArborHelper::BuildOrderedObjectList(const ObjectList &object
 
 //----------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode ArborHelper::GetConnectedObjects(Object *pSeedObject, ObjectList &connectedObjectList)
+pandora::StatusCode ArborHelper::GetMeanDirection(const Object *pObject, ConnectorDirection connectorDirection,
+		pandora::CartesianVector &direction, unsigned int connectorDepth, unsigned int pseudoLayerDepth)
 {
-	if(NULL == pSeedObject)
+	if(NULL == pObject)
 		return STATUS_CODE_INVALID_PARAMETER;
 
-	const ConnectorList &forwardConnectorList = pSeedObject->GetForwardConnectorList();
+	ConnectorList connectorList;
+	unsigned int maxPseudoLayer(0);
 
-	connectedObjectList.insert(pSeedObject);
+	if(connectorDirection == FORWARD)
+	{
+		connectorList = pObject->GetForwardConnectorList();
+		maxPseudoLayer = pseudoLayerDepth == std::numeric_limits<unsigned int>::max() ? pseudoLayerDepth : pObject->GetPseudoLayer() + pseudoLayerDepth;
+	}
+	else
+	{
+		connectorList = pObject->GetBackwardConnectorList();
+		maxPseudoLayer = pseudoLayerDepth >= pObject->GetPseudoLayer() ? 0 : pObject->GetPseudoLayer() - pseudoLayerDepth;
+	}
 
-	if(forwardConnectorList.empty())
-		return STATUS_CODE_SUCCESS;
+	if(connectorList.empty())
+		return STATUS_CODE_UNCHANGED;
 
-	for(ConnectorList::const_iterator iter = forwardConnectorList.begin() , endIter = forwardConnectorList.end() ;
+	const pandora::CartesianVector objectPosition(pObject->GetPosition());
+
+	for(ConnectorList::const_iterator iter = connectorList.begin() , endIter = connectorList.end() ;
 			endIter != iter ; ++iter)
 	{
 		Connector *pConnector = *iter;
 		Object *pOtherObject = NULL;
 
-		if(pConnector->GetFirst() == pSeedObject)
+		if(pConnector->GetFirst() == pObject)
 			pOtherObject = pConnector->GetSecond();
 		else
 			pOtherObject = pConnector->GetFirst();
 
-		// test if already present
-		if(!connectedObjectList.insert(pOtherObject).second)
+		if(pOtherObject->GetPseudoLayer() > maxPseudoLayer)
 			continue;
 
-		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, GetConnectedObjects(pOtherObject, connectedObjectList));
+		const pandora::CartesianVector otherObjectPosition(pOtherObject->GetPosition());
+
+		direction += (otherObjectPosition - objectPosition);
+
+		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, ArborHelper::RecursiveDirection(pOtherObject, connectorDirection, direction, connectorDepth-1, maxPseudoLayer));
+	}
+
+	return STATUS_CODE_SUCCESS;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborHelper::RecursiveDirection(const Object *pObject, ConnectorDirection connectorDirection,
+		pandora::CartesianVector &direction, unsigned int currentDepth, unsigned int maxPseudoLayer)
+{
+	if(NULL == pObject)
+		return STATUS_CODE_INVALID_PARAMETER;
+
+	if(0 == currentDepth)
+		return STATUS_CODE_SUCCESS;
+
+	const pandora::PseudoLayer pseudoLayer(pObject->GetPseudoLayer());
+
+	ConnectorList connectorList;
+
+	if(connectorDirection == FORWARD)
+	{
+		connectorList = pObject->GetForwardConnectorList();
+	}
+	else
+	{
+		connectorList = pObject->GetBackwardConnectorList();
+	}
+
+	if(connectorList.empty())
+		return STATUS_CODE_SUCCESS;
+
+	const pandora::CartesianVector objectPosition(pObject->GetPosition());
+
+	for(ConnectorList::const_iterator iter = connectorList.begin() , endIter = connectorList.end() ;
+			endIter != iter ; ++iter)
+	{
+		Connector *pConnector = *iter;
+		Object *pOtherObject = NULL;
+
+		if(pConnector->GetFirst() == pObject)
+			pOtherObject = pConnector->GetSecond();
+		else
+			pOtherObject = pConnector->GetFirst();
+
+		if(pOtherObject->GetPseudoLayer() > maxPseudoLayer)
+			continue;
+
+		const pandora::CartesianVector otherObjectPosition(pOtherObject->GetPosition());
+
+		direction += (otherObjectPosition - objectPosition);
+
+		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, ArborHelper::RecursiveDirection(pOtherObject, connectorDirection, direction, currentDepth-1, maxPseudoLayer));
 	}
 
 	return STATUS_CODE_SUCCESS;

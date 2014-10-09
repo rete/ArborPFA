@@ -36,6 +36,7 @@
 // std
 #include <utility>
 #include <cstddef>
+#include <climits>
 
 #include "arborpfa/arbor/ArborTypes.h"
 
@@ -58,33 +59,6 @@ class Connector;
 class ArborHelper 
 {
  public:
-
-		/**
-			* @brief Compute the centroid (barycenter) of the cluster.
-			*
-			* @param pCluster the cluster for centroid computation
-			* @param centroid the centroid position to receive (by reference)
-			*/
-	 static pandora::StatusCode GetCentroid(const pandora::Cluster *pCluster, pandora::CartesianVector &centroid);
-
-	 /**
-	  * @brief Compute the distance wrt the cluster centroids. See ArborHelper::GetCentroid() method
-	  *
-	  * @param pCluster1 the first cluster
-	  * @param pCluster2 the second cluster
-	  * @param the distance between centroid to receive (by reference)
-	  */
-	 static pandora::StatusCode GetCentroidDifference(const pandora::Cluster *pCluster1, const pandora::Cluster *pCluster2, float &centroidDifference);
-
-	 /**
-	  * @brief Return the distance of closest approach of the two clusters, i.e, the </br>
-	  * minimum distance between their calo hits
-	  *
-	  * @param pCluster1 the first cluster
-	  * @param pCluster2 the second cluster
-	  * @param distance the distance of closest approach to receive (by reference)
-	  */
-	 static pandora::StatusCode GetClosestDistanceApproach(const pandora::Cluster *pCluster1, const pandora::Cluster *pCluster2, float &distance);
 
 		/**
 			* @brief Compute the centroid (barycenter) of the cluster.
@@ -133,8 +107,7 @@ class ArborHelper
 	 /**
 	  *
 	  */
-	 static pandora::StatusCode GetKappaParameter(const Object *pInnerObject, const Object *pOuterObject, const pandora::CartesianVector &referenceVector,
-	 		float thetaPower, float distancePower, float &kappaParameter);
+	 static pandora::StatusCode GetKappaParameter(float distance, float angle, float distancePower, float anglePower, float &kappaParameter);
 
 	 /**
 	  *
@@ -144,7 +117,8 @@ class ArborHelper
 	 /**
 	  *
 	  */
-	 static pandora::StatusCode GetConnectedObjects(Object *pSeedObject, ObjectList &connectedObjectList);
+	 static pandora::StatusCode GetMeanDirection(const Object *pObject, ConnectorDirection connectorDirection, pandora::CartesianVector &direction,
+	 		unsigned int connectorDepth = 1, unsigned int pseudoLayerDepth = std::numeric_limits<unsigned int>::max());
 
  private:
 
@@ -154,6 +128,12 @@ class ArborHelper
 	 static pandora::StatusCode RecursiveReferenceDirection(const Object *pObject,
 	 		float forwardConnectorWeight, unsigned int &currentDepth, unsigned int maxForwardLayer,
 	 		pandora::CartesianVector &meanBackwardDirection);
+
+	 /**
+	  *
+	  */
+	 static pandora::StatusCode RecursiveDirection(const Object *pObject, ConnectorDirection connectorDirection, pandora::CartesianVector &direction,
+	 		unsigned int currentDepth, unsigned int maxPseudoLayer);
 
 };
 
