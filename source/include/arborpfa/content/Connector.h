@@ -121,12 +121,25 @@ class Connector
 		 */
 		virtual ConnectorType GetType() const;
 
+		/**
+		 * @brief Set the normalized distance (0 < d < 1).
+		 * Should be normalized to maximum connection distance in algorithm
+		 */
+		virtual pandora::StatusCode SetNormalizedDistance(float distance);
+
+		/**
+		 * @brief Return the normalized distance (0 < d < 1).
+		 * Should be normalized to maximum connection distance in algorithm
+		 */
+		virtual float GetNormalizedDistance() const;
+
  protected:
 
 		// members
-		ObjectPair              m_objectPair;     ///< The objects that are connected
-		float                  m_weight;          ///< The connection weight
-		ConnectorType           m_type;            ///< The connector type
+		ObjectPair              m_objectPair;          ///< The objects that are connected
+		ConnectorType           m_type;                 ///< The connector type
+		float                  m_weight;               ///< The connection weight
+		float                  m_normalizedDistance; ///< The normalized connection distance
 
 		friend class Object;
 		friend class ObjectMetaData;

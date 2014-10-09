@@ -34,7 +34,8 @@
 namespace arbor
 {
 
-Connector::Connector(Object *pObject1, Object *pObject2, const float weight)
+Connector::Connector(Object *pObject1, Object *pObject2, const float weight) :
+		m_normalizedDistance(0.f)
 {
 	if(NULL == pObject1 || NULL == pObject2)
 	{
@@ -50,9 +51,10 @@ Connector::Connector(Object *pObject1, Object *pObject2, const float weight)
 
 Connector::Connector(const Connector *pConnector)
 {
-	m_objectPair.first  = pConnector->m_objectPair.first;
-	m_objectPair.second = pConnector->m_objectPair.second;
-	m_weight            = pConnector->m_weight;
+	m_objectPair.first   = pConnector->m_objectPair.first;
+	m_objectPair.second  = pConnector->m_objectPair.second;
+	m_weight             = pConnector->m_weight;
+	m_normalizedDistance = pConnector->m_normalizedDistance;
 }
 
 //--------------------------------------------------------------------------------------------------------------------
@@ -61,7 +63,8 @@ Connector::~Connector()
 {
 	m_objectPair.first  = NULL;
 	m_objectPair.second = NULL;
-	m_weight = 0.0;
+	m_weight = 0.f;
+	m_normalizedDistance = 0.f;
 }
 
 //--------------------------------------------------------------------------------------------------------------------
@@ -129,6 +132,26 @@ pandora::StatusCode Connector::SetType(ConnectorType type)
 	return pandora::STATUS_CODE_SUCCESS;
 }
 
+//--------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode Connector::SetNormalizedDistance(float distance)
+{
+	if(distance < 0.f || distance > 1.f)
+		return pandora::STATUS_CODE_INVALID_PARAMETER;
+
+	m_normalizedDistance = distance;
+
+	return pandora::STATUS_CODE_SUCCESS;
+}
+
+//--------------------------------------------------------------------------------------------------------------------
+
+float Connector::GetNormalizedDistance() const
+{
+	return m_normalizedDistance;
+}
+
+//--------------------------------------------------------------------------------------------------------------------
 
 }
 
