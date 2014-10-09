@@ -38,7 +38,10 @@
 
 namespace arbor
 {
+
 class Arbor;
+class IEnergyFunction;
+
 /** 
  * @brief ArborPlugin class
  */ 
@@ -144,6 +147,50 @@ class ArborPluginManager
 	 */
 	pandora::StatusCode GetCurrentEnergyResolutionFunctionName(std::string &energyResolutionFunctionName);
 
+	/**
+	 *  @brief  Register an energy function
+	 *
+	 *  @param  energyFunctionName the energy function name
+	 *  @param  pEnergyFunction the energy function address to register
+	 */
+	pandora::StatusCode RegisterEnergyFunction(const std::string &energyFunctionName, IEnergyFunction *pEnergyFunction);
+
+	/**
+	 *  @brief  Set the current energy function
+	 *
+	 *  @param  energyFunctionName the energy function name
+	 */
+	pandora::StatusCode SetCurrentEnergyFunction(const std::string &energyFunctionName);
+
+	/**
+	 *  @brief  Get the current energy function name
+	 *
+	 *  @param  energyFunctionName the energy function name to receive
+	 */
+	pandora::StatusCode GetCurrentEnergyFunctionName(std::string &energyFunctionName) const;
+
+	/**
+	 *  @brief  Compute and return the energy of the calo hit list using an energy function
+	 *
+	 *  @param  energyFunctionName the energy function name
+	 *  @param  pCaloHitList the calo hit list address
+	 *  @param  energy the energy to receive
+	 */
+	pandora::StatusCode GetEnergy(const std::string &energyFunctionName,
+			const pandora::CaloHitList *const pCaloHitList, float &energy) const;
+
+	/**
+	 *  @brief  Compute and return the energy resolution at an energy point using an energy function
+	 *
+	 *  @param  energyFunctionName the energy function name
+	 *  @param  energy the energy point
+	 *  @param  energy the energy resolution to receive
+	 */
+	pandora::StatusCode GetEnergyResolution(const std::string &energyFunctionName,
+			float energy, float &energyResolution);
+
+
+
 
 	/**
 	 * @brief Read the settings for all of the plugins
@@ -153,7 +200,7 @@ class ArborPluginManager
 	/**
 	 * @brief Read the settings for all of the plugins
 	 */
-	pandora::StatusCode _ReadSettings(const pandora::TiXmlHandle xmlHandle);
+	pandora::StatusCode _ReadSettings(const pandora::TiXmlHandle &xmlHandle);
 
 	/**
 	 *
@@ -166,6 +213,13 @@ class ArborPluginManager
 	pandora::StatusCode ReadBranchBuilderSettings(const pandora::TiXmlHandle &xmlHandle);
 
 	/**
+	 *  @brief  Read energy function settings from the xml handle
+	 *
+	 *  @param  xmlHandle the xml handle
+	 */
+	pandora::StatusCode ReadEnergyFunctionSettings(const pandora::TiXmlHandle &xmlHandle);
+
+	/**
 	 *
 	 */
 	pandora::StatusCode ReadEnergyEstimatorSettings(const pandora::TiXmlHandle &xmlHandle);
@@ -176,6 +230,8 @@ class ArborPluginManager
 	pandora::StatusCode ReadEnergyResolutionSettings(const pandora::TiXmlHandle &xmlHandle);
 
 
+	typedef std::map<const std::string, IEnergyFunction *> EnergyFunctionMap;
+
 	// tree builder members
 	std::string             m_currentTreeBuilderName;
 	ITreeBuilder           *m_pCurrentTreeBuilder;
@@ -185,6 +241,13 @@ class ArborPluginManager
 	std::string             m_currentBranchBuilderName;
 	IBranchBuilder         *m_pCurrentBranchBuilder;
 	BranchBuilderMap        m_branchBuilderMap;
+
+
+	// energy function members
+	std::string             m_currentEnergyFunctionName;
+	IEnergyFunction        *m_pCurrentEnergyFunction;
+	EnergyFunctionMap       m_energyFunctionMap;
+
 
  // energy estimator members
 	std::string             m_currentEnergyEstimatorName;

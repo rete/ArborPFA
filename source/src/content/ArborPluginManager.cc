@@ -34,6 +34,7 @@
 #include "arborpfa/content/IBranchBuilder.h"
 #include "arborpfa/content/IEnergyEstimator.h"
 #include "arborpfa/content/IEnergyResolutionFunction.h"
+#include "arborpfa/content/IEnergyFunction.h"
 
 #include "arborpfa/content/SimpleTreeBuilder.h"
 #include "arborpfa/content/SimpleBranchBuilder.h"
@@ -68,6 +69,13 @@ ArborPluginManager::~ArborPluginManager()
 	{
 		delete iter->second;
 	}
+
+		for(EnergyFunctionMap::iterator iter = m_energyFunctionMap.begin() , endIter = m_energyFunctionMap.end() ; endIter != iter ; ++iter)
+		{
+			delete iter->second;
+		}
+
+		m_energyFunctionMap.clear();
 
 	m_treeBuilderMap.clear();
 	m_branchBuilderMap.clear();
@@ -316,6 +324,93 @@ pandora::StatusCode ArborPluginManager::GetCurrentEnergyResolutionFunctionName(s
 
 //-------------------------------------------------------------------------------------------------------------
 
+pandora::StatusCode ArborPluginManager::RegisterEnergyFunction(const std::string &energyFunctionName, IEnergyFunction *pEnergyFunction)
+{
+	if(NULL == pEnergyFunction)
+		return STATUS_CODE_INVALID_PARAMETER;
+
+	EnergyFunctionMap::iterator findIter = m_energyFunctionMap.find(energyFunctionName);
+
+	if(m_energyFunctionMap.end() != findIter)
+		return STATUS_CODE_ALREADY_PRESENT;
+
+	m_energyFunctionMap[energyFunctionName] = pEnergyFunction;
+
+	return STATUS_CODE_SUCCESS;
+}
+
+//-------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborPluginManager::SetCurrentEnergyFunction(const std::string &energyFunctionName)
+{
+	EnergyFunctionMap::iterator findIter = m_energyFunctionMap.find(energyFunctionName);
+
+	if(m_energyFunctionMap.end() == findIter)
+		return STATUS_CODE_NOT_FOUND;
+
+	m_currentEnergyFunctionName = findIter->first;
+	m_pCurrentEnergyFunction = findIter->second;
+
+	return STATUS_CODE_SUCCESS;
+}
+
+//-------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborPluginManager::GetCurrentEnergyFunctionName(std::string &energyFunctionName) const
+{
+	energyFunctionName = m_currentEnergyFunctionName;
+
+	return STATUS_CODE_SUCCESS;
+}
+
+//-------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborPluginManager::GetEnergy(const std::string &energyFunctionName,
+		const pandora::CaloHitList *const pCaloHitList, float &energy) const
+{
+	if(energyFunctionName == m_currentEnergyFunctionName)
+	{
+		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pCurrentEnergyFunction->GetEnergy(pCaloHitList, energy));
+		return STATUS_CODE_SUCCESS;
+	}
+	else
+	{
+		EnergyFunctionMap::const_iterator findIter = m_energyFunctionMap.find(energyFunctionName);
+
+		if(m_energyFunctionMap.end() == findIter)
+			return STATUS_CODE_NOT_FOUND;
+
+		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, findIter->second->GetEnergy(pCaloHitList, energy));
+
+		return STATUS_CODE_SUCCESS;
+	}
+}
+
+//-------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborPluginManager::GetEnergyResolution(const std::string &energyFunctionName,
+		float energy, float &energyResolution)
+{
+	if(energyFunctionName == m_currentEnergyFunctionName)
+	{
+		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pCurrentEnergyFunction->GetEnergyResolution(energy, energyResolution));
+		return STATUS_CODE_SUCCESS;
+	}
+	else
+	{
+		EnergyFunctionMap::iterator findIter = m_energyFunctionMap.find(energyFunctionName);
+
+		if(m_energyFunctionMap.end() == findIter)
+			return STATUS_CODE_NOT_FOUND;
+
+		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, findIter->second->GetEnergyResolution(energy, energyResolution));
+
+		return STATUS_CODE_SUCCESS;
+	}
+}
+
+//-------------------------------------------------------------------------------------------------------------
+
 pandora::StatusCode ArborPluginManager::ReadSettings(const pandora::TiXmlHandle xmlHandle)
 {
 	return m_pArbor->m_pArborPluginManager->_ReadSettings(xmlHandle);
@@ -323,7 +418,7 @@ pandora::StatusCode ArborPluginManager::ReadSettings(const pandora::TiXmlHandle 
 
 //-------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode ArborPluginManager::_ReadSettings(const TiXmlHandle xmlHandle)
+pandora::StatusCode ArborPluginManager::_ReadSettings(const TiXmlHandle &xmlHandle)
 {
 	TiXmlElement *pEnergyResolutionFunctionElement(xmlHandle.FirstChild("EnergyResolutionFunctions").Element());
 	TiXmlElement *pEnergyEstimatorElement(xmlHandle.FirstChild("EnergyEstimators").Element());
@@ -341,18 +436,20 @@ pandora::StatusCode ArborPluginManager::_ReadSettings(const TiXmlHandle xmlHandl
 		const TiXmlHandle energyEstimatorHandle(pEnergyEstimatorElement);
 		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->ReadEnergyEstimatorSettings(energyEstimatorHandle));
 	}
+//
+//	if(NULL != pTreeBuilderElement)
+//	{
+//		const TiXmlHandle treeBuilderHandle(pTreeBuilderElement);
+//		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->ReadTreeBuilderSettings(treeBuilderHandle));
+//	}
+//
+//	if(NULL != pBranchBuilderElement)
+//	{
+//		const TiXmlHandle branchBuilderHandle(pBranchBuilderElement);
+//		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->ReadBranchBuilderSettings(branchBuilderHandle));
+//	}
 
-	if(NULL != pTreeBuilderElement)
-	{
-		const TiXmlHandle treeBuilderHandle(pTreeBuilderElement);
-		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->ReadTreeBuilderSettings(treeBuilderHandle));
-	}
-
-	if(NULL != pBranchBuilderElement)
-	{
-		const TiXmlHandle branchBuilderHandle(pBranchBuilderElement);
-		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->ReadBranchBuilderSettings(branchBuilderHandle));
-	}
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->ReadEnergyFunctionSettings(xmlHandle));
 
 	return STATUS_CODE_SUCCESS;
 }
@@ -424,6 +521,28 @@ pandora::StatusCode ArborPluginManager::ReadBranchBuilderSettings(const TiXmlHan
 	}
 	return STATUS_CODE_SUCCESS;
 }
+
+//-------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborPluginManager::ReadEnergyFunctionSettings(const TiXmlHandle &xmlHandle)
+{
+ for (TiXmlElement *pXmlElement = xmlHandle.FirstChild("energyFunction").Element(); NULL != pXmlElement;
+     pXmlElement = pXmlElement->NextSiblingElement("energyFunction"))
+ {
+ 	const std::string energyFunctionName(pXmlElement->Attribute("name"));
+
+		EnergyFunctionMap::iterator findIter = m_energyFunctionMap.find(energyFunctionName);
+
+		if(m_energyFunctionMap.end() == findIter)
+			return STATUS_CODE_NOT_FOUND;
+
+		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, findIter->second->ReadSettings(pandora::TiXmlHandle(pXmlElement)));
+ }
+
+	return STATUS_CODE_SUCCESS;
+}
+
+//-------------------------------------------------------------------------------------------------------------
 
 } 
 
