@@ -34,7 +34,6 @@
 
 // parent algorithms
 #include "arborpfa/algorithm/ObjectCreationParentAlgorithm.h"
-//#include "arborpfa/algorithm/ArborParentAlgorithm.h"
 #include "arborpfa/algorithm/ConnectorParentAlgorithm.h"
 #include "arborpfa/algorithm/ConnectorClusteringParentAlgorithm.h"
 #include "arborpfa/algorithm/DummyClusteringAlgorithm.h"
@@ -50,10 +49,13 @@
 #include "arborpfa/algorithm/SmallNeutralFragmentMergingAlgorithm.h"
 #include "arborpfa/algorithm/ArborClusterConverterAlgorithm.h"
 #include "arborpfa/algorithm/ArborOutputAlgorithm.h"
+#include "arborpfa/algorithm/ArborMonitoringAlgorithm.h"
 
 // plugins
 #include "arborpfa/content/SDHCALEnergyResolutionFunction.h"
 #include "arborpfa/content/SDHCALQuadraticEnergyEstimator.h"
+#include "arborpfa/content/SdhcalEnergyFunction.h"
+#include "arborpfa/content/EcalSdhcalEnergyFunction.h"
 #include "arborpfa/content/SimpleTreeBuilder.h"
 #include "arborpfa/content/SimpleBranchBuilder.h"
 
@@ -132,6 +134,8 @@ pandora::StatusCode ArborApiImpl::RegisterArborAlgorithms(Arbor &arbor) const
 			  new arbor::ArborClusterConverterAlgorithm::Factory));
 	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "ArborOutput",
 				  new arbor::ArborOutputAlgorithm::Factory));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "ArborMonitoring",
+				  new arbor::ArborMonitoringAlgorithm::Factory));
 
 	return pandora::STATUS_CODE_SUCCESS;
 }
@@ -155,6 +159,12 @@ pandora::StatusCode ArborApiImpl::RegisterArborPlugins(Arbor &arbor) const
  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->RegisterTreeBuilder(arbor, "SimpleTreeBuilder",
  		  new SimpleTreeBuilder()));
 
+ PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->RegisterEnergyFunction(arbor, "SdhcalEnergyFunction",
+     new SdhcalEnergyFunction()));
+
+ PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->RegisterEnergyFunction(arbor, "EcalSdhcalEnergyFunction",
+     new EcalSdhcalEnergyFunction()));
+
 	PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, arbor.m_pArborPluginManager->SetCurrentTreeBuilder("SimpleTreeBuilder"));
 	PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, arbor.m_pArborPluginManager->SetCurrentBranchBuilder("SimpleBranchBuilder"));
 	PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, arbor.m_pArborPluginManager->SetCurrentEnergyResolutionFunction("SDHCALEnergyResolution"));
@@ -175,6 +185,13 @@ pandora::StatusCode ArborApiImpl::RegisterEnergyResolutionFunction(Arbor &pArbor
 pandora::StatusCode ArborApiImpl::RegisterEnergyEstimator(Arbor &pArbor, const std::string &energyEstimatorName, IEnergyEstimator *pEnergyEstimator) const
 {
 	return pArbor.m_pArborPluginManager->RegisterEnergyEstimator(energyEstimatorName, pEnergyEstimator);
+}
+
+//---------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborApiImpl::RegisterEnergyFunction(Arbor &pArbor, const std::string &energyFunctionName, IEnergyFunction *pEnergyFunction) const
+{
+	return pArbor.m_pArborPluginManager->RegisterEnergyFunction(energyFunctionName, pEnergyFunction);
 }
 
 //---------------------------------------------------------------------------------------------------------------

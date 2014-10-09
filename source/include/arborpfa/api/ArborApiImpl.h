@@ -43,6 +43,7 @@ namespace arbor
 
 class Arbor;
 class ArborAlgorithmFactory;
+class IEnergyFunction;
 
 /** 
  * @brief ArborApiImpl class
@@ -80,6 +81,11 @@ class ArborApiImpl
 		 *
 		 */
 		pandora::StatusCode RegisterEnergyEstimator(Arbor &pArbor, const std::string &energyEstimatorName, IEnergyEstimator *pEnergyEstimator) const;
+
+		/**
+		 *
+		 */
+		pandora::StatusCode RegisterEnergyFunction(Arbor &pArbor, const std::string &energyFunctionName, IEnergyFunction *pEnergyFunction) const;
 
 		/**
 		 *
