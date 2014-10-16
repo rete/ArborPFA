@@ -72,30 +72,14 @@ class ArborApiImpl
 			*/
 		pandora::StatusCode RegisterAlgorithmFactory(Arbor &pArbor, const std::string &factoryName, ArborAlgorithmFactory *pFactory) const;
 
-	 /**
-	  *
-	  */
-	 pandora::StatusCode RegisterEnergyResolutionFunction(Arbor &pArbor, const std::string &energyResolutionFunctionName, IEnergyResolutionFunction *pEnergyResolutionFunction) const;
-
 		/**
+		 *  @brief  Register an energy function
 		 *
+		 *  @param  arbor the Arbor instance
+		 *  @param  energyFunctionName the energy function name
+		 *  @param  pEnergyFunction the energy function ptr to register
 		 */
-		pandora::StatusCode RegisterEnergyEstimator(Arbor &pArbor, const std::string &energyEstimatorName, IEnergyEstimator *pEnergyEstimator) const;
-
-		/**
-		 *
-		 */
-		pandora::StatusCode RegisterEnergyFunction(Arbor &pArbor, const std::string &energyFunctionName, IEnergyFunction *pEnergyFunction) const;
-
-		/**
-		 *
-		 */
-		pandora::StatusCode RegisterTreeBuilder(Arbor &pArbor, const std::string &treeBuilderName, ITreeBuilder *pTreeBuilder) const;
-
-		/**
-		 *
-		 */
-		pandora::StatusCode RegisterBranchBuilder(Arbor &pArbor, const std::string &branchBuilderName, IBranchBuilder *pBranchBuilder) const;
+		pandora::StatusCode RegisterEnergyFunction(Arbor &arbor, const std::string &energyFunctionName, IEnergyFunction *pEnergyFunction) const;
 
 	 /**
 	  *

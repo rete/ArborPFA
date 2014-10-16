@@ -76,31 +76,12 @@ pandora::StatusCode ArborApi::RegisterArborPlugins(Arbor &arbor)
 
 //---------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode ArborApi::RegisterEnergyResolutionFunction(Arbor &arbor, const std::string &energyResolutionFunctionName, IEnergyResolutionFunction *pEnergyResolutionFunction)
+pandora::StatusCode ArborApi::RegisterEnergyFunction(Arbor &arbor, const std::string &energyFunctionName, IEnergyFunction *pEnergyFunction)
 {
-	return arbor.GetArborApiImpl()->RegisterEnergyResolutionFunction(arbor, energyResolutionFunctionName, pEnergyResolutionFunction);
+	return arbor.GetArborApiImpl()->RegisterEnergyFunction(arbor, energyFunctionName, pEnergyFunction);
 }
 
 //---------------------------------------------------------------------------------------------------------------
-
-pandora::StatusCode ArborApi::RegisterEnergyEstimator(Arbor &arbor, const std::string &energyEstimatorName, IEnergyEstimator *pEnergyEstimator)
-{
-	return arbor.GetArborApiImpl()->RegisterEnergyEstimator(arbor, energyEstimatorName, pEnergyEstimator);
-}
-
-//---------------------------------------------------------------------------------------------------------------
-
-pandora::StatusCode ArborApi::RegisterTreeBuilder(Arbor &arbor, const std::string &treeBuilderName, ITreeBuilder *pTreeBuilder)
-{
-	return arbor.GetArborApiImpl()->RegisterTreeBuilder(arbor, treeBuilderName, pTreeBuilder);
-}
-
-//---------------------------------------------------------------------------------------------------------------
-
-pandora::StatusCode ArborApi::RegisterBranchBuilder(Arbor &arbor, const std::string &branchBuilderName, IBranchBuilder *pBranchBuilder)
-{
-	return arbor.GetArborApiImpl()->RegisterBranchBuilder(arbor, branchBuilderName, pBranchBuilder);
-}
 
 } 
 
