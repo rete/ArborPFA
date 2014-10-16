@@ -32,8 +32,6 @@
 #include "arborpfa/content/ObjectManager.h"
 #include "arborpfa/content/ClusterManager.h"
 #include "arborpfa/content/ArborPluginManager.h"
-#include "arborpfa/content/IEnergyEstimator.h"
-#include "arborpfa/content/IEnergyResolutionFunction.h"
 
 // pandora
 #include "Api/PandoraContentApi.h"
@@ -46,17 +44,13 @@ namespace arbor
 ArborContentApiImpl::ArborContentApiImpl(Arbor *pArbor) :
 		m_pArbor(pArbor)
 {
-	m_reclusteringInitialized = false;
-	m_runningReclusterAlgorithm = false;
+	/* nop */
 }
 
 //-----------------------------------------------------------------------------------------------------------------------
 
 pandora::StatusCode ArborContentApiImpl::CreateObject(Object *&pObject, CaloHit *pInputCaloHit) const
 {
-	if(m_reclusteringInitialized)
-		return pandora::STATUS_CODE_NOT_ALLOWED;
-
 	return m_pArbor->m_pObjectManager->CreateObject(pObject, pInputCaloHit);
 }
 
@@ -64,9 +58,7 @@ pandora::StatusCode ArborContentApiImpl::CreateObject(Object *&pObject, CaloHit 
 
 pandora::StatusCode ArborContentApiImpl::CreateCluster(arbor::Cluster *&pCluster, Object *pSeedObject) const
 {
-	ITreeBuilder *pTreeBuilder = NULL;
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborPluginManager->GetCurrentTreeBuilder(pTreeBuilder));
-	return m_pArbor->m_pClusterManager->CreateCluster(pCluster, pSeedObject, pTreeBuilder);
+	return m_pArbor->m_pClusterManager->CreateCluster(pCluster, pSeedObject);
 }
 
 //-----------------------------------------------------------------------------------------------------------------------
@@ -78,15 +70,8 @@ pandora::StatusCode ArborContentApiImpl::CreateBranch(Branch *&pBranch, Tree *pT
 
 //-----------------------------------------------------------------------------------------------------------------------
 
-
-/**
- * Object related methods
- */
 pandora::StatusCode ArborContentApiImpl::GetCurrentObjectList(const ObjectList *&pObjectList, std::string &listName) const
 {
-	if(m_reclusteringInitialized)
-		return m_pArbor->m_pObjectManager->GetReclusteringObjectList(pObjectList, listName);
-
 	return m_pArbor->m_pObjectManager->GetCurrentList(pObjectList, listName);
 }
 
@@ -94,12 +79,6 @@ pandora::StatusCode ArborContentApiImpl::GetCurrentObjectList(const ObjectList *
 
 pandora::StatusCode ArborContentApiImpl::GetCurrentObjectListName(std::string &listName) const
 {
-	if(m_reclusteringInitialized)
-	{
-		listName = ObjectManager::m_reclusteringListName;
-		return STATUS_CODE_SUCCESS;
-	}
-
 	return m_pArbor->m_pObjectManager->GetCurrentListName(listName);
 }
 
@@ -107,9 +86,6 @@ pandora::StatusCode ArborContentApiImpl::GetCurrentObjectListName(std::string &l
 
 pandora::StatusCode ArborContentApiImpl::GetObjectList(const std::string &listName, const ObjectList *&pObjectList) const
 {
-	if(m_reclusteringInitialized)
-		return pandora::STATUS_CODE_NOT_ALLOWED;
-
 	return m_pArbor->m_pObjectManager->GetList(listName, pObjectList);
 }
 
@@ -117,9 +93,6 @@ pandora::StatusCode ArborContentApiImpl::GetObjectList(const std::string &listNa
 
 pandora::StatusCode ArborContentApiImpl::CreateTemporaryObjectListAndSetCurrent(const ArborAlgorithm &algorithm, const ObjectList *&pObjectList, std::string &temporaryListName) const
 {
-	if(m_reclusteringInitialized)
-		return pandora::STATUS_CODE_NOT_ALLOWED;
-
  PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pObjectManager->CreateTemporaryListAndSetCurrent(&algorithm, temporaryListName));
  PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pObjectManager->GetCurrentList(pObjectList, temporaryListName));
 
@@ -130,9 +103,6 @@ pandora::StatusCode ArborContentApiImpl::CreateTemporaryObjectListAndSetCurrent(
 
 pandora::StatusCode ArborContentApiImpl::SaveObjectList(const std::string &newListName) const
 {
-	if(m_reclusteringInitialized)
-		return pandora::STATUS_CODE_NOT_ALLOWED;
-
  std::string currentObjectListName;
  PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pObjectManager->GetCurrentListName(currentObjectListName));
  PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pObjectManager->SaveObjects(newListName, currentObjectListName));
@@ -147,9 +117,6 @@ pandora::StatusCode ArborContentApiImpl::SaveObjectList(const std::string &newLi
 
 pandora::StatusCode ArborContentApiImpl::SaveObjectList(const std::string &newObjectListName, const ObjectList &objectsToSave) const
 {
-	if(m_reclusteringInitialized)
-		return pandora::STATUS_CODE_NOT_ALLOWED;
-
  std::string currentObjectListName;
  PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pObjectManager->GetCurrentListName(currentObjectListName));
  PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pObjectManager->SaveObjects(newObjectListName, currentObjectListName, objectsToSave));
@@ -161,9 +128,6 @@ pandora::StatusCode ArborContentApiImpl::SaveObjectList(const std::string &newOb
 
 pandora::StatusCode ArborContentApiImpl::SaveObjectList(const std::string &oldObjectListName, const std::string &newObjectListName) const
 {
-	if(m_reclusteringInitialized)
-		return pandora::STATUS_CODE_NOT_ALLOWED;
-
 	return m_pArbor->m_pObjectManager->SaveObjects(newObjectListName, oldObjectListName);
 }
 
@@ -171,9 +135,6 @@ pandora::StatusCode ArborContentApiImpl::SaveObjectList(const std::string &oldOb
 
 pandora::StatusCode ArborContentApiImpl::SaveObjectList(const std::string &oldObjectListName, const std::string &newObjectListName, const ObjectList &objectsToSave) const
 {
-	if(m_reclusteringInitialized)
-		return pandora::STATUS_CODE_NOT_ALLOWED;
-
 	return m_pArbor->m_pObjectManager->SaveObjects(newObjectListName, oldObjectListName, objectsToSave);
 }
 
@@ -181,9 +142,6 @@ pandora::StatusCode ArborContentApiImpl::SaveObjectList(const std::string &oldOb
 
 pandora::StatusCode ArborContentApiImpl::ReplaceCurrentObjectList(const ArborAlgorithm &algorithm, const std::string &newListName) const
 {
-	if(m_reclusteringInitialized)
-		return pandora::STATUS_CODE_NOT_ALLOWED;
-
 	return m_pArbor->m_pObjectManager->ReplaceCurrentAndAlgorithmInputLists(&algorithm, newListName);
 }
 
@@ -191,9 +149,6 @@ pandora::StatusCode ArborContentApiImpl::ReplaceCurrentObjectList(const ArborAlg
 
 pandora::StatusCode ArborContentApiImpl::TemporarilyReplaceCurrentObjectList(const std::string &newObjectListName) const
 {
-	if(m_reclusteringInitialized)
-		return pandora::STATUS_CODE_NOT_ALLOWED;
-
  return m_pArbor->m_pObjectManager->TemporarilyReplaceCurrentList(newObjectListName);
 }
 
@@ -201,17 +156,10 @@ pandora::StatusCode ArborContentApiImpl::TemporarilyReplaceCurrentObjectList(con
 
 pandora::StatusCode ArborContentApiImpl::DropCurrentObjectList() const
 {
-	if(m_reclusteringInitialized)
-		return pandora::STATUS_CODE_NOT_ALLOWED;
-
 	return m_pArbor->m_pObjectManager->DropCurrentList();
 }
 
 //-----------------------------------------------------------------------------------------------------------------------
-
-/**
- * Cluster related methods
- */
 
 pandora::StatusCode ArborContentApiImpl::GetCurrentClusterList(const ClusterList *&pClusterList, std::string &listName) const
 {
@@ -325,6 +273,21 @@ pandora::StatusCode ArborContentApiImpl::MoveTree(arbor::Cluster *pOldCluster, a
 
 //-----------------------------------------------------------------------------------------------------------------------
 
+pandora::StatusCode ArborContentApiImpl::AddPreviousObjectToBranch(arbor::Branch *pBranch, arbor::Object *pObject) const
+{
+	return m_pArbor->m_pClusterManager->AddPreviousObjectToBranch(pBranch, pObject);
+}
+
+//-----------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborContentApiImpl::AddNextObjectToBranch(arbor::Branch *pBranch, arbor::Object *pObject) const
+{
+	return m_pArbor->m_pClusterManager->AddNextObjectToBranch(pBranch, pObject);
+}
+
+
+//-----------------------------------------------------------------------------------------------------------------------
+
 pandora::StatusCode ArborContentApiImpl::RunObjectCreationAlgorithm(const ArborAlgorithm &arborAlgorithm, const std::string &arborObjectAlgorithmName,
 		const ObjectList *&pObjectList, std::string &newObjectListName) const
 {
@@ -349,166 +312,80 @@ pandora::StatusCode ArborContentApiImpl::RunClusterCreationAlgorithm(const Arbor
 
 //-----------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode ArborContentApiImpl::GetCurrentEnergyEstimatorName(std::string &energyEstimatorName) const
+pandora::StatusCode ArborContentApiImpl::GetCurrentEnergyFunctionName(std::string &energyFunctionName) const
 {
-	return m_pArbor->m_pArborPluginManager->GetCurrentEnergyEstimatorName(energyEstimatorName);
+	return m_pArbor->m_pArborPluginManager->GetCurrentEnergyFunctionName(energyFunctionName);
 }
 
 //-----------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode ArborContentApiImpl::SetCurrentEnergyEstimator(const std::string &energyEstimatorName) const
+pandora::StatusCode ArborContentApiImpl::SetCurrentEnergyFunction(const std::string &energyFunctionName) const
 {
-	return m_pArbor->m_pArborPluginManager->SetCurrentEnergyEstimator(energyEstimatorName);
+	return m_pArbor->m_pArborPluginManager->SetCurrentEnergyFunction(energyFunctionName);
 }
 
 //-----------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode ArborContentApiImpl::EstimateEnergy(const arbor::Cluster *pCluster,
-		const std::string energyEstimatorName, float &energy) const
+pandora::StatusCode ArborContentApiImpl::GetEnergy(const arbor::Cluster *pCluster, float &energy) const
 {
-	const CaloHitList caloHitList(pCluster->GetCaloHitList());
+	CaloHitList clusterCaloHitList(pCluster->GetCaloHitList());
+	std::string currentEnergyFunctionName;
 
-	if(caloHitList.empty())
-		return pandora::STATUS_CODE_NOT_INITIALIZED;
-
-	std::string originalEnergyEstimatorName;
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborPluginManager->GetCurrentEnergyEstimatorName(originalEnergyEstimatorName));
-
-	if(energyEstimatorName != originalEnergyEstimatorName)
-	{
-		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborPluginManager->SetCurrentEnergyEstimator(energyEstimatorName));
-	}
-
-	IEnergyEstimator *pEnergyEstimator = NULL;
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborPluginManager->GetCurrentEnergyEstimator(pEnergyEstimator));
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, pEnergyEstimator->EstimateEnergy(&caloHitList, energy));
-
-	if(energyEstimatorName != originalEnergyEstimatorName)
-	{
-		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborPluginManager->SetCurrentEnergyEstimator(originalEnergyEstimatorName));
-	}
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborPluginManager->GetCurrentEnergyFunctionName(currentEnergyFunctionName));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborPluginManager->GetEnergy(currentEnergyFunctionName, &clusterCaloHitList, energy));
 
 	return pandora::STATUS_CODE_SUCCESS;
 }
 
 //-----------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode ArborContentApiImpl::EstimateEnergy(const arbor::Cluster *pCluster,
-	 float &energy) const
+pandora::StatusCode ArborContentApiImpl::GetEnergy(const std::string &energyFunctionName, const arbor::Cluster *pCluster, float &energy) const
 {
-	CaloHitList caloHitList(pCluster->GetCaloHitList());
-
-	if(caloHitList.empty())
-		return pandora::STATUS_CODE_NOT_INITIALIZED;
-
-	IEnergyEstimator *pEnergyEstimator = NULL;
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborPluginManager->GetCurrentEnergyEstimator(pEnergyEstimator));
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, pEnergyEstimator->EstimateEnergy(&caloHitList, energy));
+	CaloHitList clusterCaloHitList(pCluster->GetCaloHitList());
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborPluginManager->GetEnergy(energyFunctionName, &clusterCaloHitList, energy));
 
 	return pandora::STATUS_CODE_SUCCESS;
 }
 
 //-----------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode ArborContentApiImpl::EstimateEnergy(const pandora::CaloHitList *const pCaloHitList,
-		const std::string energyEstimatorName, float &energy) const
+pandora::StatusCode ArborContentApiImpl::GetEnergy(const pandora::CaloHitList *const pCaloHitList, float &energy) const
 {
-	if(pCaloHitList->empty())
-		return pandora::STATUS_CODE_NOT_INITIALIZED;
+	std::string currentEnergyFunctionName;
 
-	std::string originalEnergyEstimatorName;
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborPluginManager->GetCurrentEnergyEstimatorName(originalEnergyEstimatorName));
-
-	if(energyEstimatorName != originalEnergyEstimatorName)
-	{
-		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborPluginManager->SetCurrentEnergyEstimator(energyEstimatorName));
-	}
-
-	IEnergyEstimator *pEnergyEstimator = NULL;
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborPluginManager->GetCurrentEnergyEstimator(pEnergyEstimator));
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, pEnergyEstimator->EstimateEnergy(pCaloHitList, energy));
-
-	if(energyEstimatorName != originalEnergyEstimatorName)
-	{
-		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborPluginManager->SetCurrentEnergyEstimator(originalEnergyEstimatorName));
-	}
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborPluginManager->GetCurrentEnergyFunctionName(currentEnergyFunctionName));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborPluginManager->GetEnergy(currentEnergyFunctionName, pCaloHitList, energy));
 
 	return pandora::STATUS_CODE_SUCCESS;
 }
 
 //-----------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode ArborContentApiImpl::EstimateEnergy(const pandora::CaloHitList *const pCaloHitList,
-		float &energy) const
+pandora::StatusCode ArborContentApiImpl::GetEnergy(const std::string &energyFunctionName, const pandora::CaloHitList *const pCaloHitList, float &energy) const
 {
-	if(pCaloHitList->empty())
-		return pandora::STATUS_CODE_NOT_INITIALIZED;
-
-	IEnergyEstimator *pEnergyEstimator = NULL;
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborPluginManager->GetCurrentEnergyEstimator(pEnergyEstimator));
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, pEnergyEstimator->EstimateEnergy(pCaloHitList, energy));
-
-	return pandora::STATUS_CODE_SUCCESS;
-}
-
-//-----------------------------------------------------------------------------------------------------------------------
-
-pandora::StatusCode ArborContentApiImpl::GetCurrentEnergyResolutionFunctionName(std::string &energyResolutionFunctionName) const
-{
-	return m_pArbor->m_pArborPluginManager->GetCurrentEnergyResolutionFunctionName(energyResolutionFunctionName);
-}
-
-//-----------------------------------------------------------------------------------------------------------------------
-
-pandora::StatusCode ArborContentApiImpl::SetCurrentEnergyResolutionFunction(const std::string &energyResolutionFunctionName) const
-{
-	return m_pArbor->m_pArborPluginManager->SetCurrentEnergyResolutionFunction(energyResolutionFunctionName);
-}
-
-//-----------------------------------------------------------------------------------------------------------------------
-
-pandora::StatusCode ArborContentApiImpl::GetEnergyResolution(const std::string &energyResolutionFunctionName, float energy,		float &energyResolution) const
-{
-	if(0 > energy)
-		return pandora::STATUS_CODE_INVALID_PARAMETER;
-
-	std::string originalEnergyResolutionFunctionName;
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborPluginManager->GetCurrentEnergyResolutionFunctionName(originalEnergyResolutionFunctionName));
-
-	if(energyResolutionFunctionName != originalEnergyResolutionFunctionName)
-	{
-		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborPluginManager->SetCurrentEnergyResolutionFunction(energyResolutionFunctionName));
-	}
-
-	IEnergyResolutionFunction *pEnergyResolutionFunction = NULL;
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborPluginManager->GetCurrentEnergyResolutionFunction(pEnergyResolutionFunction));
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, pEnergyResolutionFunction->GetEnergyResolution(energy, energyResolution));
-
-	if(energyResolutionFunctionName != originalEnergyResolutionFunctionName)
-	{
-		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborPluginManager->SetCurrentEnergyResolutionFunction(originalEnergyResolutionFunctionName));
-	}
-
-	return pandora::STATUS_CODE_SUCCESS;
+	return m_pArbor->m_pArborPluginManager->GetEnergy(energyFunctionName, pCaloHitList, energy);
 }
 
 //-----------------------------------------------------------------------------------------------------------------------
 
 pandora::StatusCode ArborContentApiImpl::GetEnergyResolution(float energy,		float &energyResolution) const
 {
-	if(0 > energy)
-		return pandora::STATUS_CODE_INVALID_PARAMETER;
+	std::string currentEnergyFunctionName;
 
-	IEnergyResolutionFunction *pEnergyResolutionFunction = NULL;
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborPluginManager->GetCurrentEnergyResolutionFunction(pEnergyResolutionFunction));
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, pEnergyResolutionFunction->GetEnergyResolution(energy, energyResolution));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborPluginManager->GetCurrentEnergyFunctionName(currentEnergyFunctionName));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pArbor->m_pArborPluginManager->GetEnergyResolution(currentEnergyFunctionName, energy, energyResolution));
 
 	return pandora::STATUS_CODE_SUCCESS;
 }
 
 //-----------------------------------------------------------------------------------------------------------------------
 
+pandora::StatusCode ArborContentApiImpl::GetEnergyResolution(const std::string &energyFunctionName, float energy,		float &energyResolution) const
+{
+	return m_pArbor->m_pArborPluginManager->GetEnergyResolution(energyFunctionName, energy, energyResolution);
+}
 
+//-----------------------------------------------------------------------------------------------------------------------
 
 } 
 

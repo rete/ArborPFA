@@ -78,7 +78,7 @@ class ArborContentApi
 	 		/**
 	 		 *
 	 		 */
-	 	 static pandora::StatusCode Create(const IBranchBuilder &branchBuilder, arbor::Branch *&pBranch, arbor::Tree *pTree);
+	 	 static pandora::StatusCode Create(const ArborAlgorithm &algorithm, arbor::Branch *&pBranch, arbor::Tree *pTree);
 	 };
 
 	 /*
@@ -165,12 +165,22 @@ class ArborContentApi
    * Branch related method
    */
 
-  static pandora::StatusCode RemoveBranchFromTree(const IBranchBuilder &branchBuilder, arbor::Tree *pTree, arbor::Branch *pBranch);
+  static pandora::StatusCode RemoveBranchFromTree(const ArborAlgorithm &algorithm, arbor::Tree *pTree, arbor::Branch *pBranch);
 
   /**
    *
    */
   static pandora::StatusCode MoveTree(const ArborAlgorithm &arborAlgorithm, arbor::Cluster *pOldCluster, arbor::Cluster *pNewCluster, Tree *pTree);
+
+  /**
+   *
+   */
+  static pandora::StatusCode AddPreviousObjectToBranch(const ArborAlgorithm &arborAlgorithm, arbor::Branch *pBranch, arbor::Object *pObject);
+
+  /**
+   *
+   */
+  static pandora::StatusCode AddNextObjectToBranch(const ArborAlgorithm &arborAlgorithm, arbor::Branch *pBranch, arbor::Object *pObject);
 
   /**
    * Algorithm related methods
@@ -191,33 +201,81 @@ class ArborContentApi
   static pandora::StatusCode RunClusterCreationAlgorithm(const ArborAlgorithm &arborAlgorithm, const std::string &arborClusterAlgorithmName,
   		const ClusterList *&pClusterList, std::string &newClusterListName);
 
+
+   // Energy function related methods
+
   /**
-   * Plugin related methods
+   *  @brief  Get the current energy function name
+   *
+   *  @param  arborAlgorithm  the algorithm from which the function is called
+   *  @param  energyFunctionName  the current energy function name to get by reference
    */
+  static pandora::StatusCode GetCurrentEnergyFunctionName(const ArborAlgorithm &arborAlgorithm, std::string &energyFunctionName);
 
-  static pandora::StatusCode GetCurrentEnergyEstimatorName(const ArborAlgorithm &arborAlgorithm, std::string &energyEstimatorName);
+  /**
+   *  @brief  Set the current energy function by name
+   *
+   *  @param  arborAlgorithm  the algorithm from which the function is called
+   *  @param  energyFunctionName  the energy function name
+   */
+  static pandora::StatusCode SetCurrentEnergyFunction(const ArborAlgorithm &arborAlgorithm, const std::string &energyFunctionName);
 
-  static pandora::StatusCode SetCurrentEnergyEstimator(const ArborAlgorithm &arborAlgorithm, const std::string &energyEstimatorName);
+  /**
+   *  @brief  Get the cluster energy estimated from the current energy function
+   *
+   *  @param  arborAlgorithm  the algorithm from which the function is called
+   *  @param  pCluster  the address of the cluster from which we extract the energy
+   *  @param  energy  the estimated energy to get by reference
+   */
+  static pandora::StatusCode GetEnergy(const ArborAlgorithm &arborAlgorithm, const arbor::Cluster *pCluster, float &energy);
 
-  static pandora::StatusCode EstimateEnergy(const ArborAlgorithm &arborAlgorithm, const arbor::Cluster *pCluster,
-  		const std::string energyEstimatorName, float &energy);
+  /**
+   *  @brief  Get the cluster energy estimated from a given energy function
+   *
+   *  @param  arborAlgorithm  the algorithm from which the function is called
+   *  @param  energyFunctionName  the energy function name
+   *  @param  pCluster  the address of the cluster from which we extract the energy
+   *  @param  energy  the estimated energy to get by reference
+   */
+  static pandora::StatusCode GetEnergy(const ArborAlgorithm &arborAlgorithm, const std::string &energyFunctionName, const arbor::Cluster *pCluster, float &energy);
 
-  static pandora::StatusCode EstimateEnergy(const ArborAlgorithm &arborAlgorithm, const arbor::Cluster *pCluster,
-  	 float &energy);
+  /**
+   *  @brief  Get the cluster energy estimated from the current energy function
+   *
+   *  @param  arborAlgorithm  the algorithm from which the function is called
+   *  @param  pCaloHitList  the address of the calo hit list from which we extract the energy
+   *  @param  energy  the estimated energy to get by reference
+   */
+  static pandora::StatusCode GetEnergy(const ArborAlgorithm &arborAlgorithm, const pandora::CaloHitList *const pCaloHitList, float &energy);
 
-  static pandora::StatusCode EstimateEnergy(const ArborAlgorithm &arborAlgorithm, const pandora::CaloHitList *const pCaloHitList,
-  		const std::string energyEstimatorName, float &energy);
+  /**
+   *  @brief  Get the calo hit list energy estimated from a given energy function
+   *
+   *  @param  arborAlgorithm  the algorithm from which the function is called
+   *  @param  energyFunctionName  the energy function name
+   *  @param  pCaloHitList  the address of the calo hit list from which we extract the energy
+   *  @param  energy  the estimated energy to get by reference
+   */
+  static pandora::StatusCode GetEnergy(const ArborAlgorithm &arborAlgorithm, const std::string &energyFunctionName, const pandora::CaloHitList *const pCaloHitList, float &energy);
 
-  static pandora::StatusCode EstimateEnergy(const ArborAlgorithm &arborAlgorithm, const pandora::CaloHitList *const pCaloHitList,
-  		float &energy);
-
-  static pandora::StatusCode GetCurrentEnergyResolutionFunctionName(const ArborAlgorithm &arborAlgorithm, std::string &energyResolutionFunctionName);
-
-  static pandora::StatusCode SetCurrentEnergyResolutionFunction(const ArborAlgorithm &arborAlgorithm, const std::string &energyResolutionFunctionName);
-
+  /**
+   *  @brief  Get the energy resolution at a given energy from the current energy function
+   *
+   *  @param  arborAlgorithm  the algorithm from which the function is called
+   *  @param  energy  the energy reference point for the energy resolution
+   *  @param  energyResolution  the energy resolution to get by reference
+   */
   static pandora::StatusCode GetEnergyResolution(const ArborAlgorithm &arborAlgorithm, float energy,		float &energyResolution);
 
-  static pandora::StatusCode GetEnergyResolution(const ArborAlgorithm &arborAlgorithm, const std::string &energyResolutionFunctionName, float energy,		float &energyResolution);
+  /**
+   *  @brief  Get the energy resolution at a given energy from the given energy function
+   *
+   *  @param  arborAlgorithm  the algorithm from which the function is called
+   *  @param  energyFunctionName  the energy function name
+   *  @param  energy  the energy reference point for the energy resolution
+   *  @param  energyResolution  the energy resolution to get by reference
+   */
+  static pandora::StatusCode GetEnergyResolution(const ArborAlgorithm &arborAlgorithm, const std::string &energyFunctionName, float energy,		float &energyResolution);
 
 }; 
 
