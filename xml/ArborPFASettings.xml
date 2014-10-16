@@ -1,5 +1,5 @@
 <!-- 
-ArborPFA settings xml file for Arbor algorithms 
+Arbor Pandora settings xml file for Arbor algorithms 
  @author Remi Ete
 -->
 
@@ -15,39 +15,12 @@ ArborPFA settings xml file for Arbor algorithms
         <ShouldCalculateSurroundingEnergy>  false  </ShouldCalculateSurroundingEnergy>
     </CaloHitHelper>
 
-
     <ArborPlugin>
-    
-		   <EnergyResolutionFunctions>
-		     <SDHCALEnergyResolution>
-		       <EnergyFactor>        0.55    </EnergyFactor>
-		       <ConstantFactor>      0.081   </ConstantFactor>
-		       <EnergySquareFactor>  0.6     </EnergySquareFactor>
-		     </SDHCALEnergyResolution>
-		   </EnergyResolutionFunctions>
-		   
-		   <EnergyEstimators>
-		     <SDHCALQuadraticEnergyEstimator>
-		       <EnergyConstantParameters>
-		          0.0442674
-					    3.95986e-05
-					    -2.0133e-10
-					    0.0781586
-					    -5.9623e-05
-					    -3.06952e-08
-					    0.115295
-					    1.57508e-05
-					    2.28041e-09
-		       </EnergyConstantParameters>
-		       <ThresholdValues> 0.0406459 0.101952 0.258078 </ThresholdValues>
-		     </SDHCALQuadraticEnergyEstimator>
-		   </EnergyEstimators>
-		   
-	     <energyFunction name="EcalSdhcalEnergyFunction">
-	       <ResolutionEnergyFactor>        0.55    </ResolutionEnergyFactor>
+       <energyFunction name="SdhcalEnergyFunction">
+         <ResolutionEnergyFactor>        0.55    </ResolutionEnergyFactor>
          <ResolutionConstantFactor>      0.081   </ResolutionConstantFactor>
          <ResolutionEnergySquareFactor>  0.6     </ResolutionEnergySquareFactor>
-         <SdhcalEnergyConstantParameters>
+         <EnergyConstantParameters>
             0.0442674
             3.95986e-05
             -2.0133e-10
@@ -57,21 +30,14 @@ ArborPFA settings xml file for Arbor algorithms
             0.115295
             1.57508e-05
             2.28041e-09
-         </SdhcalEnergyConstantParameters>
-         <SdhcalEnergyThresholdValues> 
+         </EnergyConstantParameters>
+         <EnergyThresholdValues> 
            0.0406459 
            0.101952 
            0.258078 
-         </SdhcalEnergyThresholdValues>
-	     </energyFunction>
-		   
-		</ArborPlugin>
-		
-    <!-- ARBOR PANDORA ALGORITHM SETTINGS -->
-
-    <!-- Select tracks and hits to use for clustering -->
-    <algorithm type = "EventPreparation"/>
-    
+         </EnergyThresholdValues>
+       </energyFunction>
+    </ArborPlugin>
     
     <!-- Create objects to cluster before starting anything -->
     <algorithm type="ObjectCreationParent">
@@ -128,7 +94,7 @@ ArborPFA settings xml file for Arbor algorithms
           
           <!-- Seed connectors in order to align connectors -->
          <algorithm type="ConnectorSeeding">
-            <ConnectionStrategy> 3 </ConnectionStrategy>
+            <ConnectionStrategy> 2 </ConnectionStrategy>
             <MaxForwardPseudoLayer> 3 </MaxForwardPseudoLayer>
             <EcalConnectionDistance> 50.0 </EcalConnectionDistance>
             <HcalConnectionDistance> 65.0 </HcalConnectionDistance>
@@ -138,15 +104,15 @@ ArborPFA settings xml file for Arbor algorithms
           </algorithm>
          
           <!-- Clean again connector lists using the kappa parameter -->
-          <algorithm type="KappaConnectorCleaning">
-            <CleaningStrategy> 0 </CleaningStrategy>
-            <BackwardConnectorWeight> 0.001 </BackwardConnectorWeight>    
-            <ForwardConnectorWeight> 10 </ForwardConnectorWeight>
+         <algorithm type="KappaConnectorCleaning">
+            <CleaningStrategy> 1 </CleaningStrategy>
+            <BackwardConnectorWeight> 0.1 </BackwardConnectorWeight>    
+            <ForwardConnectorWeight> 5 </ForwardConnectorWeight>
             <OrderParameterAnglePower> 1 </OrderParameterAnglePower>
             <OrderParameterDistancePower> 5 </OrderParameterDistancePower>
-            <ReferenceDirectionDepth> 3 </ReferenceDirectionDepth>
+            <ReferenceDirectionDepth> 2 </ReferenceDirectionDepth>
             <ReferenceDirectionMaximumForwardLayer> 10 </ReferenceDirectionMaximumForwardLayer>
-          </algorithm> 
+          </algorithm>
           
         </connectorAlgorithms>
         
@@ -162,22 +128,22 @@ ArborPFA settings xml file for Arbor algorithms
           <!-- Create track to cluster associations -->
           <algorithm type = "TopologicalTrackAssociation">
             <ShouldMergeChargedTrees> true </ShouldMergeChargedTrees>
-            <TrackToClusterDistanceCut> 45.f </TrackToClusterDistanceCut>
+            <TrackToClusterDistanceCut> 65.f </TrackToClusterDistanceCut>
             <TrackToClusterNLayersCut> 2 </TrackToClusterNLayersCut>
           </algorithm>
           
-<!--           Merge neutral trees that have close-by seeds 
+          <!-- Merge neutral trees that have close-by seeds --> 
           <algorithm type = "NeutralTreeMerging">
             <UseClustersWithTrackAssociation> true </UseClustersWithTrackAssociation>
             <SeedSeparationDistance> 25.0 </SeedSeparationDistance>
           </algorithm>
           
-          Associate small neutral fragments to their closest cluster
+          <!-- Associate small neutral fragments to their closest cluster -->
           <algorithm type = "SmallNeutralFragmentMerging">
             <MaximumDaughterNObject> 20 </MaximumDaughterNObject>
-            <LargeDistanceCut> 300.f </LargeDistanceCut>
+            <LargeDistanceCut> 1000.f </LargeDistanceCut>
             <ShouldUseDistanceToCentroid> false </ShouldUseDistanceToCentroid>
-          </algorithm> -->
+          </algorithm>
           
         </associationAlgorithms>
       
@@ -229,7 +195,7 @@ ArborPFA settings xml file for Arbor algorithms
        <ShowCurrentTracks>          true     </ShowCurrentTracks> 
        <ShowCurrentClusters>        true    </ShowCurrentClusters> 
        <ShowCurrentPfos>            true     </ShowCurrentPfos>
-       <ShowConnectors>             false     </ShowConnectors>
+       <ShowConnectors>             true     </ShowConnectors>
        <HitColors>                  iterate  </HitColors>
        <ShowOnlyAvailable>          false    </ShowOnlyAvailable>
        

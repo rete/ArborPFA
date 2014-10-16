@@ -6,8 +6,8 @@ Arbor Pandora settings xml file for Arbor algorithms
 <pandora>
 
     <!-- HELPER CLASS SETTINGS -->
-    <IsMonitoringEnabled> false </IsMonitoringEnabled>
-    <ShouldDisplayAlgorithmInfo> false </ShouldDisplayAlgorithmInfo>
+    <IsMonitoringEnabled> true </IsMonitoringEnabled>
+    <ShouldDisplayAlgorithmInfo> true </ShouldDisplayAlgorithmInfo>
 
     <!-- CaloHit helper settings -->
     <CaloHitHelper>
@@ -17,37 +17,11 @@ Arbor Pandora settings xml file for Arbor algorithms
 
 
     <ArborPlugin>
-    
-		   <EnergyResolutionFunctions>
-		     <SDHCALEnergyResolution>
-		       <EnergyFactor>        0.55    </EnergyFactor>
-		       <ConstantFactor>      0.081   </ConstantFactor>
-		       <EnergySquareFactor>  0.6     </EnergySquareFactor>
-		     </SDHCALEnergyResolution>
-		   </EnergyResolutionFunctions>
-		   
-		   <EnergyEstimators>
-		     <SDHCALQuadraticEnergyEstimator>
-		       <EnergyConstantParameters>
-		          0.0442674
-					    3.95986e-05
-					    -2.0133e-10
-					    0.0781586
-					    -5.9623e-05
-					    -3.06952e-08
-					    0.115295
-					    1.57508e-05
-					    2.28041e-09
-		       </EnergyConstantParameters>
-		       <ThresholdValues> 0.0406459 0.101952 0.258078 </ThresholdValues>
-		     </SDHCALQuadraticEnergyEstimator>
-		   </EnergyEstimators>
-		   
-		   <energyFunction name="SdhcalEnergyFunction">
+  	   <energyFunction name="SdhcalEnergyFunction">
          <ResolutionEnergyFactor>        0.55    </ResolutionEnergyFactor>
          <ResolutionConstantFactor>      0.081   </ResolutionConstantFactor>
          <ResolutionEnergySquareFactor>  0.6     </ResolutionEnergySquareFactor>
-         <SdhcalEnergyConstantParameters>
+         <EnergyConstantParameters>
             0.0442674
             3.95986e-05
             -2.0133e-10
@@ -57,22 +31,15 @@ Arbor Pandora settings xml file for Arbor algorithms
             0.115295
             1.57508e-05
             2.28041e-09
-         </SdhcalEnergyConstantParameters>
-         <SdhcalEnergyThresholdValues> 
+         </EnergyConstantParameters>
+         <EnergyThresholdValues> 
            0.0406459 
            0.101952 
            0.258078 
-         </SdhcalEnergyThresholdValues>
+         </EnergyThresholdValues>
        </energyFunction>
-		   
 		</ArborPlugin>
 		
-    <!-- ARBOR PANDORA ALGORITHM SETTINGS -->
-
-    <!-- Select tracks and hits to use for clustering -->
-<!--     <algorithm type = "EventPreparation"/> -->
-    
-    
     <!-- Create objects to cluster before starting anything -->
     <algorithm type="ObjectCreationParent">
       <algorithm type="SimpleObjectCreation" description="ObjectFormation">
@@ -127,14 +94,14 @@ Arbor Pandora settings xml file for Arbor algorithms
           </algorithm>
           
           <!-- Seed connectors in order to align connectors -->
-          <algorithm type="ConnectorSeeding">
-            <ConnectionStrategy> 3 </ConnectionStrategy>
+         <algorithm type="ConnectorSeeding">
+            <ConnectionStrategy> 2 </ConnectionStrategy>
             <MaxForwardPseudoLayer> 3 </MaxForwardPseudoLayer>
             <EcalConnectionDistance> 50.0 </EcalConnectionDistance>
-            <HcalConnectionDistance> 85.0 </HcalConnectionDistance>
+            <HcalConnectionDistance> 65.0 </HcalConnectionDistance>
             <AllowForwardConnectionForIsolatedObjects> false </AllowForwardConnectionForIsolatedObjects>    
             <EcalConnectionAngle> 0.4 </EcalConnectionAngle>
-            <HcalConnectionAngle> 0.9 </HcalConnectionAngle>
+            <HcalConnectionAngle> 0.7 </HcalConnectionAngle>
           </algorithm>
          
           <!-- Clean again connector lists using the kappa parameter -->
@@ -146,7 +113,7 @@ Arbor Pandora settings xml file for Arbor algorithms
             <OrderParameterDistancePower> 5 </OrderParameterDistancePower>
             <ReferenceDirectionDepth> 2 </ReferenceDirectionDepth>
             <ReferenceDirectionMaximumForwardLayer> 10 </ReferenceDirectionMaximumForwardLayer>
-          </algorithm> 
+          </algorithm>
           
         </connectorAlgorithms>
         
@@ -162,7 +129,7 @@ Arbor Pandora settings xml file for Arbor algorithms
           <!-- Create track to cluster associations -->
           <algorithm type = "TopologicalTrackAssociation">
             <ShouldMergeChargedTrees> true </ShouldMergeChargedTrees>
-            <TrackToClusterDistanceCut> 65.f </TrackToClusterDistanceCut>
+            <TrackToClusterDistanceCut> 45.f </TrackToClusterDistanceCut>
             <TrackToClusterNLayersCut> 2 </TrackToClusterNLayersCut>
           </algorithm>
           
@@ -220,12 +187,12 @@ Arbor Pandora settings xml file for Arbor algorithms
     </algorithm>
    
    <!-- Output algorithm that saves some variable in a root file -->
-   <algorithm type = "ArborOutput">
-<!--       <RootFileName> SingleParticleReconstruction_50GeV_cut_ArborPFA_MC_alignement.root </RootFileName> -->
+<!--    <algorithm type = "ArborOutput">
+
       <RootFileName> OverlayEventReconstruction_10GeV_neutral_30GeV_charged_5cm_cut_ArborPFA_MC_alignement.root </RootFileName>
       <RootTreeName> ArborOutputTree </RootTreeName>
       <NCutOnChargedParticle> 1 </NCutOnChargedParticle>
-    </algorithm>
+    </algorithm> -->
     
     <!-- EVE Monitoring -->
     <algorithm type = "ArborMonitoring" description = "display all">
