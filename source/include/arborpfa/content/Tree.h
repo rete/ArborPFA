@@ -50,7 +50,7 @@ class Tree
  /**
   * @brief Ctor
   */
- Tree(Object *pSeedObject);//, ITreeBuilder *pTreeBuilder);
+ Tree(Object *pSeedObject);
 
  /**
   * @brief Dtor 
@@ -87,12 +87,7 @@ protected:
  /**
   *
   */
-// pandora::StatusCode BuildBranches(IBranchBuilder *pBranchBuilder);
-
- /**
-  *
-  */
- pandora::StatusCode BuildTree(ITreeBuilder *pTreeBuilder);
+ pandora::StatusCode BuildTree(Object *pSeedObject);
 
  /**
   *
@@ -108,6 +103,11 @@ protected:
   *
   */
  pandora::StatusCode RemoveBranch(Branch *pBranch);
+
+ /**
+  *
+  */
+ pandora::StatusCode RecursiveTreeBuilding(Object *pCurrentObject);
 
  Object       *m_pSeedObject;
  ObjectList    m_objectList;

@@ -29,9 +29,9 @@
 #include "arborpfa/content/Tree.h"
 
 // arborpfa
-#include "arborpfa/content/ITreeBuilder.h"
 #include "arborpfa/content/Branch.h"
 #include "arborpfa/content/Object.h"
+#include "arborpfa/content/Connector.h"
 
 // std
 #include <algorithm>
@@ -48,6 +48,7 @@ Tree::Tree(Object *pSeedObject) :
 		throw StatusCodeException(STATUS_CODE_INVALID_PARAMETER);
 
 	m_pSeedObject = pSeedObject;
+	PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->BuildTree(m_pSeedObject));
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -61,27 +62,17 @@ Tree::~Tree()
 
 //------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode Tree::BuildTree(ITreeBuilder *pTreeBuilder)
+pandora::StatusCode Tree::BuildTree(Object *pSeedObject)
 {
-	if(NULL == pTreeBuilder)
+	if(NULL == pSeedObject)
 		return STATUS_CODE_INVALID_PARAMETER;
 
+	m_pSeedObject = pSeedObject;
 	m_objectList.clear();
+	m_objectList.insert(pSeedObject);
 
-	return pTreeBuilder->Build(m_pSeedObject, m_objectList);
+	return this->RecursiveTreeBuilding(pSeedObject);
 }
-
-//------------------------------------------------------------------------------------------------------
-
-//pandora::StatusCode Tree::BuildBranches(IBranchBuilder *pBranchBuilder)
-//{
-//	if(NULL == pBranchBuilder)
-//		return STATUS_CODE_INVALID_PARAMETER;
-//
-//	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->ClearBranches());
-//
-//	return pBranchBuilder->Build(this, m_arborBranchList);
-//}
 
 //------------------------------------------------------------------------------------------------------
 
@@ -180,6 +171,39 @@ unsigned int Tree::GetNCaloHits() const
 
 	return nCaloHits;
 }
+
+//------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode Tree::RecursiveTreeBuilding(Object *pCurrentObject)
+{
+	if(NULL == pCurrentObject)
+		return pandora::STATUS_CODE_INVALID_PARAMETER;
+
+	const ConnectorList &forwardConnectors = pCurrentObject->GetForwardConnectorList();
+
+	if(forwardConnectors.empty())
+		return pandora::STATUS_CODE_SUCCESS;
+
+	for(ConnectorList::const_iterator iter = forwardConnectors.begin() , endIter = forwardConnectors.end() ; endIter != iter ; ++iter)
+	{
+		Connector *pConnector = *iter;
+		Object *pOtherObject = NULL;
+
+		if(pConnector->GetFirst() == pCurrentObject)
+			pOtherObject = pConnector->GetSecond();
+		else
+			pOtherObject = pConnector->GetFirst();
+
+		if(!m_objectList.insert(pOtherObject).second)
+			continue;
+
+		PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->RecursiveTreeBuilding(pOtherObject));
+	}
+
+	return pandora::STATUS_CODE_SUCCESS;
+}
+
+//------------------------------------------------------------------------------------------------------
 
 } 
 
