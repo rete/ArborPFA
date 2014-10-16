@@ -19,9 +19,6 @@
 // lcio
 #include "EVENT/CalorimeterHit.h"
 
-// arborpfa
-#include "arborpfa/content/IEnergyResolutionFunction.h"
-
 namespace pandora
 {
  class Pandora;
