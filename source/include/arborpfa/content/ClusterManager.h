@@ -73,7 +73,7 @@ protected:
  /**
   *
   */
- pandora::StatusCode CreateCluster(arbor::Cluster *&pCluster, Object *pSeedObject, ITreeBuilder *pTreeBuilder);
+ pandora::StatusCode CreateCluster(arbor::Cluster *&pCluster, Object *pSeedObject);
 
  /**
   *
@@ -94,6 +94,16 @@ protected:
   *
   */
  pandora::StatusCode MoveTree(arbor::Cluster *pOldCluster, arbor::Cluster *pNewCluster, Tree *pMovingTree) const;
+
+ /**
+  *
+  */
+ pandora::StatusCode AddPreviousObjectToBranch(arbor::Branch *pBranch, arbor::Object *pObject) const;
+
+ /**
+  *
+  */
+ pandora::StatusCode AddNextObjectToBranch(arbor::Branch *pBranch, arbor::Object *pObject) const;
 
  // friend class field
  friend class ArborImpl;

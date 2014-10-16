@@ -636,10 +636,11 @@ pandora::StatusCode	ClusterManager::ReplaceCurrentAndAlgorithmInputLists(const A
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode ClusterManager::CreateCluster(Cluster *&pCluster, Object *pSeedObject, ITreeBuilder *pTreeBuilder)
+pandora::StatusCode ClusterManager::CreateCluster(Cluster *&pCluster, Object *pSeedObject)
 {
 	pCluster = NULL;
 	Tree *pTree = NULL;
+
  try
  {
 		if (!m_canMakeNewObjects)
@@ -659,7 +660,6 @@ pandora::StatusCode ClusterManager::CreateCluster(Cluster *&pCluster, Object *pS
 			throw StatusCodeException(STATUS_CODE_FAILURE);
 
 		pTree = new Tree(pSeedObject);
-		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pTree->BuildTree(pTreeBuilder));
 		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pCluster->AddTree(pTree));
 
 		return STATUS_CODE_SUCCESS;
@@ -717,6 +717,22 @@ pandora::StatusCode ClusterManager::RemoveBranchFromTree(arbor::Tree* pTree, arb
 
 	return STATUS_CODE_SUCCESS;
 }
+
+//------------------------------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ClusterManager::AddPreviousObjectToBranch(arbor::Branch *pBranch, arbor::Object *pObject) const
+{
+	return pBranch->AddPrevious(pObject);
+}
+
+//------------------------------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ClusterManager::AddNextObjectToBranch(arbor::Branch *pBranch, arbor::Object *pObject) const
+{
+	return pBranch->AddNext(pObject);
+}
+
+//------------------------------------------------------------------------------------------------------------------------------------------
 
 } 
 
