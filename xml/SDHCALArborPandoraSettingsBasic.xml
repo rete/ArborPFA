@@ -7,7 +7,7 @@ Arbor Pandora settings xml file for Arbor algorithms
 
     <!-- HELPER CLASS SETTINGS -->
     <IsMonitoringEnabled> true </IsMonitoringEnabled>
-    <ShouldDisplayAlgorithmInfo> false </ShouldDisplayAlgorithmInfo>
+    <ShouldDisplayAlgorithmInfo> true </ShouldDisplayAlgorithmInfo>
 
     <!-- CaloHit helper settings -->
     <CaloHitHelper>
@@ -187,7 +187,7 @@ Arbor Pandora settings xml file for Arbor algorithms
     </algorithm>
    
     <!-- Monitor pfos. Save some variables in a root file -->
-   <algorithm type = "PfoMonitoring">
+   <algorithm type = "ArborPfoMonitoring">
       <RootFileName> ArborPFAOutput.root </RootFileName>
       <RootTreeName> PfoMonitoring </RootTreeName>
       <EnergyFunctionName> SdhcalEnergyFunction </EnergyFunctionName>

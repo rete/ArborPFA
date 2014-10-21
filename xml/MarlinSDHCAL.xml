@@ -5,31 +5,20 @@
 	  <processor name="MyMarlinSDHCALArbor"/>
 	</execute>
 
-<!--   
-  /home/remi/ilcsoft/SDHCAL/data/simulation/pi-/single_calorimeterhit_pi-_20GeV_new.slcio
-  /home/remi/ilcsoft/SDHCAL/MokkaILD/output/Marlin/mokkaILD_REC.slcio
-  /home/remi/ilcsoft/SDHCAL/joli.slcio
-  /home/remi/ilcsoft/SDHCAL/data/ILD_02_v05/uds500_00.stdhep_digitized.slcio 
-  /home/remi/git/ArborPFA/output/Separation/OverlayEvent_60_GeV_neutral_50_GeV_charged_10_cm_PandoraPFA_MC.slcio
-  /home/remi/ilcsoft/SDHCAL/data/testBeam/2012/TDHCAL_715693_cut_I0.slcio
-  /home/remi/ilcsoft/SDHCAL/data/simulation/overlay/pi-/double_calorimeterhit_pi-_10_neutral_30_charged_GeV_new_I0_1_overlay_5pads.slcio
-  /home/remi/git/ArborPFA/TDHCAL_715751_cut.slcio
-  /home/remi/ilcsoft/SDHCAL/data/simulation/overlay/pi-/double_calorimeterhit_pi-_10_neutral_30_charged_GeV_new_I0_1_overlay_10pads.slcio
-  /home/remi/git/ArborPFA/output/Separation/OverlayEvent_10_GeV_charged_40_GeV_charged_5_cm_ArborPFA_MC.slcio
-  /home/remi/ilcsoft/SDHCAL/data/testBeam/2012/TDHCAL_715751_cut_I0.slcio
-  /home/remi/git/ArborPFA/output/Separation/OverlayEvent_30_GeV_charged_10_GeV_charged_5_cm_ArborPFA_MC.slcio
-  /home/remi/git/ArborPFA/output/Separation/OverlayEvent_10_GeV_neutral_30_GeV_charged_5_cm_ArborPFA_MC.slcio
-  /home/remi/ilcsoft/SDHCAL/data/testBeam/2012/TDHCAL_715693_cut_I0.slcio
-  /home/remi/git/ArborPFA/output/Separation/OverlayEvent_10_GeV_neutral_30_GeV_charged_5_cm_ArborPFA_MC.slcio
+<!--  
+  /home/remi/git/ArborPFA/output/OverlayEvent/OverlayEvent_pi-_10GeV_neutral_30GeV_charged_5cm_cut.slcio
+  /home/remi/git/ArborPFA/output/simCut/single_pi-_20GeV_cut.slcio
+  /home/remi/git/ArborPFA/output/TestBeamCut/TDHCAL_715751_cut.slcio
+  /home/remi/git/ArborPFA/OverlayEvent_20_GeV_charged_30_GeV_charged_15_cm_ArborPFA_MC.slcio
   -->
 
 	<global>
 	  <parameter name="LCIOInputFiles">
-	  /home/remi/git/ArborPFA/output/v00-01-00/Separation/OverlayEvent_10_GeV_neutral_30_GeV_charged_10_cm_ArborPFA_MC.slcio
+       /home/remi/git/ArborPFA/output/OverlayEvent/OverlayEvent_pi-_10GeV_neutral_30GeV_charged_5cm_cut.slcio
 	  </parameter>
 	  <parameter name="GearXMLFile" value="/home/remi/git/ArborPFA/xml/SDHCALGearFile.xml"/>
-	  <parameter name="MaxRecordNumber" value="0"/>
-	  <parameter name="SkipNEvents" value="20"/>
+	  <parameter name="MaxRecordNumber" value="2000"/>
+	  <parameter name="SkipNEvents" value="0"/>
 	  <parameter name="SupressCheck" value="false"/>
 	  <parameter name="Verbosity" options="DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT"> MESSAGE </parameter>
 	  <parameter name="RandomSeed" value="1234567890" />
@@ -37,12 +26,14 @@
 
 	<processor name="MyMarlinSDHCALArbor" type="SDHCALArborProcessor">
 	
-	<!--  <parameter name="PandoraSettingsXmlFile" type="String">/home/remi/git/ArborPFA/xml/PandoraSettingsDefault.xml</parameter> -->
-	<!-- <parameter name="PandoraSettingsXmlFile" type="String">/home/remi/git/ArborPFA/xml/SDHCALArborPandoraSettingsBasic.xml</parameter>    -->
-	<parameter name="PandoraSettingsXmlFile" type="String">/home/remi/git/ArborPFA/xml/SDHCALArborPandoraSettingsReclustering.xml</parameter>   
+<!--    <parameter name="PandoraSettingsXmlFile" type="String">/home/remi/git/ArborPFA/xml/PandoraSettingsDefault.xml</parameter> -->
+<!--  <parameter name="PandoraSettingsXmlFile" type="String">/home/remi/git/ArborPFA/xml/SDHCALArborPandoraSettingsBasic.xml</parameter>  -->
+ <!--  <parameter name="PandoraSettingsXmlFile" type="String">/home/remi/git/ArborPFA/xml/ArborPandoraSettings_test.xml</parameter>  -->
+	<!-- <parameter name="PandoraSettingsXmlFile" type="String">/home/remi/git/ArborPFA/xml/SDHCALArborPandoraSettingsReclustering.xml</parameter>  -->
+	 <parameter name="PandoraSettingsXmlFile" type="String">/home/remi/git/ArborPFA/xml/StandardReconstructionPandoraSettings.xml</parameter>
 	
 	  <!-- Collection names -->
-	  <parameter name="HCalCaloHitCollection" type="String"> HCALBarrel </parameter>
+	  <parameter name="HCalCaloHitCollection" type="String"> HCALEndcap </parameter>
 	  <parameter name="GenericObjectTrackInfoCollection" type="String"> SDHCALTrackInfo </parameter>
 	  <parameter name="ClusterCollectionName" type="String">SDHCALArborProcessorClusters</parameter>
 	  <parameter name="PFOCollectionName" type="String">SDHCALArborProcessorPFOs</parameter>
@@ -53,29 +44,22 @@
 	    0.101952
 	    0.258078
 	  </parameter>
-	  <parameter name="SDHCALEnergyConstants" type="FloatVec"> 
-		  0.0442674
-		  3.95986e-05
-		  -2.0133e-10
-		  0.0781586
-		  -5.9623e-05
-		  -3.06952e-08
-		  0.115295
-		  1.57508e-05
-		  2.28041e-09
-	  <!--  Old parameters
-	    0.0227148
-	    4.77839e-05
-	    -4.05221e-08
-	    0.112287
-	    6.24094e-06
-	    2.9642e-08
-	    0.156503
-	    0.00010774
-	    4.97735e-08 -->
+	       
+      <!-- Parameters extracted from simulation -->
+	  <parameter name="SDHCALEnergyConstants" type="FloatVec">
+		  0.0414525
+			4.65724e-05
+			-4.35488e-09
+			0.0781576
+			-5.98067e-05
+			-5.70665e-08
+			0.115292
+			1.56002e-05
+			2.18979e-09
 	  </parameter>
+	  
 	  <parameter name="IsSingleParticleStudy" type="bool"> false </parameter>
-	  <parameter name="SingleParticleMomentum" type="float"> 30 </parameter>
+	  <parameter name="SingleParticleMomentum" type="float"> 20 </parameter>
 	  <parameter name="Verbosity" options="DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT"> MESSAGE DEBUG </parameter>
 	</processor>
 
