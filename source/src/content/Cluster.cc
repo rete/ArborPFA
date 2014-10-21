@@ -55,6 +55,7 @@ Cluster::~Cluster()
 		delete *iter;
 
 	m_treeList.clear();
+	m_pAssociatedTrack = NULL;
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -134,7 +135,6 @@ pandora::StatusCode Cluster::RemoveTree(Tree *pTree)
 		return pandora::STATUS_CODE_SUCCESS;
 
 	// Then upate the cluster seed position and pseudolayer
-
 	pandora::CartesianVector newSeedPosition(0.f, 0.f, 0.f);
 	pandora::PseudoLayer innermostPseudoLayer(std::numeric_limits<pandora::PseudoLayer>::max());
 
@@ -220,6 +220,8 @@ unsigned int Cluster::GetNObjects() const
 
 	return nObjects;
 }
+
+//------------------------------------------------------------------------------------------------------
 
 unsigned int Cluster::GetNCaloHits() const
 {
