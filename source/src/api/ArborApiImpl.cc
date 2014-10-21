@@ -135,7 +135,7 @@ pandora::StatusCode ArborApiImpl::RegisterArborAlgorithms(Arbor &arbor) const
 			  new arbor::ArborClusterConverterAlgorithm::Factory));
 	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "ArborMonitoring",
 				  new arbor::ArborMonitoringAlgorithm::Factory));
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "PfoMonitoring",
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "ArborPfoMonitoring",
 				  new arbor::PfoMonitoringAlgorithm::Factory));
 
 	return pandora::STATUS_CODE_SUCCESS;
