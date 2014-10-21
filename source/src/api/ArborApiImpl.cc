@@ -48,8 +48,10 @@
 #include "arborpfa/algorithm/NeutralTreeMergingAlgorithm.h"
 #include "arborpfa/algorithm/SmallNeutralFragmentMergingAlgorithm.h"
 #include "arborpfa/algorithm/ArborClusterConverterAlgorithm.h"
-#include "arborpfa/algorithm/ArborOutputAlgorithm.h"
+
+// monitoring
 #include "arborpfa/algorithm/ArborMonitoringAlgorithm.h"
+#include "arborpfa/algorithm/PfoMonitoringAlgorithm.h"
 
 // plugins
 #include "arborpfa/content/SdhcalEnergyFunction.h"
@@ -63,6 +65,8 @@ using namespace pandora;
 
 namespace arbor
 {
+
+//---------------------------------------------------------------------------------------------------------------
 
 ArborApiImpl::ArborApiImpl(Arbor *pArbor) :
 		m_pArbor(pArbor)
@@ -87,6 +91,7 @@ pandora::StatusCode ArborApiImpl::RegisterAlgorithmFactory(Arbor &arbor, const s
 		return STATUS_CODE_SUCCESS;
 }
 
+//---------------------------------------------------------------------------------------------------------------
 
 pandora::StatusCode ArborApiImpl::RegisterArborAlgorithms(Arbor &arbor) const
 {
@@ -128,14 +133,15 @@ pandora::StatusCode ArborApiImpl::RegisterArborAlgorithms(Arbor &arbor) const
 	// additional algorithms
 	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "ArborClusterConverter",
 			  new arbor::ArborClusterConverterAlgorithm::Factory));
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "ArborOutput",
-				  new arbor::ArborOutputAlgorithm::Factory));
 	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "ArborMonitoring",
 				  new arbor::ArborMonitoringAlgorithm::Factory));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "PfoMonitoring",
+				  new arbor::PfoMonitoringAlgorithm::Factory));
 
 	return pandora::STATUS_CODE_SUCCESS;
 }
 
+//---------------------------------------------------------------------------------------------------------------
 
 pandora::StatusCode ArborApiImpl::RegisterArborPlugins(Arbor &arbor) const
 {
@@ -162,6 +168,7 @@ pandora::StatusCode ArborApiImpl::ResetEvent() const
 	return m_pArbor->ResetEvent();
 }
 
+//---------------------------------------------------------------------------------------------------------------
 
 } 
 
