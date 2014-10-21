@@ -45,13 +45,13 @@ namespace arbor
 
 class Arbor;
 class ArborAlgorithmFactory;
+class IEnergyFunction;
 
 /** 
  * @brief ArborApi class
  */ 
 class ArborApi
 {
-
  public:
 
 		/**
@@ -79,31 +79,15 @@ class ArborApi
 		 */
 		static pandora::StatusCode RegisterAlgorithmFactory(Arbor &arbor, const std::string &factoryName, ArborAlgorithmFactory *pFactory);
 
-		/**		/**
+		/**
 		 *
 		 */
 		static pandora::StatusCode RegisterArborPlugins(Arbor &arbor);
 
-	 /**
-	  *
-	  */
-		static pandora::StatusCode RegisterEnergyResolutionFunction(Arbor &arbor, const std::string &energyResolutionFunctionName, IEnergyResolutionFunction *pEnergyResolutionFunction) ;
-
 		/**
 		 *
 		 */
-		static pandora::StatusCode RegisterEnergyEstimator(Arbor &arbor, const std::string &energyEstimatorName, IEnergyEstimator *pEnergyEstimator) ;
-
-		/**
-		 *
-		 */
-		static pandora::StatusCode RegisterTreeBuilder(Arbor &arbor, const std::string &treeBuilderName, ITreeBuilder *pTreeBuilder);
-
-		/**
-		 *
-		 */
-		static pandora::StatusCode RegisterBranchBuilder(Arbor &arbor, const std::string &branchBuilderName, IBranchBuilder *pBranchBuilder);
-
+		static pandora::StatusCode RegisterEnergyFunction(Arbor &arbor, const std::string &energyFunctionName, IEnergyFunction *pEnergyFunction) ;
 }; 
 
 } 
