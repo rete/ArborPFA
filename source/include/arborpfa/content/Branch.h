@@ -134,13 +134,14 @@ class Branch
 			*/
 		virtual pandora::StatusCode AddPrevious(Object *pPreviousObject);
 
-	 Object         *m_pBranchSeed;
-	 Object         *m_pBranchLeaf;
-	 ObjectVector    m_objectVector;
-	 float          m_branchLength;
-
+		// members
+	 Object                 *m_pBranchSeed;
+	 Object                 *m_pBranchLeaf;
+	 ObjectVector            m_objectVector;
+	 float                  m_branchLength;
 	 ObjectVector::iterator  m_currentIterationObject;
 
+	 // friendship
 	 friend class IBranchBuilder;
 		friend class Tree;
 		friend class ArborContentApiImpl;
