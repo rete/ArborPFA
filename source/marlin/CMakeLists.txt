@@ -23,7 +23,7 @@ ENDFOREACH()
 INCLUDE_DIRECTORIES( include )
 
 
-# build the SDHCAL arbor processor library
+# build the SDHCAL Arbor processor library
 # ===========================================
 SET (
   SDHCAL_ARBOR_PROCESSOR_SRC_FILES
