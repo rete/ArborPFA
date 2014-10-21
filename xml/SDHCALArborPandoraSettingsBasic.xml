@@ -7,7 +7,7 @@ Arbor Pandora settings xml file for Arbor algorithms
 
     <!-- HELPER CLASS SETTINGS -->
     <IsMonitoringEnabled> true </IsMonitoringEnabled>
-    <ShouldDisplayAlgorithmInfo> true </ShouldDisplayAlgorithmInfo>
+    <ShouldDisplayAlgorithmInfo> false </ShouldDisplayAlgorithmInfo>
 
     <!-- CaloHit helper settings -->
     <CaloHitHelper>
@@ -186,13 +186,17 @@ Arbor Pandora settings xml file for Arbor algorithms
       <AllowSingleLayerClusters> false </AllowSingleLayerClusters>
     </algorithm>
    
-   <!-- Output algorithm that saves some variable in a root file -->
-<!--    <algorithm type = "ArborOutput">
-
-      <RootFileName> OverlayEventReconstruction_10GeV_neutral_30GeV_charged_5cm_cut_ArborPFA_MC_alignement.root </RootFileName>
-      <RootTreeName> ArborOutputTree </RootTreeName>
-      <NCutOnChargedParticle> 1 </NCutOnChargedParticle>
-    </algorithm> -->
+    <!-- Monitor pfos. Save some variables in a root file -->
+   <algorithm type = "PfoMonitoring">
+      <RootFileName> ArborPFAOutput.root </RootFileName>
+      <RootTreeName> PfoMonitoring </RootTreeName>
+      <EnergyFunctionName> SdhcalEnergyFunction </EnergyFunctionName>
+      <EnergyThresholdValues> 0.0406459 0.101952 0.258078 </EnergyThresholdValues>
+      <!-- 0 for no additional analysis, 1 for single particle and 2 for overlay particles -->
+      <AnalysisType> 2 </AnalysisType>
+      <!-- Minimum N tracks required in the event in order to fill an entry -->
+      <NTrackMinimumCutForNoFill> 1 </NTrackMinimumCutForNoFill>
+    </algorithm> 
     
     <!-- EVE Monitoring -->
     <algorithm type = "ArborMonitoring" description = "display all">
