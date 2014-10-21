@@ -18,6 +18,30 @@
         <ShouldCalculateDensityWeight>true</ShouldCalculateDensityWeight>
         <ShouldCalculateSurroundingEnergy>true</ShouldCalculateSurroundingEnergy>
     </CaloHitHelper>
+    
+    <ArborPlugin>
+       <energyFunction name="SdhcalEnergyFunction">
+         <ResolutionEnergyFactor>        0.55    </ResolutionEnergyFactor>
+         <ResolutionConstantFactor>      0.081   </ResolutionConstantFactor>
+         <ResolutionEnergySquareFactor>  0.6     </ResolutionEnergySquareFactor>
+         <EnergyConstantParameters>
+            0.0442674
+            3.95986e-05
+            -2.0133e-10
+            0.0781586
+            -5.9623e-05
+            -3.06952e-08
+            0.115295
+            1.57508e-05
+            2.28041e-09
+         </EnergyConstantParameters>
+         <EnergyThresholdValues> 
+           0.0406459 
+           0.101952 
+           0.258078 
+         </EnergyThresholdValues>
+       </energyFunction>
+    </ArborPlugin>
 
     <!-- PANDORA ALGORITHM SETTINGS -->
 
@@ -39,7 +63,7 @@
             <MaxLayersToTrackSeed>0</MaxLayersToTrackSeed>
             <MaxLayersToTrackLikeHit>0</MaxLayersToTrackLikeHit>
             <TrackPathWidth>0</TrackPathWidth>
-        </algorithm>
+        </algorithm>PfoMonitoring
     </algorithm> -->
 
     <!-- Standalone photon clustering -->
@@ -410,9 +434,8 @@
 
     <!-- Create particle flow objects -->
     <algorithm type = "ForceSplitTrackAssociations"/>
-    <!-- <algorithm type = "PfoCreation"/> -->
+
     <algorithm type = "PfoCreation">
-<!--       <OutputPfoListName> ArborPFOs </OutputPfoListName> -->
       <ShouldCreateTrackBasedPfos> true </ShouldCreateTrackBasedPfos>
       <ShouldCreateNeutralPfos> true </ShouldCreateNeutralPfos>
       <MinClusterHadronicEnergy> 0.1 </MinClusterHadronicEnergy>
@@ -424,26 +447,17 @@
     <!-- Particle flow object modification algorithms -->
     <algorithm type = "FinalParticleId"/>
     <algorithm type = "V0PfoCreation"/>
-    <!--algorithm type = "DumpPfosMonitoring"/-->
     
-        <!-- EVE Monitoring -->
-    <algorithm type = "VisualMonitoring" description = "display all">
-          
-       <DisplayEvent>true</DisplayEvent>
-       
-       <ShowMCParticles>false</ShowMCParticles>
-       <ShowCurrentCaloHits>true</ShowCurrentCaloHits>
-       <ShowCurrentTracks>true</ShowCurrentTracks> 
-       <ShowCurrentClusters>false</ShowCurrentClusters> 
-       <ShowCurrentPfos>true</ShowCurrentPfos>
-       <HitColors> iterate </HitColors>
-       <ShowOnlyAvailable>false</ShowOnlyAvailable>
-       
-       <TransparencyThresholdE>-1</TransparencyThresholdE>
-       <EnergyScaleThresholdE>1.0</EnergyScaleThresholdE> 
-       <BlackBackground>true</BlackBackground>
-       <ShowDetector>false</ShowDetector>
-          
-    </algorithm>
+    <!-- Monitor pfos. Save some variables in a root file -->
+   <algorithm type = "ArborPfoMonitoring">
+      <RootFileName> PandoraPFAOutput.root </RootFileName>
+      <RootTreeName> PfoMonitoring </RootTreeName>
+      <EnergyFunctionName> SdhcalEnergyFunction </EnergyFunctionName>
+      <EnergyThresholdValues> 0.0406459 0.101952 0.258078 </EnergyThresholdValues>
+      <!-- 0 for no additional analysis, 1 for single particle and 2 for overlay particles -->
+      <AnalysisType> 2 </AnalysisType>
+      <!-- Minimum N tracks required in the event in order to fill an entry -->
+      <NTrackMinimumCutForNoFill> 1 </NTrackMinimumCutForNoFill>
+    </algorithm> 
     
 </pandora>
