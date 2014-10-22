@@ -8,11 +8,9 @@ CMAKE_MINIMUM_REQUIRED( VERSION 2.6 FATAL_ERROR )
 # project name
 PROJECT( ArborPFA )
 
-
 SET( ${PROJECT_NAME}_VERSION_MAJOR 1 )
-SET( ${PROJECT_NAME}_VERSION_MINOR 1 )
-SET( ${PROJECT_NAME}_VERSION_PATCH 2 )
-
+SET( ${PROJECT_NAME}_VERSION_MINOR 3 )
+SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
 
 # --------------- ilcsoft dependencies -----------
 LIST( APPEND CMAKE_MODULE_PATH $ILCSOFT )
@@ -70,7 +68,7 @@ CONFIGURE_FILE( "${PROJECT_SOURCE_DIR}/cmake/${PROJECT_NAME}Config.h.cmake.in"
 INSTALL( FILES "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.h" DESTINATION "source/include/arborpfa" )
 
 
-OPTION( BUILD_PROCESSOR "Set to OFF to skip build/install ArborPFA processor (Marlin)" ON )
+OPTION( BUILD_PROCESSOR "Set to OFF to skip build/install ArborPFA processors (Marlin)" ON )
 
 ADD_SUBDIRECTORY( ./source )
 
