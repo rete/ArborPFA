@@ -273,6 +273,52 @@ pandora::StatusCode PfoMonitoringAlgorithm::RunSdhcalOverlayPfoMonitoring(const 
 
  } // pfo loop
 
+	if(!m_energyFunctionName.empty())
+	{
+		// get the original input calo hit list
+		// from which we want to compute the energy of the 2 monte carlo particles
+		const pandora::CaloHitList *pCaloHitList = NULL;
+		PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetCaloHitList(*this, "Input", pCaloHitList));
+
+		pandora::CaloHitList mcPfoCaloHitList1;
+		pandora::CaloHitList mcPfoCaloHitList2;
+
+		for(pandora::CaloHitList::const_iterator iter = pCaloHitList->begin(), endIter = pCaloHitList->end() ;
+				endIter != iter ; ++iter)
+		{
+			pandora::CaloHit *pCaloHit = *iter;
+
+			EVENT::CalorimeterHit *pLCCaloHit = NULL;
+			pLCCaloHit = (EVENT::CalorimeterHit *) pCaloHit->GetParentCaloHitAddress();
+
+			// should we break ? ...
+			if(NULL == pLCCaloHit)
+				continue;
+
+			if(pLCCaloHit->getType() == 1)
+			{
+				mcPfoCaloHitList1.insert(pCaloHit);
+			}
+			else if(pLCCaloHit->getType() == 2)
+			{
+				mcPfoCaloHitList2.insert(pCaloHit);
+			}
+			else if(pLCCaloHit->getType() == 3)
+			{
+				mcPfoCaloHitList1.insert(pCaloHit);
+				mcPfoCaloHitList2.insert(pCaloHit);
+			}
+		}
+
+		m_mcParticleEnergy1 = 0.f;
+		m_mcParticleEnergy2 = 0.f;
+		PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, ArborContentApi::GetEnergy(*this, &mcPfoCaloHitList1, m_mcParticleEnergy1));
+		PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, ArborContentApi::GetEnergy(*this, &mcPfoCaloHitList2, m_mcParticleEnergy2));
+
+	 ARBOR_MONITORING_API(SetTreeVariable(m_rootTreeName, "mcParticleEnergy1", m_mcParticleEnergy1));
+	 ARBOR_MONITORING_API(SetTreeVariable(m_rootTreeName, "mcParticleEnergy2", m_mcParticleEnergy2));
+	}
+
  ARBOR_MONITORING_API(SetTreeVariable(m_rootTreeName, "lcioFlagType1", &m_pfoFlagType1));
  ARBOR_MONITORING_API(SetTreeVariable(m_rootTreeName, "lcioFlagType2", &m_pfoFlagType2));
  ARBOR_MONITORING_API(SetTreeVariable(m_rootTreeName, "lcioFlagType3", &m_pfoFlagType3));

@@ -137,6 +137,8 @@ protected:
 	unsigned int   m_nTrackMinimumCutForNoFill;
 
 	// sdhcal overlay particles study
+	float      m_mcParticleEnergy1;
+	float      m_mcParticleEnergy2;
 	IntVector   m_pfoFlagType1;
 	IntVector   m_pfoFlagType2;
 	IntVector   m_pfoFlagType3;
