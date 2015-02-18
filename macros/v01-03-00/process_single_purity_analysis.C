@@ -3,6 +3,7 @@
 #include <TPaveText.h>
 #include <TStyle.h>
 #include <TH2.h>
+#include <TF1.h>
 #include <TH2D.h>
 #include <TLegend.h>
 #include <TText.h>
@@ -20,7 +21,7 @@
 
 void process_single_purity_analysis()
 {
-	std::string fileDirectory = "/home/remi/git/ArborPFA/output/v01-03-00/SingleParticle/";
+	std::string fileDirectory = "/home/remi/git/ArborPFA/output/v01-03-00/SingleParticle/newCuts/";
 	std::string physicsList = "FTFP_BERT_HP";
 
 	std::map<AlgorithmType, std::string> algorithmToTreeNameMap;
@@ -28,9 +29,9 @@ void process_single_purity_analysis()
 	algorithmToTreeNameMap[ARBOR_PFA] = "PfoMonitoring";
 
 	std::vector< std::pair<AlgorithmType, DataType> > algorithmAndDataToProcess;
-	algorithmAndDataToProcess.push_back( std::pair<AlgorithmType, DataType>(PANDORA_PFA, SIMULATION) );
+//	algorithmAndDataToProcess.push_back( std::pair<AlgorithmType, DataType>(PANDORA_PFA, SIMULATION) );
 	algorithmAndDataToProcess.push_back( std::pair<AlgorithmType, DataType>(PANDORA_PFA, TEST_BEAM) );
-	algorithmAndDataToProcess.push_back( std::pair<AlgorithmType, DataType>(ARBOR_PFA, SIMULATION) );
+//	algorithmAndDataToProcess.push_back( std::pair<AlgorithmType, DataType>(ARBOR_PFA, SIMULATION) );
 	algorithmAndDataToProcess.push_back( std::pair<AlgorithmType, DataType>(ARBOR_PFA, TEST_BEAM) );
 
 	std::vector<int> energies;
@@ -50,20 +51,24 @@ void process_single_purity_analysis()
 	TCanvas *cc1 = new TCanvas("cc1","Mean Purity");
 	TCanvas *cc2 = new TCanvas("cc2","Number of PFOs");
 	TCanvas *cc3 = new TCanvas("cc3","Mean charged energy");
+	TCanvas *cc4 = new TCanvas("cc4","Energy resolution");
 
 	CanvasFormat(cc1);
 	CanvasFormat(cc2);
 	CanvasFormat(cc3);
+	CanvasFormat(cc4);
 
 	TMultiGraph *pMeanPurityChargedMultiGraph = new TMultiGraph("MeanPurityChargedMultiGraph", "Efficiency");
 	TMultiGraph *pNPfosMultiGraph = new TMultiGraph("NPfosMultiGraph", "N Pfos");
 	TMultiGraph *pMeanChargedEnergyMultiGraph = new TMultiGraph("MeanChargedEnergyMultiGraph", "Reconstructed Energy [GeV]");
+	TMultiGraph *pEnergyResolutionMultiGraph = new TMultiGraph();
 
 	for(unsigned int a=0 ; a<algorithmAndDataToProcess.size() ; a++)
 	{
 		TGraph *pMeanPurityChargedGraph = new TGraph((int)energies.size());
 		TGraph *pNPfosGraph = new TGraph((int)energies.size());
-		TGraph *pMeanChargedEnergyGraph = new TGraph((int)energies.size());
+		TGraphErrors *pMeanChargedEnergyGraph = new TGraphErrors((int)energies.size());
+		TGraphErrors *pEnergyResolutionGraph = new TGraphErrors((int)energies.size());
 
 		AlgorithmType algoritmType = algorithmAndDataToProcess.at(a).first;
 		DataType dataType = algorithmAndDataToProcess.at(a).second;
@@ -82,17 +87,33 @@ void process_single_purity_analysis()
 
 			pMeanPurityChargedGraph->SetPoint(e, energy, purityAnalysis->purityChargedDistribution.mean);
 			pNPfosGraph->SetPoint(e, energy, purityAnalysis->nPfosDistribution.mean);
-			pMeanChargedEnergyGraph->SetPoint(e, energy, purityAnalysis->energyChargedDistribution.mean);
+
+			int min = 0;
+			int max = energy + 30;
+			TH1 *pHistogram = createHistogram("histo", "histo", max-min, min, max, purityAnalysis->energyChargedDistribution);
+
+			TF1 *pGaus = new TF1("gausFunc","gaus", min, max);
+			pHistogram->Fit(pGaus, "NQ", "");
+			pHistogram->Fit(pGaus, "NQ", "", pGaus->GetParameter(1)-1.5*pGaus->GetParameter(2), pGaus->GetParameter(1)+1.5*pGaus->GetParameter(2));
+
+			pMeanChargedEnergyGraph->SetPoint(e, energy, pGaus->GetParameter(1));//purityAnalysis->energyChargedDistribution.mean);
+			pMeanChargedEnergyGraph->SetPointError(e, 0, pGaus->GetParError(1));
+
+			pEnergyResolutionGraph->SetPoint(e, energy, pGaus->GetParameter(2)/pGaus->GetParameter(1));
+			double error = std::sqrt(std::pow(pGaus->GetParError(2)/pGaus->GetParameter(1), 2)
+			                        + std::pow((pGaus->GetParameter(2)*pGaus->GetParError(1))/(pGaus->GetParameter(1)*pGaus->GetParameter(1)), 2));
+			pEnergyResolutionGraph->SetPointError(e, 0, error);
 
 			singlePurityAnalysisStorage.push_back(purityAnalysis);
 		}
+
 		std::stringstream ss;
 		ss << AlgorithmName(algoritmType) << " - " << DataName(dataType);
 		GraphInfo graphInfo(algoritmType, dataType);
 
 		pMeanPurityChargedGraph->SetMarkerColor(graphInfo.m_markerColor);
 		pMeanPurityChargedGraph->SetMarkerStyle(graphInfo.m_markerStyle);
-		pMeanPurityChargedGraph->SetLineStyle(graphInfo.m_lineStyle);
+		pMeanPurityChargedGraph->SetLineStyle(1);//graphInfo.m_lineStyle);
 		pMeanPurityChargedGraph->SetLineWidth(graphInfo.m_lineWidth);
 		pMeanPurityChargedGraph->SetLineColor(graphInfo.m_lineColor);
 		pMeanPurityChargedGraph->SetFillColor(kWhite);
@@ -110,42 +131,61 @@ void process_single_purity_analysis()
 
 		pMeanChargedEnergyGraph->SetMarkerColor(graphInfo.m_markerColor);
 		pMeanChargedEnergyGraph->SetMarkerStyle(graphInfo.m_markerStyle);
-		pMeanChargedEnergyGraph->SetLineStyle(graphInfo.m_lineStyle);
+		pMeanChargedEnergyGraph->SetLineStyle(1);//graphInfo.m_lineStyle);
 		pMeanChargedEnergyGraph->SetLineWidth(graphInfo.m_lineWidth);
 		pMeanChargedEnergyGraph->SetLineColor(graphInfo.m_lineColor);
 		pMeanChargedEnergyGraph->SetFillColor(kWhite);
 		pMeanChargedEnergyGraph->SetTitle(ss.str().c_str());
 		pMeanChargedEnergyMultiGraph->Add(pMeanChargedEnergyGraph);
+
+		pEnergyResolutionGraph->SetMarkerColor(graphInfo.m_markerColor);
+		pEnergyResolutionGraph->SetMarkerStyle(graphInfo.m_markerStyle);
+		pEnergyResolutionGraph->SetLineStyle(graphInfo.m_lineStyle);
+		pEnergyResolutionGraph->SetLineWidth(graphInfo.m_lineWidth);
+		pEnergyResolutionGraph->SetLineColor(graphInfo.m_lineColor);
+		pEnergyResolutionGraph->SetFillColor(kWhite);
+		pEnergyResolutionGraph->SetTitle(ss.str().c_str());
+		pEnergyResolutionMultiGraph->Add(pEnergyResolutionGraph);
 	}
 
 	cc1->cd();
-	cc1->SetGrid();
-	pMeanPurityChargedMultiGraph->Draw("alp");
-	pMeanPurityChargedMultiGraph->GetXaxis()->SetTitle("E [GeV]");
+	pMeanPurityChargedMultiGraph->Draw("ap");
+	pMeanPurityChargedMultiGraph->GetXaxis()->SetTitle("E_{beam} [GeV]");
 	pMeanPurityChargedMultiGraph->GetXaxis()->SetRangeUser(0, energies.back()+10);
 	pMeanPurityChargedMultiGraph->GetYaxis()->SetTitle("Efficiency");
 	pMeanPurityChargedMultiGraph->GetYaxis()->SetRangeUser(0, 1);
-	cc1->BuildLegend();
+	LegendFormat(cc1->BuildLegend());
 	cc1->Update();
 
 	cc2->cd();
-	cc2->SetGrid();
-	pNPfosMultiGraph->Draw("alp");
-	pNPfosMultiGraph->GetXaxis()->SetTitle("E [GeV]");
+	pNPfosMultiGraph->Draw("ap");
+	pNPfosMultiGraph->GetXaxis()->SetTitle("E_{beam} [GeV]");
 	pNPfosMultiGraph->GetXaxis()->SetRangeUser(0, energies.back()+10);
-	pNPfosMultiGraph->GetYaxis()->SetTitle("#N_{pfo}");
-	cc2->BuildLegend();
+	pNPfosMultiGraph->GetYaxis()->SetTitle("N_{pfo}");
+	LegendFormat(cc2->BuildLegend());
 	cc2->Update();
 
 	cc3->cd();
-	cc3->SetGrid();
-	pMeanChargedEnergyMultiGraph->Draw("alp");
-	pMeanChargedEnergyMultiGraph->GetXaxis()->SetTitle("E [GeV]");
+	pMeanChargedEnergyMultiGraph->Draw("ap");
+	pMeanChargedEnergyMultiGraph->GetXaxis()->SetTitle("E_{beam} [GeV]");
 	pMeanChargedEnergyMultiGraph->GetXaxis()->SetRangeUser(0, energies.back()+10);
 	pMeanChargedEnergyMultiGraph->GetYaxis()->SetTitle("Reconstructed energy");
 	pMeanChargedEnergyMultiGraph->GetYaxis()->SetRangeUser(0, energies.back()+10);
-	cc3->BuildLegend();
+	LegendFormat(cc3->BuildLegend());
+	TF1 *pLin = new TF1("lin", "x", 0, 90);
+	pLin->SetLineColor(kGray);
+	pLin->SetLineWidth(2);
+	pLin->Draw("same");
 	cc3->Update();
+
+	cc4->cd();
+	pEnergyResolutionMultiGraph->Draw("ap");
+	pEnergyResolutionMultiGraph->GetXaxis()->SetTitle("E_{beam} [GeV]");
+	pEnergyResolutionMultiGraph->GetXaxis()->SetRangeUser(0, energies.back()+10);
+	pEnergyResolutionMultiGraph->GetYaxis()->SetTitle("#frac{#sigma_{E}}{E}");
+	pEnergyResolutionMultiGraph->GetYaxis()->SetRangeUser(0, 0.4);
+	LegendFormat(cc4->BuildLegend());
+	cc4->Update();
 
 	cc1->WaitPrimitive();
 

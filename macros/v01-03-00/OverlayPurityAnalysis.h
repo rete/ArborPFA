@@ -81,19 +81,20 @@ public :
    virtual Bool_t   Notify();
    virtual void     Show(Long64_t entry = -1);
 
-   void SetPurityCut(float cut) { m_purityCut = cut; }
+   // for neutral particle
+   Distribution<float> neutralPurityDistribution;
+   Distribution<float> neutralEfficiencyDistribution;
+   Distribution<float> neutralEnergyDifferenceDistribution;
+   Distribution<float> neutralEnergyDistribution;
 
+   // for charged particle
+   Distribution<float> chargedPurityDistribution;
+   Distribution<float> chargedEfficiencyDistribution;
+   Distribution<float> chargedEnergyDifferenceDistribution;
+   Distribution<float> chargedEnergyDistribution;
 
+   // global
    Distribution<float> nPfosDistribution;
-   Distribution<float> purityChargedDistribution;
-   Distribution<float> efficiencyChargedDistribution;
-   Distribution<float> energyChargedDistribution;
-   Distribution<float> energyDifferenceChargedDistribution;
-   Distribution<float> energyDifferenceNeutralDistribution;
-   Distribution<float> pureNeutralEnergyDistribution;
-   Distribution<float> pureChargedEnergyDistribution;
-
-   float               m_purityCut;
 };
 
 #endif
@@ -101,8 +102,6 @@ public :
 #ifdef OverlayPurityAnalysis_cxx
 OverlayPurityAnalysis::OverlayPurityAnalysis(TTree *tree) : fChain(0) 
 {
-  	m_purityCut = 0;
-
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
 			if (tree == 0)
@@ -147,23 +146,23 @@ void OverlayPurityAnalysis::Init(TTree *tree)
    // Init() will be called many times when running on PROOF
    // (once per file to be processed).
 
- // Set object pointer
- energy = 0;
- momentum = 0;
- nTracks = 0;
- nClusters = 0;
- charge = 0;
- mass = 0;
- pid = 0;
- nHit = 0;
- nHit1 = 0;
- nHit2 = 0;
- nHit3 = 0;
- mcParticleEnergy1 = 0;
- mcParticleEnergy2 = 0;
- lcioFlagType1 = 0;
- lcioFlagType2 = 0;
- lcioFlagType3 = 0;
+			// Set object pointer
+			energy = 0;
+			momentum = 0;
+			nTracks = 0;
+			nClusters = 0;
+			charge = 0;
+			mass = 0;
+			pid = 0;
+			nHit = 0;
+			nHit1 = 0;
+			nHit2 = 0;
+			nHit3 = 0;
+			mcParticleEnergy1 = 0;
+			mcParticleEnergy2 = 0;
+			lcioFlagType1 = 0;
+			lcioFlagType2 = 0;
+			lcioFlagType3 = 0;
 
    // Set branch addresses and branch pointers
    if (!tree) return;

@@ -40,16 +40,19 @@ void OverlayPurityAnalysis::Loop()
 		float reconstructedNHitGoodNeutral = 0;
 		float reconstructedNHitBadNeutral = 0;
 
-		float energyCharged = 0.f;
-
 		if(1 != nChargedPfos)
 			continue;
 
 		bool chargedFound = false;
 		bool neutralFound = false;
 
-		energyDifferenceNeutralDistribution.distribution.push_back(neutralEnergy-mcParticleEnergy1);
+		// fill energy information
+		neutralEnergyDifferenceDistribution.distribution.push_back(neutralEnergy-mcParticleEnergy1);
+	 neutralEnergyDistribution.distribution.push_back(neutralEnergy);
+	 chargedEnergyDifferenceDistribution.distribution.push_back(chargedEnergy-mcParticleEnergy2);
+	 chargedEnergyDistribution.distribution.push_back(chargedEnergy);
 
+	 // analyze pfos and extract the purity/efficiency
 		for(int p=0 ; p<nPfos ; p++)
 		{
 			totalHitType1 += lcioFlagType1->at(p);
@@ -61,57 +64,46 @@ void OverlayPurityAnalysis::Loop()
 			{
 				chargedFound = true;
 				reconstructedNHitCharged += lcioFlagType1->at(p) + lcioFlagType2->at(p) + lcioFlagType3->at(p);
-				reconstructedNHitBadCharged += lcioFlagType1->at(p);// + pfoHitType3->at(p)/2.f;
-				reconstructedNHitGoodCharged += lcioFlagType2->at(p) + lcioFlagType3->at(p);
-				energyCharged += energy->at(p);
+				reconstructedNHitBadCharged += lcioFlagType1->at(p) + lcioFlagType3->at(p)/2.f;
+				reconstructedNHitGoodCharged += lcioFlagType2->at(p) + lcioFlagType3->at(p)/2.f;
 			}
 			// neutral case
 			else
 			{
 				neutralFound = true;
 				reconstructedNHitNeutral += lcioFlagType1->at(p) + lcioFlagType2->at(p) + lcioFlagType3->at(p);
-				reconstructedNHitBadNeutral += lcioFlagType2->at(p);// + pfoHitType3->at(p)/2.f;
-				reconstructedNHitGoodNeutral += lcioFlagType1->at(p) + lcioFlagType3->at(p);
+				reconstructedNHitBadNeutral += lcioFlagType2->at(p) + lcioFlagType3->at(p)/2.f;
+				reconstructedNHitGoodNeutral += lcioFlagType1->at(p) + lcioFlagType3->at(p)/2.f;
 			}
 		}
 
-		originalNHitNeutral = totalHitType1 + totalHitType3;
-		originalNHitCharged = totalHitType2 + totalHitType3;
+		originalNHitNeutral = totalHitType1 + totalHitType3/2.f;
+		originalNHitCharged = totalHitType2 + totalHitType3/2.f;
 
 		float chargedPurity = reconstructedNHitGoodCharged / (reconstructedNHitGoodCharged + reconstructedNHitBadCharged);
+		float chargedEfficiency = reconstructedNHitGoodCharged/originalNHitCharged;
+		float neutralPurity = reconstructedNHitGoodNeutral / (reconstructedNHitGoodNeutral + reconstructedNHitBadNeutral);
+		float neutralEfficiency = reconstructedNHitGoodNeutral/originalNHitNeutral;
 
-		if(neutralFound)
-		{
-			if(chargedPurity > m_purityCut)
-			{
-				pureNeutralEnergyDistribution.distribution.push_back(neutralEnergy);
-			}
-		}
+		// fill efficiency/purity for the charged particle
+		chargedPurityDistribution.distribution.push_back(chargedFound ? chargedPurity : 0.f);
+		chargedEfficiencyDistribution.distribution.push_back(chargedFound ? chargedEfficiency : 0.f);
 
-		if(chargedFound)
-		{
-		 purityChargedDistribution.distribution.push_back(chargedPurity);
-		 efficiencyChargedDistribution.distribution.push_back(reconstructedNHitGoodCharged/originalNHitCharged);
-//		 contaminationChargedDistribution.distribution.push_back((reconstructedNHitBadCharged + reconstructedNHitGoodCharged - originalNHitCharged) / originalNHitCharged);
-		 energyChargedDistribution.distribution.push_back(energyCharged);
+		// fill the efficiency/purity for the neutral particle
+		neutralPurityDistribution.distribution.push_back(neutralFound ? neutralPurity : 0.f);
+		neutralEfficiencyDistribution.distribution.push_back(neutralFound ? neutralEfficiency : 0.f);
 
-		 if(chargedPurity > m_purityCut)
-		  pureChargedEnergyDistribution.distribution.push_back(energyCharged);
-		}
-		else
-		{
-			purityChargedDistribution.distribution.push_back(0.f);
-			efficiencyChargedDistribution.distribution.push_back(0.f);
-//			contaminationChargedDistribution.distribution.push_back(1.f);
-			energyChargedDistribution.distribution.push_back(0.f);
-		}
 	} // end of loop
 
-	purityChargedDistribution.mean = Mean<float>(purityChargedDistribution.distribution);
-	efficiencyChargedDistribution.mean = Mean<float>(efficiencyChargedDistribution.distribution);
-//	contaminationChargedDistribution.mean = Mean<float>(contaminationChargedDistribution.distribution);
-	nPfosDistribution.mean = Mean<float>(nPfosDistribution.distribution);
-	energyChargedDistribution.mean = Mean<float>(energyChargedDistribution.distribution);
+	chargedPurityDistribution.mean = Mean<float>(chargedPurityDistribution.distribution);
+	chargedEfficiencyDistribution.mean = Mean<float>(chargedEfficiencyDistribution.distribution);
+ chargedEnergyDifferenceDistribution.mean = Mean<float>(chargedEnergyDifferenceDistribution.distribution);
+ chargedEnergyDistribution.mean = Mean<float>(chargedEnergyDistribution.distribution);
 
-	std::cout << "purityChargedDistribution.mean : " << purityChargedDistribution.mean << std::endl;
+	neutralPurityDistribution.mean = Mean<float>(neutralPurityDistribution.distribution);
+	neutralEfficiencyDistribution.mean = Mean<float>(neutralEfficiencyDistribution.distribution);
+ neutralEnergyDifferenceDistribution.mean = Mean<float>(neutralEnergyDifferenceDistribution.distribution);
+ neutralEnergyDistribution.mean = Mean<float>(neutralEnergyDistribution.distribution);
+
+	nPfosDistribution.mean = Mean<float>(nPfosDistribution.distribution);
 }

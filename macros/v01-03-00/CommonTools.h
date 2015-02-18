@@ -7,6 +7,9 @@
 #include <cmath>
 #include <numeric>
 #include <sstream>
+#include <map>
+#include <exception>
+#include <stdexcept>
 
 // root
 #include "TPaveText.h"
@@ -152,14 +155,7 @@ public:
 
  DrawAttributeMapping(AlgorithmType algorithmType, DataType dataType)
  {
- 	if(dataType == SIMULATION)
- 	{
- 		m_drawAttributeMap[LINE_STYLE] = 1;
- 	}
- 	else
- 	{
- 		m_drawAttributeMap[LINE_STYLE] = 7;
- 	}
+ 	m_drawAttributeMap[LINE_STYLE] = 0;
 
  	if(algorithmType == ARBOR_PFA)
  	{
@@ -174,7 +170,7 @@ public:
  		m_drawAttributeMap[MARKER_STYLE] = 21;
  	}
 
-		m_drawAttributeMap[LINE_WIDTH] = 2;
+		m_drawAttributeMap[LINE_WIDTH] = 1;
 		m_drawAttributeMap[MARKER_SIZE] = 1;
 		m_drawAttributeMap[FILL_COLOR] = 0;
 		m_drawAttributeMap[FILL_STYLE] = 0;
@@ -259,7 +255,7 @@ void drawOverlayMultiGraph(TMultiGraph *pMultiGraph, const std::string &yAxisTit
 	if(NULL == pMultiGraph)
 		return;
 
-	pMultiGraph->Draw("alp");
+	pMultiGraph->Draw("ap");
 	pMultiGraph->GetXaxis()->SetTitle("Distance between showers [cm]");
 	pMultiGraph->GetXaxis()->SetRangeUser(-1, 31);
 	pMultiGraph->GetYaxis()->SetTitle(yAxisTitle.c_str());
@@ -408,6 +404,13 @@ std::string BuildOverlayEventFileName(int energy1, int energy2, int separationDi
 
 //-----------------------------------------------------------------------------------------------------
 
+double resolutionFunction(double *x, double *par)
+{
+  return std::sqrt(par[0]*par[0]/x[0] + par[1]*par[1]);
+}
+
+//-----------------------------------------------------------------------------------------------------
+
 TPaveText *CreateText(const TString &str)
 {
   TPaveText *pt = new TPaveText(0.60, 0.81, 0.93, 0.86, "tbNDC");
@@ -507,6 +510,8 @@ void CanvasFormat(TCanvas *canvas)
 
 	canvas->Size( 875 , 800 );
 	canvas->SetWindowSize( 750 , 800 );
+	canvas->SetGrid(0, 0);
+	canvas->SetCanvasSize(700, 650);
 }
 
 //-----------------------------------------------------------------------------------------------------
@@ -519,12 +524,6 @@ void GraphFormat(TGraph *graph) {
 	graph->SetEditable( kFALSE );
 	graph->GetXaxis()->SetNdivisions( 510 );
 	graph->GetYaxis()->SetNdivisions( 505 );
-//	graph->GetXaxis()->SetTitleOffset( 1.2 );
-//	graph->GetYaxis()->SetTitleOffset( 1.2 );
-//	graph->GetXaxis()->SetTitleSize( 0.035 );
-//	graph->GetYaxis()->SetTitleSize( 0.035 );
-//	graph->GetXaxis()->SetLabelSize( 0.03 );
-//	graph->GetYaxis()->SetLabelSize( 0.03 );
 	graph->SetMarkerStyle( 23 );
 	graph->SetMarkerSize( 1 );
 }
@@ -536,7 +535,7 @@ void LegendFormat(TLegend *pLegend)
 	if(NULL == pLegend)
 		return;
 
-	pLegend->SetLineColor(kBlack);
+	pLegend->SetLineColor(0);
 	pLegend->SetFillColor(0);
 	pLegend->SetTextFont(GLOBAL_FONT);
 }
@@ -549,31 +548,21 @@ public:
 
 	GraphInfo(AlgorithmType algorithmType, DataType dataType)
 	{
-		m_lineWidth = 2;
+		m_lineWidth = 4;
 
 		if(PANDORA_PFA == algorithmType)
 		{
 			m_markerStyle = 21;
 			m_markerColor = kBlack;
 			m_lineColor = kBlack;
-
-			if(SIMULATION == dataType)
-				m_lineStyle = 1;
-			else
-				m_lineStyle = 7;
 		}
 		else
 		{
 			m_markerStyle = 23;
 			m_markerColor = kRed;
 			m_lineColor = kRed;
-
-			if(SIMULATION == dataType)
-				m_lineStyle = 1;
-			else
-				m_lineStyle = 7;
 		}
-
+		m_lineStyle = 0;
 	}
 
 	int m_markerStyle;

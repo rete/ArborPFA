@@ -197,7 +197,10 @@ void processAlgorithmOverlayAnalysis()
 
 	float       minFitValue = -4;
 	float       maxFitValue = 4;
-	float       purityCut = 0.9;
+	bool        drawDetailed = false;
+	bool        saveDetailedPlots = false;
+	std::string fitOpt = drawDetailed ? "Q" : "NQ";
+	std::string controlPlotsDirectory = "ControlPlots/";
 
 	ParticleInfo particle1;
 	particle1.m_energy = 10;
@@ -209,12 +212,12 @@ void processAlgorithmOverlayAnalysis()
 
 	AlgorithmOverlayAnalysis *pAnalysis = new AlgorithmOverlayAnalysis();
 
-	pAnalysis->m_fileDirectory = "/home/remi/git/ArborPFA/output/v01-03-00/Separation/";
+	pAnalysis->m_fileDirectory = "/home/remi/git/ArborPFA/output/v01-03-00/Separation/newCuts/";
 	pAnalysis->m_physicsList = "FTFP_BERT_HP";
 	pAnalysis->m_treeName = "PfoMonitoring";
 	pAnalysis->m_algorithmTypeList.push_back(ARBOR_PFA);
 	pAnalysis->m_algorithmTypeList.push_back(PANDORA_PFA);
-	pAnalysis->m_dataTypeList.push_back(SIMULATION);
+//	pAnalysis->m_dataTypeList.push_back(SIMULATION);
 	pAnalysis->m_dataTypeList.push_back(TEST_BEAM);
 
 		for(unsigned int d=startingDistance ; d<=endDistance; d+=distanceStep)
@@ -222,76 +225,86 @@ void processAlgorithmOverlayAnalysis()
 
 	CaliceStyle();
 
-	// purity and efficiency for the charged particle
-	pAnalysis->m_canvasMultiGraphMap["CHARGED_PURITY"].first = new TCanvas("CHARGED_PURITY", "Mean charged hit purity");
-	pAnalysis->m_canvasMultiGraphMap["CHARGED_PURITY"].second = new TMultiGraph();
-//	pAnalysis->m_canvasMultiGraphMap["NEUTRAL_PURITY"].first = new TCanvas("NEUTRAL_PURITY", "Mean neutral hit purity");
-//	pAnalysis->m_canvasMultiGraphMap["NEUTRAL_PURITY"].second = new TMultiGraph();
-
-	// purity and efficiency for the neutral particle
-	pAnalysis->m_canvasMultiGraphMap["CHARGED_EFFICIENCY"].first = new TCanvas("CHARGED_EFFICIENCY", "Mean charged hit efficiency");
-	pAnalysis->m_canvasMultiGraphMap["CHARGED_EFFICIENCY"].second = new TMultiGraph();
-//	pAnalysis->m_canvasMultiGraphMap["NEUTRAL_EFFICIENCY"].first = new TCanvas("NEUTRAL_EFFICIENCY", "Mean neutral hit efficiency");
-//	pAnalysis->m_canvasMultiGraphMap["NEUTRAL_EFFICIENCY"].second = new TMultiGraph();
-
 	// mean number of pfos
 	pAnalysis->m_canvasMultiGraphMap["N_PFOS"].first = new TCanvas("N_PFOS", "Mean number of pfos");
 	pAnalysis->m_canvasMultiGraphMap["N_PFOS"].second = new TMultiGraph();
 
-	// mean recovered - measured energy for the neutral particle
-	pAnalysis->m_canvasMultiGraphMap["REC_MEAS_NEUTRAL_ENERGY"].first = new TCanvas("REC_MEAS_NEUTRAL_ENERGY", "Mean recovered - measured neutral energy");
-	pAnalysis->m_canvasMultiGraphMap["REC_MEAS_NEUTRAL_ENERGY"].second = new TMultiGraph();
+	// charged particle
+	pAnalysis->m_canvasMultiGraphMap["CHARGED_ENERGY_MEAN"].first = new TCanvas("CHARGED_ENERGY_MEAN", "Mean charged ERec from GetMean()");
+	pAnalysis->m_canvasMultiGraphMap["CHARGED_ENERGY_MEAN"].second = new TMultiGraph();
+	pAnalysis->m_canvasMultiGraphMap["CHARGED_ENERGY_FIT"].first = new TCanvas("CHARGED_ENERGY_FIT", "Mean charged ERec from fit");
+	pAnalysis->m_canvasMultiGraphMap["CHARGED_ENERGY_FIT"].second = new TMultiGraph();
+	pAnalysis->m_canvasMultiGraphMap["CHARGED_ENERGY_DIFFERENCE_MEAN"].first = new TCanvas("CHARGED_ENERGY_DIFFERENCE_MEAN", "Charged ERec - EMeas from GetMean()");
+	pAnalysis->m_canvasMultiGraphMap["CHARGED_ENERGY_DIFFERENCE_MEAN"].second = new TMultiGraph();
+	pAnalysis->m_canvasMultiGraphMap["CHARGED_ENERGY_DIFFERENCE_FIT"].first = new TCanvas("CHARGED_ENERGY_DIFFERENCE_FIT", "Charged ERec - EMeas from fit");
+	pAnalysis->m_canvasMultiGraphMap["CHARGED_ENERGY_DIFFERENCE_FIT"].second = new TMultiGraph();
+	pAnalysis->m_canvasMultiGraphMap["CHARGED_EFFICIENCY"].first = new TCanvas("CHARGED_EFFICIENCY", "Mean charged hit efficiency");
+	pAnalysis->m_canvasMultiGraphMap["CHARGED_EFFICIENCY"].second = new TMultiGraph();
+	pAnalysis->m_canvasMultiGraphMap["CHARGED_PURITY"].first = new TCanvas("CHARGED_PURITY", "Mean charged hit purity");
+	pAnalysis->m_canvasMultiGraphMap["CHARGED_PURITY"].second = new TMultiGraph();
 
-	// pure reconstructed neutral energy mean
-	pAnalysis->m_canvasMultiGraphMap["PURE_REC_NEUTRAL_ENERGY_MEAN"].first = new TCanvas("PURE_REC_NEUTRAL_ENERGY_MEAN", "Pure reconstructed neutral energy");
-	pAnalysis->m_canvasMultiGraphMap["PURE_REC_NEUTRAL_ENERGY_MEAN"].second = new TMultiGraph();
-
-	// pure reconstructed charged energy mean
-	pAnalysis->m_canvasMultiGraphMap["PURE_REC_CHARGED_ENERGY_MEAN"].first = new TCanvas("PURE_REC_CHARGED_ENERGY_MEAN", "Pure reconstructed charged energy");
-	pAnalysis->m_canvasMultiGraphMap["PURE_REC_CHARGED_ENERGY_MEAN"].second = new TMultiGraph();
-
-	// pure reconstructed neutral energy rms
-	pAnalysis->m_canvasMultiGraphMap["PURE_REC_NEUTRAL_ENERGY_RESOL"].first = new TCanvas("PURE_REC_NEUTRAL_ENERGY_RESOL", "Pure reconstructed neutral energy");
-	pAnalysis->m_canvasMultiGraphMap["PURE_REC_NEUTRAL_ENERGY_RESOL"].second = new TMultiGraph();
-
-	// pure reconstructed charged energy rms
-	pAnalysis->m_canvasMultiGraphMap["PURE_REC_CHARGED_ENERGY_RESOL"].first = new TCanvas("PURE_REC_CHARGED_ENERGY_RESOL", "Pure reconstructed charged energy");
-	pAnalysis->m_canvasMultiGraphMap["PURE_REC_CHARGED_ENERGY_RESOL"].second = new TMultiGraph();
+	// neutral particle
+	pAnalysis->m_canvasMultiGraphMap["NEUTRAL_ENERGY_MEAN"].first = new TCanvas("NEUTRAL_ENERGY_MEAN", "Mean neutral ERec from GetMean()");
+	pAnalysis->m_canvasMultiGraphMap["NEUTRAL_ENERGY_MEAN"].second = new TMultiGraph();
+	pAnalysis->m_canvasMultiGraphMap["NEUTRAL_ENERGY_FIT"].first = new TCanvas("NEUTRAL_ENERGY_FIT", "Mean neutral ERec from fit");
+	pAnalysis->m_canvasMultiGraphMap["NEUTRAL_ENERGY_FIT"].second = new TMultiGraph();
+	pAnalysis->m_canvasMultiGraphMap["NEUTRAL_ENERGY_DIFFERENCE_MEAN"].first = new TCanvas("NEUTRAL_ENERGY_DIFFERENCE_MEAN", "Neutral ERec - EMeas from GetMean()");
+	pAnalysis->m_canvasMultiGraphMap["NEUTRAL_ENERGY_DIFFERENCE_MEAN"].second = new TMultiGraph();
+	pAnalysis->m_canvasMultiGraphMap["NEUTRAL_ENERGY_DIFFERENCE_FIT"].first = new TCanvas("NEUTRAL_ENERGY_DIFFERENCE_FIT", "Neutral ERec - EMeas from fit");
+	pAnalysis->m_canvasMultiGraphMap["NEUTRAL_ENERGY_DIFFERENCE_FIT"].second = new TMultiGraph();
+	pAnalysis->m_canvasMultiGraphMap["NEUTRAL_EFFICIENCY"].first = new TCanvas("NEUTRAL_EFFICIENCY", "Mean neutral hit efficiency");
+	pAnalysis->m_canvasMultiGraphMap["NEUTRAL_EFFICIENCY"].second = new TMultiGraph();
+	pAnalysis->m_canvasMultiGraphMap["NEUTRAL_PURITY"].first = new TCanvas("NEUTRAL_PURITY", "Mean neutral hit purity");
+	pAnalysis->m_canvasMultiGraphMap["NEUTRAL_PURITY"].second = new TMultiGraph();
 
 	// format the canvases
-	CanvasFormat(pAnalysis->m_canvasMultiGraphMap["CHARGED_PURITY"].first);
-	CanvasFormat(pAnalysis->m_canvasMultiGraphMap["NEUTRAL_PURITY"].first);
-	CanvasFormat(pAnalysis->m_canvasMultiGraphMap["CHARGED_EFFICIENCY"].first);
-	CanvasFormat(pAnalysis->m_canvasMultiGraphMap["NEUTRAL_EFFICIENCY"].first);
 	CanvasFormat(pAnalysis->m_canvasMultiGraphMap["N_PFOS"].first);
-	CanvasFormat(pAnalysis->m_canvasMultiGraphMap["REC_MEAS_NEUTRAL_ENERGY"].first);
-	CanvasFormat(pAnalysis->m_canvasMultiGraphMap["PURE_REC_NEUTRAL_ENERGY_MEAN"].first);
-	CanvasFormat(pAnalysis->m_canvasMultiGraphMap["PURE_REC_CHARGED_ENERGY_MEAN"].first);
-	CanvasFormat(pAnalysis->m_canvasMultiGraphMap["PURE_REC_NEUTRAL_ENERGY_RESOL"].first);
-	CanvasFormat(pAnalysis->m_canvasMultiGraphMap["PURE_REC_CHARGED_ENERGY_RESOL"].first);
+	CanvasFormat(pAnalysis->m_canvasMultiGraphMap["CHARGED_PURITY"].first);
+	CanvasFormat(pAnalysis->m_canvasMultiGraphMap["CHARGED_EFFICIENCY"].first);
+	CanvasFormat(pAnalysis->m_canvasMultiGraphMap["CHARGED_ENERGY_MEAN"].first);
+	CanvasFormat(pAnalysis->m_canvasMultiGraphMap["CHARGED_ENERGY_FIT"].first);
+	CanvasFormat(pAnalysis->m_canvasMultiGraphMap["CHARGED_ENERGY_DIFFERENCE_MEAN"].first);
+	CanvasFormat(pAnalysis->m_canvasMultiGraphMap["CHARGED_ENERGY_DIFFERENCE_FIT"].first);
+	CanvasFormat(pAnalysis->m_canvasMultiGraphMap["NEUTRAL_PURITY"].first);
+	CanvasFormat(pAnalysis->m_canvasMultiGraphMap["NEUTRAL_EFFICIENCY"].first);
+	CanvasFormat(pAnalysis->m_canvasMultiGraphMap["NEUTRAL_ENERGY_MEAN"].first);
+	CanvasFormat(pAnalysis->m_canvasMultiGraphMap["NEUTRAL_ENERGY_FIT"].first);
+	CanvasFormat(pAnalysis->m_canvasMultiGraphMap["NEUTRAL_ENERGY_DIFFERENCE_MEAN"].first);
+	CanvasFormat(pAnalysis->m_canvasMultiGraphMap["NEUTRAL_ENERGY_DIFFERENCE_FIT"].first);
 
-	// loop over SIM and TB
+	// for fits in the loop
+	gStyle->SetOptFit(1);
+
+	TF1 *pGaus = new TF1("gausFunc", "gaus", -120, 120);
+
+	// loop over data types
 	for(unsigned int dt=0 ; dt<pAnalysis->m_dataTypeList.size() ; dt++)
 	{
 		DataType dataType = pAnalysis->m_dataTypeList.at(dt);
 
-		// loop over ARBOR_PFA and PANDORA_PFA
+		// loop over algorithms
 		for(unsigned int at=0 ; at<pAnalysis->m_algorithmTypeList.size() ; at++)
 		{
 			AlgorithmType algorithmType = pAnalysis->m_algorithmTypeList.at(at);
 
-			// single graph declaration
+			// global graphs
+			TGraph *pNPfosGraph = new TGraph(int(pAnalysis->m_separationDistanceList.size()));
+
+			// charged particle graph
 			TGraph *pChargedPurityGraph = new TGraph(int(pAnalysis->m_separationDistanceList.size()));
 			TGraph *pChargedEfficiencyGraph = new TGraph(int(pAnalysis->m_separationDistanceList.size()));
-			TGraph *pNPfosGraph = new TGraph(int(pAnalysis->m_separationDistanceList.size()));
-			TGraph *pRecMeasNeutralEnergyGraph = new TGraph(int(pAnalysis->m_separationDistanceList.size()));
-			TGraph *pPureRecNeutralEnergyMeanGraph = new TGraph(int(pAnalysis->m_separationDistanceList.size()));
-			TGraph *pPureRecChargedEnergyMeanGraph = new TGraph(int(pAnalysis->m_separationDistanceList.size()));
-			TGraph *pPureRecNeutralEnergyResolGraph = new TGraph(int(pAnalysis->m_separationDistanceList.size()));
-			TGraph *pPureRecChargedEnergyResolGraph = new TGraph(int(pAnalysis->m_separationDistanceList.size()));
-			int currentPointId = 0;
-			int currentPointId2 = 0;
-			int currentPointId3 = 0;
+			TGraph *pChargedEnergyMeanGraph = new TGraph(int(pAnalysis->m_separationDistanceList.size()));
+			TGraph *pChargedEnergyFitGraph = new TGraph(int(pAnalysis->m_separationDistanceList.size()));
+			TGraph *pChargedEnergyDifferenceMeanGraph = new TGraph(int(pAnalysis->m_separationDistanceList.size()));
+			TGraph *pChargedEnergyDifferenceFitGraph = new TGraph(int(pAnalysis->m_separationDistanceList.size()));
+
+			// neutral particle graph
+			TGraph *pNeutralPurityGraph = new TGraph(int(pAnalysis->m_separationDistanceList.size()));
+			TGraph *pNeutralEfficiencyGraph = new TGraph(int(pAnalysis->m_separationDistanceList.size()));
+			TGraph *pNeutralEnergyMeanGraph = new TGraph(int(pAnalysis->m_separationDistanceList.size()));
+			TGraph *pNeutralEnergyFitGraph = new TGraph(int(pAnalysis->m_separationDistanceList.size()));
+			TGraph *pNeutralEnergyDifferenceMeanGraph = new TGraph(int(pAnalysis->m_separationDistanceList.size()));
+			TGraph *pNeutralEnergyDifferenceFitGraph = new TGraph(int(pAnalysis->m_separationDistanceList.size()));
 
 			// loop over separation distance
 			for(unsigned int dis=0 ; dis<pAnalysis->m_separationDistanceList.size() ; dis++)
@@ -307,87 +320,153 @@ void processAlgorithmOverlayAnalysis()
 				pOverlayInfo->m_pRootFile = TFile::Open(pOverlayInfo->m_fileName.c_str());
 				TTree *pTree = (TTree*) pOverlayInfo->m_pRootFile->Get(pAnalysis->m_treeName.c_str());
 				pOverlayInfo->m_pAnalysis = new OverlayPurityAnalysis(pTree);
-				pOverlayInfo->m_pAnalysis->SetPurityCut(purityCut);
 				pOverlayInfo->m_pAnalysis->Loop();
 
-				pChargedPurityGraph->SetPoint(     dis, pOverlayInfo->m_separationDistance, pOverlayInfo->m_pAnalysis->purityChargedDistribution.mean);
-				pChargedEfficiencyGraph->SetPoint( dis, pOverlayInfo->m_separationDistance, pOverlayInfo->m_pAnalysis->efficiencyChargedDistribution.mean);
-				pNPfosGraph->SetPoint(             dis, pOverlayInfo->m_separationDistance, pOverlayInfo->m_pAnalysis->nPfosDistribution.mean);
+				std::stringstream ss;
+				TCanvas *pCanvas;
 
-				TH1 *pNeutralEnergyDifferenceHistogram = createHistogram("tmpHisto", "tmpHisto", 201, -50, 50, pOverlayInfo->m_pAnalysis->energyDifferenceNeutralDistribution);
-				FitInputParameters inputParams;
-				FitResult fitResult;
-				inputParams.m_minFitValue = minFitValue;
-				inputParams.m_maxFitValue = maxFitValue;
-				inputParams.m_fitOptions = "S";
-
-				fitHistogramWithGaussian(inputParams, fitResult, pNeutralEnergyDifferenceHistogram);
-
-				if(fitResult.m_isSuccessful)
+				if(drawDetailed)
 				{
-					pRecMeasNeutralEnergyGraph->SetPoint(currentPointId, pOverlayInfo->m_separationDistance, fitResult.m_mean);
-					currentPointId++;
+					pCanvas = new TCanvas();
+					pCanvas->cd();
 				}
-				else
+
+				// extract neutral energy from fit around the expected mean energy
+				ss << "histo_neutral_energy_" << AlgorithmName(algorithmType) << "_" << DataName(dataType) << "_" << pOverlayInfo->m_separationDistance << "cm";
+				TH1 *pNeutralEnergyHistogram = createHistogram(ss.str().c_str(), ss.str().c_str(), particle1.m_energy*6 + 1,
+						particle1.m_energy-3*particle1.m_energy, particle1.m_energy+3*particle1.m_energy,
+						pOverlayInfo->m_pAnalysis->neutralEnergyDistribution);
+
+				pNeutralEnergyHistogram->Fit(pGaus, fitOpt.c_str(), "", particle1.m_energy-particle1.m_energy*0.5, particle1.m_energy+particle1.m_energy*0.5);
+				double neutralEnergyFit = pGaus->GetParameter(1);
+
+				if(drawDetailed)
 				{
-					std::cout << "*** WARNING : non successful fit (neutral difference)! ***" << std::endl;
+					pNeutralEnergyHistogram->DrawCopy();
+
+					if(saveDetailedPlots)
+					{
+						std::string fileName = controlPlotsDirectory + ss.str() + ".pdf";
+						pCanvas->SaveAs(fileName.c_str());
+					}
+				}
+
+				delete pNeutralEnergyHistogram;
+
+				if(drawDetailed)
+				{
+					pCanvas = new TCanvas();
+					pCanvas->cd();
+				}
+
+				// extract charged energy from fit around the expected mean energy
+				ss.str("");
+				ss << "histo_charged_energy_" << AlgorithmName(algorithmType) << "_" << DataName(dataType) << "_" << pOverlayInfo->m_separationDistance << "cm";
+				TH1 *pChargedEnergyHistogram = createHistogram(ss.str().c_str(), ss.str().c_str(), particle2.m_energy*6 + 1,
+						particle2.m_energy-3*particle2.m_energy, particle2.m_energy+3*particle2.m_energy,
+						pOverlayInfo->m_pAnalysis->chargedEnergyDistribution);
+
+				pChargedEnergyHistogram->Fit(pGaus, "Q", "", particle2.m_energy-particle2.m_energy*0.5, particle2.m_energy+particle2.m_energy*0.5);
+				double chargedEnergyFit = pGaus->GetParameter(1);
+
+				if(drawDetailed)
+				{
+					pChargedEnergyHistogram->DrawCopy();
+
+					if(saveDetailedPlots)
+					{
+						std::string fileName = controlPlotsDirectory + ss.str() + ".pdf";
+						pCanvas->SaveAs(fileName.c_str());
+					}
+				}
+
+				delete pChargedEnergyHistogram;
+
+
+
+
+				if(drawDetailed)
+				{
+					pCanvas = new TCanvas();
+					pCanvas->cd();
+				}
+
+				// extract neutral rec-meas from fit around 0
+				ss.str("");
+				ss << "histo_neutral_energy_difference_" << AlgorithmName(algorithmType) << "_" << DataName(dataType) << "_" << pOverlayInfo->m_separationDistance << "cm";
+				TH1 *pNeutralEnergyDifferenceHistogram = createHistogram(ss.str().c_str(), ss.str().c_str(), 121, -60, 60,
+						pOverlayInfo->m_pAnalysis->neutralEnergyDifferenceDistribution);
+
+				pNeutralEnergyDifferenceHistogram->Fit(pGaus, fitOpt.c_str(), "", -4, 4);
+				double neutralEnergyDifferenceFit = pGaus->GetParameter(1);
+
+				if(drawDetailed)
+				{
+					pNeutralEnergyDifferenceHistogram->DrawCopy();
+
+					if(saveDetailedPlots)
+					{
+						std::string fileName = controlPlotsDirectory + ss.str() + ".pdf";
+						pCanvas->SaveAs(fileName.c_str());
+					}
 				}
 
 				delete pNeutralEnergyDifferenceHistogram;
 
-				std::stringstream ss;
-				ss << "histo_neutral_" << AlgorithmName(algorithmType) << "_" << DataName(dataType) << "_" << pOverlayInfo->m_separationDistance << "cm";
-
-				TH1 *pPureNeutralEnergyHistogram = createHistogram(ss.str().c_str(), ss.str().c_str(), particle1.m_energy*6 + 1,
-						particle1.m_energy-3*particle1.m_energy, particle1.m_energy+3*particle1.m_energy,
-						pOverlayInfo->m_pAnalysis->pureNeutralEnergyDistribution);
-
-				FitInputParameters inputParams2;
-				FitResult fitResult2;
-				inputParams2.m_minFitValue = particle1.m_energy-2*particle1.m_energy;
-				inputParams2.m_maxFitValue = particle1.m_energy+2*particle1.m_energy;
-				inputParams2.m_fitOptions = "S";
-				fitHistogramWithGaussian(inputParams2, fitResult2, pPureNeutralEnergyHistogram);
-
-				if(fitResult2.m_isSuccessful)
+				if(drawDetailed)
 				{
-					pPureRecNeutralEnergyMeanGraph->SetPoint(currentPointId2, pOverlayInfo->m_separationDistance, fitResult2.m_mean);
-					pPureRecNeutralEnergyResolGraph->SetPoint(currentPointId2, pOverlayInfo->m_separationDistance, fitResult2.m_rms/particle1.m_energy);
-					currentPointId2++;
-				}
-				else
-				{
-					std::cout << "*** WARNING : non successful fit (pure neutral) ! ***" << std::endl;
+					pCanvas = new TCanvas();
+					pCanvas->cd();
 				}
 
-				delete pPureNeutralEnergyHistogram;
-
+				// extract charged rec-meas from fit around 0
 				ss.str("");
-				ss << "histo_charged_" << AlgorithmName(algorithmType) << "_" << DataName(dataType) << "_" << pOverlayInfo->m_separationDistance << "cm";
+				ss << "histo_charged_energy_difference_" << AlgorithmName(algorithmType) << "_" << DataName(dataType) << "_" << pOverlayInfo->m_separationDistance << "cm";
+				TH1 *pChargedEnergyDifferenceHistogram = createHistogram(ss.str().c_str(), ss.str().c_str(), 121, -60, 60,
+						pOverlayInfo->m_pAnalysis->chargedEnergyDifferenceDistribution);
 
-				TH1 *pPureChargedEnergyHistogram = createHistogram(ss.str().c_str(), ss.str().c_str(), particle2.m_energy*6 + 1,
-						particle2.m_energy-3*particle2.m_energy, particle2.m_energy+3*particle2.m_energy,
-						pOverlayInfo->m_pAnalysis->pureChargedEnergyDistribution);
+				pChargedEnergyDifferenceHistogram->Fit(pGaus, "Q", "", -4, 4);
+				double chargedEnergyDifferenceFit = pGaus->GetParameter(1);
 
-				FitInputParameters inputParams3;
-				FitResult fitResult3;
-				inputParams3.m_minFitValue = particle2.m_energy-2*particle2.m_energy;
-				inputParams3.m_maxFitValue = particle2.m_energy+2*particle2.m_energy;
-				inputParams3.m_fitOptions = "S";
-				fitHistogramWithGaussian(inputParams3, fitResult3, pPureChargedEnergyHistogram);
-
-				if(fitResult3.m_isSuccessful)
+				if(drawDetailed)
 				{
-					pPureRecChargedEnergyMeanGraph->SetPoint(currentPointId3, pOverlayInfo->m_separationDistance, fitResult3.m_mean);
-					pPureRecChargedEnergyResolGraph->SetPoint(currentPointId3, pOverlayInfo->m_separationDistance, fitResult3.m_rms/particle2.m_energy);
-					currentPointId3++;
-				}
-				else
-				{
-					std::cout << "*** WARNING : non successful fit (pure charged) ! ***" << std::endl;
+					pChargedEnergyDifferenceHistogram->DrawCopy();
+
+					if(saveDetailedPlots)
+					{
+						std::string fileName = controlPlotsDirectory + ss.str() + ".pdf";
+						pCanvas->SaveAs(fileName.c_str());
+					}
 				}
 
-				delete pPureChargedEnergyHistogram;
+				delete pChargedEnergyDifferenceHistogram;
+
+				/*****************/
+				//  FILL GRAPHS  //
+				/*****************/
+
+				// global graphs
+				pNPfosGraph->SetPoint(             dis, pOverlayInfo->m_separationDistance, pOverlayInfo->m_pAnalysis->nPfosDistribution.mean);
+
+				// charged particle graphs
+				pChargedPurityGraph->SetPoint(    dis, pOverlayInfo->m_separationDistance, pOverlayInfo->m_pAnalysis->chargedPurityDistribution.mean);
+				pChargedEfficiencyGraph->SetPoint(dis, pOverlayInfo->m_separationDistance, pOverlayInfo->m_pAnalysis->chargedEfficiencyDistribution.mean);
+
+				pChargedEnergyMeanGraph->SetPoint(dis, pOverlayInfo->m_separationDistance, pOverlayInfo->m_pAnalysis->chargedEnergyDistribution.mean);
+				pChargedEnergyFitGraph->SetPoint( dis, pOverlayInfo->m_separationDistance, chargedEnergyFit);
+
+				pChargedEnergyDifferenceMeanGraph->SetPoint(dis, pOverlayInfo->m_separationDistance, pOverlayInfo->m_pAnalysis->chargedEnergyDifferenceDistribution.mean);
+				pChargedEnergyDifferenceFitGraph->SetPoint( dis, pOverlayInfo->m_separationDistance, chargedEnergyDifferenceFit);
+
+				// neutral particle graphs
+				pNeutralPurityGraph->SetPoint(     dis, pOverlayInfo->m_separationDistance, pOverlayInfo->m_pAnalysis->neutralPurityDistribution.mean);
+				pNeutralEfficiencyGraph->SetPoint( dis, pOverlayInfo->m_separationDistance, pOverlayInfo->m_pAnalysis->neutralEfficiencyDistribution.mean);
+
+				pNeutralEnergyMeanGraph->SetPoint(dis, pOverlayInfo->m_separationDistance, pOverlayInfo->m_pAnalysis->neutralEnergyDistribution.mean);
+				pNeutralEnergyFitGraph->SetPoint( dis, pOverlayInfo->m_separationDistance, neutralEnergyFit);
+
+				pNeutralEnergyDifferenceMeanGraph->SetPoint(dis, pOverlayInfo->m_separationDistance, pOverlayInfo->m_pAnalysis->neutralEnergyDifferenceDistribution.mean);
+				pNeutralEnergyDifferenceFitGraph->SetPoint( dis, pOverlayInfo->m_separationDistance, neutralEnergyDifferenceFit);
 
 				pAnalysis->m_overlayInfoStorage.push_back(pOverlayInfo);
 			}
@@ -399,8 +478,16 @@ void processAlgorithmOverlayAnalysis()
 					<< particleType1Str << " , " << particle2.m_energy << " GeV "
 					<< particleType2Str;
 
+
 			DrawAttributeMapping attributeMapping(algorithmType, dataType);
 
+
+			configureGraph(pNPfosGraph, attributeMapping);
+			pNPfosGraph->SetTitle(titleStream.str().c_str());
+			pAnalysis->m_canvasMultiGraphMap["N_PFOS"].second->Add(pNPfosGraph);
+
+
+			// charged particle configuration
 			configureGraph(pChargedPurityGraph, attributeMapping);
 			pChargedPurityGraph->SetTitle(titleStream.str().c_str());
 			pAnalysis->m_canvasMultiGraphMap["CHARGED_PURITY"].second->Add(pChargedPurityGraph);
@@ -409,33 +496,65 @@ void processAlgorithmOverlayAnalysis()
 			pChargedEfficiencyGraph->SetTitle(titleStream.str().c_str());
 			pAnalysis->m_canvasMultiGraphMap["CHARGED_EFFICIENCY"].second->Add(pChargedEfficiencyGraph);
 
-			configureGraph(pNPfosGraph, attributeMapping);
-			pNPfosGraph->SetTitle(titleStream.str().c_str());
-			pAnalysis->m_canvasMultiGraphMap["N_PFOS"].second->Add(pNPfosGraph);
+			configureGraph(pChargedEnergyMeanGraph, attributeMapping);
+			pChargedEnergyMeanGraph->SetTitle(titleStream.str().c_str());
+			pAnalysis->m_canvasMultiGraphMap["CHARGED_ENERGY_MEAN"].second->Add(pChargedEnergyMeanGraph);
 
-			configureGraph(pRecMeasNeutralEnergyGraph, attributeMapping);
-			pRecMeasNeutralEnergyGraph->SetTitle(titleStream.str().c_str());
-			pAnalysis->m_canvasMultiGraphMap["REC_MEAS_NEUTRAL_ENERGY"].second->Add(pRecMeasNeutralEnergyGraph);
+			configureGraph(pChargedEnergyFitGraph, attributeMapping);
+			pChargedEnergyFitGraph->SetTitle(titleStream.str().c_str());
+			pAnalysis->m_canvasMultiGraphMap["CHARGED_ENERGY_FIT"].second->Add(pChargedEnergyFitGraph);
 
-			configureGraph(pPureRecNeutralEnergyMeanGraph, attributeMapping);
-			pPureRecNeutralEnergyMeanGraph->SetTitle(titleStream.str().c_str());
-			pAnalysis->m_canvasMultiGraphMap["PURE_REC_NEUTRAL_ENERGY_MEAN"].second->Add(pPureRecNeutralEnergyMeanGraph);
+			configureGraph(pChargedEnergyDifferenceMeanGraph, attributeMapping);
+			pChargedEnergyDifferenceMeanGraph->SetTitle(titleStream.str().c_str());
+			pAnalysis->m_canvasMultiGraphMap["CHARGED_ENERGY_DIFFERENCE_MEAN"].second->Add(pChargedEnergyDifferenceMeanGraph);
 
-			configureGraph(pPureRecNeutralEnergyResolGraph, attributeMapping);
-			pPureRecNeutralEnergyResolGraph->SetTitle(titleStream.str().c_str());
-			pAnalysis->m_canvasMultiGraphMap["PURE_REC_NEUTRAL_ENERGY_RESOL"].second->Add(pPureRecNeutralEnergyResolGraph);
+			configureGraph(pChargedEnergyDifferenceFitGraph, attributeMapping);
+			pChargedEnergyDifferenceFitGraph->SetTitle(titleStream.str().c_str());
+			pAnalysis->m_canvasMultiGraphMap["CHARGED_ENERGY_DIFFERENCE_FIT"].second->Add(pChargedEnergyDifferenceFitGraph);
 
-			configureGraph(pPureRecChargedEnergyMeanGraph, attributeMapping);
-			pPureRecChargedEnergyMeanGraph->SetTitle(titleStream.str().c_str());
-			pAnalysis->m_canvasMultiGraphMap["PURE_REC_CHARGED_ENERGY_MEAN"].second->Add(pPureRecChargedEnergyMeanGraph);
 
-			configureGraph(pPureRecChargedEnergyResolGraph, attributeMapping);
-			pPureRecChargedEnergyResolGraph->SetTitle(titleStream.str().c_str());
-			pAnalysis->m_canvasMultiGraphMap["PURE_REC_CHARGED_ENERGY_RESOL"].second->Add(pPureRecChargedEnergyResolGraph);
+			// neutral particle configuration
+			configureGraph(pNeutralPurityGraph, attributeMapping);
+			pNeutralPurityGraph->SetTitle(titleStream.str().c_str());
+			pAnalysis->m_canvasMultiGraphMap["NEUTRAL_PURITY"].second->Add(pNeutralPurityGraph);
+
+			configureGraph(pNeutralEfficiencyGraph, attributeMapping);
+			pNeutralEfficiencyGraph->SetTitle(titleStream.str().c_str());
+			pAnalysis->m_canvasMultiGraphMap["NEUTRAL_EFFICIENCY"].second->Add(pNeutralEfficiencyGraph);
+
+			configureGraph(pNeutralEnergyMeanGraph, attributeMapping);
+			pNeutralEnergyMeanGraph->SetTitle(titleStream.str().c_str());
+			pAnalysis->m_canvasMultiGraphMap["NEUTRAL_ENERGY_MEAN"].second->Add(pNeutralEnergyMeanGraph);
+
+			configureGraph(pNeutralEnergyFitGraph, attributeMapping);
+			pNeutralEnergyFitGraph->SetTitle(titleStream.str().c_str());
+			pAnalysis->m_canvasMultiGraphMap["NEUTRAL_ENERGY_FIT"].second->Add(pNeutralEnergyFitGraph);
+
+			configureGraph(pNeutralEnergyDifferenceMeanGraph, attributeMapping);
+			pNeutralEnergyDifferenceMeanGraph->SetTitle(titleStream.str().c_str());
+			pAnalysis->m_canvasMultiGraphMap["NEUTRAL_ENERGY_DIFFERENCE_MEAN"].second->Add(pNeutralEnergyDifferenceMeanGraph);
+
+			configureGraph(pNeutralEnergyDifferenceFitGraph, attributeMapping);
+			pNeutralEnergyDifferenceFitGraph->SetTitle(titleStream.str().c_str());
+			pAnalysis->m_canvasMultiGraphMap["NEUTRAL_ENERGY_DIFFERENCE_FIT"].second->Add(pNeutralEnergyDifferenceFitGraph);
+
 		} // algorithm loop
 	} // data loop
 
-	// plots everything
+	gStyle->SetOptFit(0);
+
+	/*********************/
+	//  PLOT EVERYTHING  //
+	/*********************/
+
+	// global plots
+	pAnalysis->m_canvasMultiGraphMap["N_PFOS"].first->cd();
+	drawOverlayMultiGraph(pAnalysis->m_canvasMultiGraphMap["N_PFOS"].second, "#N_{pfo}");
+	pAnalysis->m_canvasMultiGraphMap["N_PFOS"].second->GetYaxis()->SetRangeUser(0, 3);
+	pAnalysis->m_canvasMultiGraphMap["N_PFOS"].first->Update();
+
+
+	// charged particle plots
 	pAnalysis->m_canvasMultiGraphMap["CHARGED_PURITY"].first->cd();
 	drawOverlayMultiGraph(pAnalysis->m_canvasMultiGraphMap["CHARGED_PURITY"].second, "Charged particle purity");
 	pAnalysis->m_canvasMultiGraphMap["CHARGED_PURITY"].second->GetYaxis()->SetRangeUser(0, 1);
@@ -446,33 +565,48 @@ void processAlgorithmOverlayAnalysis()
 	pAnalysis->m_canvasMultiGraphMap["CHARGED_EFFICIENCY"].second->GetYaxis()->SetRangeUser(0, 1);
 	pAnalysis->m_canvasMultiGraphMap["CHARGED_EFFICIENCY"].first->Update();
 
-	pAnalysis->m_canvasMultiGraphMap["N_PFOS"].first->cd();
-	drawOverlayMultiGraph(pAnalysis->m_canvasMultiGraphMap["N_PFOS"].second, "#N_{pfo}");
-	pAnalysis->m_canvasMultiGraphMap["N_PFOS"].first->Update();
+ pAnalysis->m_canvasMultiGraphMap["CHARGED_ENERGY_MEAN"].first->cd();
+	drawOverlayMultiGraph(pAnalysis->m_canvasMultiGraphMap["CHARGED_ENERGY_MEAN"].second, "[MEAN] Mean reconstructed charged energy [GeV]");
+	pAnalysis->m_canvasMultiGraphMap["CHARGED_ENERGY_MEAN"].first->Update();
 
-	pAnalysis->m_canvasMultiGraphMap["REC_MEAS_NEUTRAL_ENERGY"].first->cd();
-	drawOverlayMultiGraph(pAnalysis->m_canvasMultiGraphMap["REC_MEAS_NEUTRAL_ENERGY"].second, "Mean of Recovered - measured neutral energy [GeV]");
-	pAnalysis->m_canvasMultiGraphMap["REC_MEAS_NEUTRAL_ENERGY"].first->Update();
+ pAnalysis->m_canvasMultiGraphMap["CHARGED_ENERGY_FIT"].first->cd();
+	drawOverlayMultiGraph(pAnalysis->m_canvasMultiGraphMap["CHARGED_ENERGY_FIT"].second, "[FIT] Mean reconstructed charged energy [GeV]");
+	pAnalysis->m_canvasMultiGraphMap["CHARGED_ENERGY_FIT"].first->Update();
 
-	pAnalysis->m_canvasMultiGraphMap["PURE_REC_NEUTRAL_ENERGY_MEAN"].first->cd();
-	drawOverlayMultiGraph(pAnalysis->m_canvasMultiGraphMap["PURE_REC_NEUTRAL_ENERGY_MEAN"].second, "Mean of pure reconstructed neutral energy [GeV]");
-	pAnalysis->m_canvasMultiGraphMap["PURE_REC_NEUTRAL_ENERGY_MEAN"].first->Update();
+ pAnalysis->m_canvasMultiGraphMap["CHARGED_ENERGY_DIFFERENCE_MEAN"].first->cd();
+	drawOverlayMultiGraph(pAnalysis->m_canvasMultiGraphMap["CHARGED_ENERGY_DIFFERENCE_MEAN"].second, "[MEAN] Mean rec-meas charged energy [GeV]");
+	pAnalysis->m_canvasMultiGraphMap["CHARGED_ENERGY_DIFFERENCE_MEAN"].first->Update();
 
-	pAnalysis->m_canvasMultiGraphMap["PURE_REC_NEUTRAL_ENERGY_RESOL"].first->cd();
-	drawOverlayMultiGraph(pAnalysis->m_canvasMultiGraphMap["PURE_REC_NEUTRAL_ENERGY_RESOL"].second, "#sigma_{E}/E of pure reconstructed neutral energy");
-	pAnalysis->m_canvasMultiGraphMap["PURE_REC_NEUTRAL_ENERGY_RESOL"].first->Update();
+ pAnalysis->m_canvasMultiGraphMap["CHARGED_ENERGY_DIFFERENCE_FIT"].first->cd();
+	drawOverlayMultiGraph(pAnalysis->m_canvasMultiGraphMap["CHARGED_ENERGY_DIFFERENCE_FIT"].second, "[FIT] Mean rec-meas charged energy [GeV]");
+	pAnalysis->m_canvasMultiGraphMap["CHARGED_ENERGY_DIFFERENCE_FIT"].first->Update();
 
- pAnalysis->m_canvasMultiGraphMap["PURE_REC_CHARGED_ENERGY_MEAN"].first->cd();
-	drawOverlayMultiGraph(pAnalysis->m_canvasMultiGraphMap["PURE_REC_CHARGED_ENERGY_MEAN"].second, "Mean of pure reconstructed charged energy [GeV]");
-	pAnalysis->m_canvasMultiGraphMap["PURE_REC_CHARGED_ENERGY_MEAN"].first->Update();
 
-	pAnalysis->m_canvasMultiGraphMap["PURE_REC_CHARGED_ENERGY_RESOL"].first->cd();
-	drawOverlayMultiGraph(pAnalysis->m_canvasMultiGraphMap["PURE_REC_CHARGED_ENERGY_RESOL"].second, "#sigma_{E}/E of pure reconstructed charged energy");
-	pAnalysis->m_canvasMultiGraphMap["PURE_REC_CHARGED_ENERGY_RESOL"].first->Update();
+	// neutral particle plots
+	pAnalysis->m_canvasMultiGraphMap["NEUTRAL_PURITY"].first->cd();
+	drawOverlayMultiGraph(pAnalysis->m_canvasMultiGraphMap["NEUTRAL_PURITY"].second, "Neutral particle purity");
+	pAnalysis->m_canvasMultiGraphMap["NEUTRAL_PURITY"].second->GetYaxis()->SetRangeUser(0, 1);
+	pAnalysis->m_canvasMultiGraphMap["NEUTRAL_PURITY"].first->Update();
 
-	// and see the result
-	pAnalysis->m_canvasMultiGraphMap["N_PFOS"].first->WaitPrimitive();
+	pAnalysis->m_canvasMultiGraphMap["NEUTRAL_EFFICIENCY"].first->cd();
+	drawOverlayMultiGraph(pAnalysis->m_canvasMultiGraphMap["NEUTRAL_EFFICIENCY"].second, "Neutral particle efficiency");
+	pAnalysis->m_canvasMultiGraphMap["NEUTRAL_EFFICIENCY"].second->GetYaxis()->SetRangeUser(0, 1);
+	pAnalysis->m_canvasMultiGraphMap["NEUTRAL_EFFICIENCY"].first->Update();
 
-	delete pAnalysis;
+ pAnalysis->m_canvasMultiGraphMap["NEUTRAL_ENERGY_MEAN"].first->cd();
+	drawOverlayMultiGraph(pAnalysis->m_canvasMultiGraphMap["NEUTRAL_ENERGY_MEAN"].second, "[MEAN] Mean reconstructed neutral energy [GeV]");
+	pAnalysis->m_canvasMultiGraphMap["NEUTRAL_ENERGY_MEAN"].first->Update();
+
+ pAnalysis->m_canvasMultiGraphMap["NEUTRAL_ENERGY_FIT"].first->cd();
+	drawOverlayMultiGraph(pAnalysis->m_canvasMultiGraphMap["NEUTRAL_ENERGY_FIT"].second, "[FIT] Mean reconstructed neutral energy [GeV]");
+	pAnalysis->m_canvasMultiGraphMap["NEUTRAL_ENERGY_FIT"].first->Update();
+
+ pAnalysis->m_canvasMultiGraphMap["NEUTRAL_ENERGY_DIFFERENCE_MEAN"].first->cd();
+	drawOverlayMultiGraph(pAnalysis->m_canvasMultiGraphMap["NEUTRAL_ENERGY_DIFFERENCE_MEAN"].second, "[MEAN] Mean rec-meas neutral energy [GeV]");
+	pAnalysis->m_canvasMultiGraphMap["NEUTRAL_ENERGY_DIFFERENCE_MEAN"].first->Update();
+
+ pAnalysis->m_canvasMultiGraphMap["NEUTRAL_ENERGY_DIFFERENCE_FIT"].first->cd();
+	drawOverlayMultiGraph(pAnalysis->m_canvasMultiGraphMap["NEUTRAL_ENERGY_DIFFERENCE_FIT"].second, "[FIT] Mean rec-meas neutral energy [GeV]");
+	pAnalysis->m_canvasMultiGraphMap["NEUTRAL_ENERGY_DIFFERENCE_FIT"].first->Update();
 }
 
