@@ -52,9 +52,7 @@ pandora::StatusCode TopologicalTrackAssociationAlgorithm::RunArborAlgorithm()
 	}
 
 	if(pTrackList->empty())
-	{
 		return pandora::STATUS_CODE_SUCCESS;
-	}
 
 	// grab the current cluster list
 	const arbor::ClusterList *pClusterList = NULL;
@@ -95,9 +93,8 @@ pandora::StatusCode TopologicalTrackAssociationAlgorithm::RunArborAlgorithm()
 				const pandora::CartesianVector &bestTrackProjectionPosition = bestTrackState.GetPosition();
 
 				if(trackClusterDistance < (bestTrackProjectionPosition - seedPosition).GetMagnitude())
-				{
 					pBestTrack = pTrack;
-				}
+
 			}
 		}
 
