@@ -131,6 +131,11 @@ class IConnectable
 	virtual pandora::StatusCode RemoveConnectionWith(Object *pObject) = 0;
 
 	/**
+	 * @brief Remove all connection with the other objects
+	 */
+	virtual pandora::StatusCode RemoveAllConnections() = 0;
+
+	/**
 	 * @brief Set the current backward connector. This connector should </br>
 	 * be unique in the arbor algorithm in order to build a tree.
 	 *

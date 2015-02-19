@@ -65,6 +65,7 @@ public:
 	virtual pandora::StatusCode ConnectWith(Object *pObject, ConnectorDirection direction, float weight = 1.0);
 	virtual pandora::StatusCode ConnectWith(Object *pObject, ConnectorDirection direction, Connector *&pConnector, float weight = 1.0);
 	virtual pandora::StatusCode RemoveConnectionWith(Object *pObject);
+	virtual pandora::StatusCode RemoveAllConnections();
 	virtual pandora::StatusCode SetCurrentBackwardConnector(Connector *pConnector);
 	virtual Connector *GetCurrentBackwardConnector() const;
 

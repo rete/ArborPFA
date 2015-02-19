@@ -73,29 +73,7 @@ Object::Object(pandora::CaloHit *pCaloHit) :
 
 Object::~Object() 
 {
-	for(ConnectorList::iterator iter = m_pMetaData->m_connectorList.begin(), endIter = m_pMetaData->m_connectorList.end() ; endIter != iter ; ++iter)
-	{
-		Connector *pConnector = *iter;
-		Object *pOtherObject = NULL;
-
-		// Find the other connector
-		if(pConnector->GetFirst() == this)
-		{
-			pOtherObject = pConnector->GetSecond();
-		}
-		else
-		{
-			pOtherObject = pConnector->GetFirst();
-		}
-
-		PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->RemoveConnectionWith(pOtherObject));
-	}
-
-	// consistency check ...
-	if(!m_pMetaData->m_connectorList.empty())
-		throw pandora::StatusCodeException(pandora::STATUS_CODE_FAILURE);
-
-	delete m_pMetaData;
+	PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, RemoveAllConnections());
 	m_caloHitList.clear();
 }
 
@@ -332,6 +310,34 @@ pandora::StatusCode Object::RemoveConnectionWith(Object *pObject)
 
 		break;
 	}
+
+	return pandora::STATUS_CODE_SUCCESS;
+}
+
+//--------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode Object::RemoveAllConnections()
+{
+	for(ConnectorList::iterator iter = m_pMetaData->m_connectorList.begin(), endIter = m_pMetaData->m_connectorList.end() ; endIter != iter ; ++iter)
+	{
+		Connector *pConnector = *iter;
+		Object *pOtherObject = NULL;
+
+		// Find the other connector
+		if(pConnector->GetFirst() == this)
+		{
+			pOtherObject = pConnector->GetSecond();
+		}
+		else
+		{
+			pOtherObject = pConnector->GetFirst();
+		}
+
+		PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->RemoveConnectionWith(pOtherObject));
+	}
+
+	delete m_pMetaData;
+	m_pMetaData = new ObjectMetaData();
 
 	return pandora::STATUS_CODE_SUCCESS;
 }
