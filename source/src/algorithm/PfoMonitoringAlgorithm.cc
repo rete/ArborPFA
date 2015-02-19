@@ -241,10 +241,15 @@ pandora::StatusCode PfoMonitoringAlgorithm::RunSdhcalSinglePfoMonitoring(const p
 
 pandora::StatusCode PfoMonitoringAlgorithm::RunSdhcalOverlayPfoMonitoring(const pandora::PfoList *const pPfoList)
 {
- // loop over the pfo list
+	int nChargedPfos = 0;
+
+	// loop over the pfo list
  for(pandora::PfoList::const_iterator itPFO = pPfoList->begin(), itPFOEnd = pPfoList->end(); itPFO != itPFOEnd; ++itPFO)
  {
   pandora::ParticleFlowObject *pPfo = *itPFO;
+
+  if(pPfo->GetCharge() != 0)
+  	nChargedPfos ++;
 
   // grab the calo hit list address map
   // and extract the type flag put on each calo hit
@@ -309,6 +314,10 @@ pandora::StatusCode PfoMonitoringAlgorithm::RunSdhcalOverlayPfoMonitoring(const 
 				mcPfoCaloHitList2.insert(pCaloHit);
 			}
 		}
+
+	 // do not fill the tree if we have not enough charged particles (only for this study and overlay)
+	 if(nChargedPfos < m_nTrackMinimumCutForNoFill)
+	 	m_shouldFillTree = false;
 
 		m_mcParticleEnergy1 = 0.f;
 		m_mcParticleEnergy2 = 0.f;
