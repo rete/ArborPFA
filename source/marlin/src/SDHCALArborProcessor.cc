@@ -550,7 +550,7 @@ pandora::StatusCode SDHCALArborProcessor::CreateTracks(EVENT::LCEvent *pLCEvent)
   }
   catch (EVENT::Exception &exception)
   {
-      streamlog_out(WARNING) << "Failed to extract a vertex: " << exception.what() << std::endl;
+      streamlog_out(WARNING) << "Failed to extract a track: " << exception.what() << std::endl;
   }
 
 		return pandora::STATUS_CODE_SUCCESS;
