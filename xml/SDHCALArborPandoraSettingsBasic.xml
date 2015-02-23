@@ -7,7 +7,7 @@ Arbor Pandora settings xml file for Arbor algorithms
 
     <!-- HELPER CLASS SETTINGS -->
     <IsMonitoringEnabled> true </IsMonitoringEnabled>
-    <ShouldDisplayAlgorithmInfo> true </ShouldDisplayAlgorithmInfo>
+    <ShouldDisplayAlgorithmInfo>true</ShouldDisplayAlgorithmInfo>
 
     <!-- CaloHit helper settings -->
     <CaloHitHelper>
@@ -15,7 +15,7 @@ Arbor Pandora settings xml file for Arbor algorithms
         <ShouldCalculateSurroundingEnergy>  false  </ShouldCalculateSurroundingEnergy>
     </CaloHitHelper>
 
-
+    <!-- Arbor plugins -->
     <ArborPlugin>
   	   <energyFunction name="SdhcalEnergyFunction">
          <ResolutionEnergyFactor>        0.55    </ResolutionEnergyFactor>
@@ -55,14 +55,13 @@ Arbor Pandora settings xml file for Arbor algorithms
       <ReplaceCurrentObjectList>  true  </ReplaceCurrentObjectList>
     </algorithm>
     
-    
     <!-- Tag some objects as isolated -->
-    <algorithm type = "IsolationTagging">
+<!--     <algorithm type = "IsolationTagging">
        <MaxNObjectsInSamePseudoLayer> 3 </MaxNObjectsInSamePseudoLayer>
        <MaxNObjects> 1 </MaxNObjects> 
        <MaxNeighborDistance> 80.f </MaxNeighborDistance>
        <MaxIntraLayerNeighborDistance> 18.f </MaxIntraLayerNeighborDistance>
-    </algorithm>
+    </algorithm> -->
     
     
     <!-- Create clusters by connecting them in an oriented tree topology -->
@@ -78,7 +77,7 @@ Arbor Pandora settings xml file for Arbor algorithms
             <ConnectionStrategy> 0 </ConnectionStrategy>
             <MaxForwardPseudoLayer> 3 </MaxForwardPseudoLayer>
             <EcalConnectionDistance> 35.0 </EcalConnectionDistance>
-            <HcalConnectionDistance> 65.0 </HcalConnectionDistance>
+            <HcalConnectionDistance> 45.0 </HcalConnectionDistance>
             <AllowForwardConnectionForIsolatedObjects> false </AllowForwardConnectionForIsolatedObjects>        
           </algorithm>
           
@@ -125,21 +124,24 @@ Arbor Pandora settings xml file for Arbor algorithms
       <!-- Make topological associations between clusters -->
       <algorithm type="TopologicalAssociationParent" description="TopologicalAssociation">
         <associationAlgorithms>
-        
+
           <!-- Create track to cluster associations -->
           <algorithm type = "TopologicalTrackAssociation">
             <ShouldMergeChargedTrees> true </ShouldMergeChargedTrees>
-            <TrackToClusterDistanceCut> 45.f </TrackToClusterDistanceCut>
+            <TrackToClusterDistanceCut> 55.f </TrackToClusterDistanceCut>
             <TrackToClusterNLayersCut> 2 </TrackToClusterNLayersCut>
+            <TrackClusterChi2Cut> 3 </TrackClusterChi2Cut>
+            <Chi2SigmaFactor> 2 </Chi2SigmaFactor>
+            <EnergyFunctionName> SdhcalEnergyFunction </EnergyFunctionName>
           </algorithm>
           
-          <!-- Merge neutral trees that have close-by seeds --> 
-          <algorithm type = "NeutralTreeMerging">
-            <UseClustersWithTrackAssociation> true </UseClustersWithTrackAssociation>
+         <!-- Merge neutral trees that have close-by seeds --> 
+         <algorithm type = "NeutralTreeMerging">
+            <UseClustersWithTrackAssociation> false </UseClustersWithTrackAssociation>
             <SeedSeparationDistance> 25.0 </SeedSeparationDistance>
-          </algorithm>
-          
-          <!-- Associate small neutral fragments to their closest cluster -->
+          </algorithm> 
+        
+                  <!-- Associate small neutral fragments to their closest cluster -->
           <algorithm type = "SmallNeutralFragmentMerging">
             <MaximumDaughterNObject> 20 </MaximumDaughterNObject>
             <LargeDistanceCut> 1000.f </LargeDistanceCut>
@@ -155,6 +157,15 @@ Arbor Pandora settings xml file for Arbor algorithms
     </algorithm>
     
     
+    
+    
+    <algorithm type = "ArborReclustering">
+      <TrackClusterChi2Cut> 3 </TrackClusterChi2Cut>
+      <Chi2SigmaFactor> 2 </Chi2SigmaFactor>
+    </algorithm>
+    
+    
+    
     <!-- ARBOR-to-PANDORA cluster conversion -->
     <algorithm type = "ClusteringParent">
       <algorithm type = "ArborClusterConverter" description = "ClusterFormation">
@@ -164,7 +175,6 @@ Arbor Pandora settings xml file for Arbor algorithms
       <ReplaceCurrentClusterList>  true             </ReplaceCurrentClusterList>
     </algorithm>
     
-    
     <!-- Prepare tracks for pfo creation -->
     <algorithm type = "TrackPreparation">
       <ShouldMakeAssociations>  false  </ShouldMakeAssociations>
@@ -173,7 +183,7 @@ Arbor Pandora settings xml file for Arbor algorithms
     <!-- Prepare clusters for pfo creation -->
     <algorithm type = "ClusterPreparation">
         <CandidateListNames>  OutputClusters  </CandidateListNames>
-    </algorithm>
+    </algorithm> 
 
     <!-- Create PFOs -->
     <algorithm type = "PfoCreation">
@@ -182,24 +192,24 @@ Arbor Pandora settings xml file for Arbor algorithms
       <ShouldCreateNeutralPfos> true </ShouldCreateNeutralPfos>
       <MinClusterHadronicEnergy> 0.f </MinClusterHadronicEnergy>
       <MinClusterElectromagneticEnergy> 0.f </MinClusterElectromagneticEnergy>
-      <MinHitsInCluster> 10 </MinHitsInCluster>
-      <AllowSingleLayerClusters> false </AllowSingleLayerClusters>
+      <MinHitsInCluster> 0 </MinHitsInCluster>
+      <AllowSingleLayerClusters> true </AllowSingleLayerClusters>
     </algorithm>
    
     <!-- Monitor pfos. Save some variables in a root file -->
-   <algorithm type = "ArborPfoMonitoring">
-      <RootFileName> ArborPFAOutput.root </RootFileName>
+<!--  <algorithm type = "ArborPfoMonitoring">
+      <RootFileName> ArborPFAOutput_single_10ch.root </RootFileName>
       <RootTreeName> PfoMonitoring </RootTreeName>
       <EnergyFunctionName> SdhcalEnergyFunction </EnergyFunctionName>
       <EnergyThresholdValues> 0.0406459 0.101952 0.258078 </EnergyThresholdValues>
-      <!-- 0 for no additional analysis, 1 for single particle and 2 for overlay particles -->
+       0 for no additional analysis, 1 for single particle and 2 for overlay particles
       <AnalysisType> 2 </AnalysisType>
-      <!-- Minimum N tracks required in the event in order to fill an entry -->
+       Minimum N tracks required in the event in order to fill an entry
       <NTrackMinimumCutForNoFill> 1 </NTrackMinimumCutForNoFill>
-    </algorithm> 
+    </algorithm> --> 
     
     <!-- EVE Monitoring -->
-    <algorithm type = "ArborMonitoring" description = "display all">
+     <algorithm type = "ArborMonitoring" description = "display all">
        
        <DisplayEvent>true</DisplayEvent>
        
