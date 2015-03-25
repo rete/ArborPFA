@@ -82,6 +82,21 @@ class Tree
   */
  pandora::CaloHitList GetCaloHitList() const;
 
+ /**
+  *
+  */
+ pandora::PseudoLayer GetFirstPseudoLayer() const;
+
+ /**
+  *
+  */
+ pandora::PseudoLayer GetLastPseudoLayer() const;
+
+ /**
+  *
+  */
+ const pandora::CartesianVector &GetSeedPosition() const;
+
 protected:
 
  /**
@@ -112,6 +127,7 @@ protected:
  Object       *m_pSeedObject;
  ObjectList    m_objectList;
  BranchList    m_branchList;
+ pandora::PseudoLayer m_lastPseudoLayer;
 
  friend class ClusterManager;
  friend class Cluster;

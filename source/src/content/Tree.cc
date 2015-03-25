@@ -42,7 +42,8 @@ namespace arbor
 {
 
 Tree::Tree(Object *pSeedObject) :
- m_pSeedObject(NULL)
+ m_pSeedObject(NULL),
+ m_lastPseudoLayer(0)
 {
 	if(NULL == pSeedObject)
 		throw StatusCodeException(STATUS_CODE_INVALID_PARAMETER);
@@ -70,6 +71,7 @@ pandora::StatusCode Tree::BuildTree(Object *pSeedObject)
 	m_pSeedObject = pSeedObject;
 	m_objectList.clear();
 	m_objectList.insert(pSeedObject);
+	m_lastPseudoLayer = m_pSeedObject->GetPseudoLayer();
 
 	return this->RecursiveTreeBuilding(pSeedObject);
 }
@@ -179,6 +181,11 @@ pandora::StatusCode Tree::RecursiveTreeBuilding(Object *pCurrentObject)
 	if(NULL == pCurrentObject)
 		return pandora::STATUS_CODE_INVALID_PARAMETER;
 
+	pandora::PseudoLayer pseudoLayer = pCurrentObject->GetPseudoLayer();
+
+	if(pseudoLayer > m_lastPseudoLayer)
+		m_lastPseudoLayer = pseudoLayer;
+
 	const ConnectorList &forwardConnectors = pCurrentObject->GetForwardConnectorList();
 
 	if(forwardConnectors.empty())
@@ -201,6 +208,27 @@ pandora::StatusCode Tree::RecursiveTreeBuilding(Object *pCurrentObject)
 	}
 
 	return pandora::STATUS_CODE_SUCCESS;
+}
+
+//------------------------------------------------------------------------------------------------------
+
+pandora::PseudoLayer Tree::GetFirstPseudoLayer() const
+{
+	return m_pSeedObject->GetPseudoLayer();
+}
+
+//------------------------------------------------------------------------------------------------------
+
+pandora::PseudoLayer Tree::GetLastPseudoLayer() const
+{
+	return m_lastPseudoLayer;
+}
+
+//------------------------------------------------------------------------------------------------------
+
+const pandora::CartesianVector &Tree::GetSeedPosition() const
+{
+	return m_pSeedObject->GetPosition();
 }
 
 //------------------------------------------------------------------------------------------------------
