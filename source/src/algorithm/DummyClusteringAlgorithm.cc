@@ -42,7 +42,7 @@ pandora::StatusCode DummyClusteringAlgorithm::RunArborAlgorithm()
 
 	for(arbor::ObjectList::const_iterator iter = pObjectList->begin() , endIter = pObjectList->end() ; endIter != iter ; ++iter)
 	{
-		if((*iter)->GetFlag(ISOLATED_OBJECT))
+		if((*iter)->GetFlag(MIP_OBJECT))
 		{
 			if(NULL == pCluster)
 			{
