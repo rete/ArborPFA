@@ -45,9 +45,14 @@
 #include "arborpfa/algorithm/KappaConnectorCleaningAlgorithm.h"
 #include "arborpfa/algorithm/TreeClusteringAlgorithm.h"
 #include "arborpfa/algorithm/TopologicalTrackAssociationAlgorithm.h"
+#include "arborpfa/algorithm/EnergyDrivenTrackAssociationAlgorithm.h"
 #include "arborpfa/algorithm/NeutralTreeMergingAlgorithm.h"
 #include "arborpfa/algorithm/SmallNeutralFragmentMergingAlgorithm.h"
+#include "arborpfa/algorithm/PointingClusterAssociationAlgorithm.h"
+#include "arborpfa/algorithm/MipTrackCandidateTaggingAlgorithm.h"
+#include "arborpfa/algorithm/PrimaryTrackConnectionAlgorithm.h"
 #include "arborpfa/algorithm/ArborClusterConverterAlgorithm.h"
+#include "arborpfa/algorithm/ArborReclusteringAlgorithm.h"
 
 // monitoring
 #include "arborpfa/algorithm/ArborMonitoringAlgorithm.h"
@@ -113,6 +118,8 @@ pandora::StatusCode ArborApiImpl::RegisterArborAlgorithms(Arbor &arbor) const
 	// additional event preparation algorithms
 	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "IsolationTagging",
 				  new arbor::IsolationTaggingAlgorithm::Factory));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "MipTrackCandidateTagging",
+				  new arbor::MipTrackCandidateTaggingAlgorithm::Factory));
 
 	// connector algorithms
 	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "ConnectorSeeding",
@@ -121,14 +128,20 @@ pandora::StatusCode ArborApiImpl::RegisterArborAlgorithms(Arbor &arbor) const
 				  new arbor::KappaConnectorCleaningAlgorithm::Factory));
 	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "TreeClustering",
 					  new arbor::TreeClusteringAlgorithm::Factory));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "PrimaryTrackConnection",
+					  new arbor::PrimaryTrackConnectionAlgorithm::Factory));
 
 	// associations algorithms
 	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "TopologicalTrackAssociation",
 			  new arbor::TopologicalTrackAssociationAlgorithm::Factory));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "EnergyDrivenTrackAssociation",
+			  new arbor::EnergyDrivenTrackAssociationAlgorithm::Factory));
 	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "NeutralTreeMerging",
 			  new arbor::NeutralTreeMergingAlgorithm::Factory));
 	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "SmallNeutralFragmentMerging",
 			  new arbor::SmallNeutralFragmentMergingAlgorithm::Factory));
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "PointingClusterAssociation",
+			  new arbor::PointingClusterAssociationAlgorithm::Factory));
 
 	// additional algorithms
 	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "ArborClusterConverter",
@@ -137,6 +150,10 @@ pandora::StatusCode ArborApiImpl::RegisterArborAlgorithms(Arbor &arbor) const
 				  new arbor::ArborMonitoringAlgorithm::Factory));
 	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "ArborPfoMonitoring",
 				  new arbor::PfoMonitoringAlgorithm::Factory));
+
+	// reclustering
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "ArborReclustering",
+				  new arbor::ArborReclusteringAlgorithm::Factory));
 
 	return pandora::STATUS_CODE_SUCCESS;
 }
