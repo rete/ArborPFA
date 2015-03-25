@@ -92,7 +92,8 @@ namespace arbor
 		CORE_OBJECT,
 		ISOLATED_OBJECT,
 		MIP_OBJECT,
-		NOISE_OBJECT
+		NOISE_OBJECT,
+		SPLIT_FROM_BIG_CLUSTER
 	};
 
 	typedef std::set<Connector*>                                     ConnectorList;
