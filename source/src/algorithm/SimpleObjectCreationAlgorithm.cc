@@ -291,6 +291,15 @@ pandora::StatusCode SimpleObjectCreationAlgorithm::CreateObjectsFromCaloHitList(
 	PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, ArborContentApi::Object::Create(*this, pObject, pFirstCaloHit));
 	firstIter++;
 
+	if(shouldSplit)
+	{
+		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pObject->SetFlag(SPLIT_FROM_BIG_CLUSTER, true));
+	}
+	else
+	{
+		PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pObject->SetFlag(SPLIT_FROM_BIG_CLUSTER, false));
+	}
+
 	for(CaloHitList::iterator iter = firstIter , endIter = caloHitList.end() ; endIter != iter ; ++iter)
 	{
 		CaloHit *pCaloHit = *iter;
@@ -299,6 +308,7 @@ pandora::StatusCode SimpleObjectCreationAlgorithm::CreateObjectsFromCaloHitList(
 		{
 			Object *pNewObject = NULL;
 			PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, ArborContentApi::Object::Create(*this, pNewObject, pCaloHit));
+			PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, pNewObject->SetFlag(SPLIT_FROM_BIG_CLUSTER, true));
 		}
 		else
 			pObject->AddCaloHit(pCaloHit);
