@@ -52,7 +52,7 @@
 #include "arborpfa/algorithm/MipTrackCandidateTaggingAlgorithm.h"
 #include "arborpfa/algorithm/PrimaryTrackConnectionAlgorithm.h"
 #include "arborpfa/algorithm/ArborClusterConverterAlgorithm.h"
-#include "arborpfa/algorithm/ArborReclusteringAlgorithm.h"
+//#include "arborpfa/algorithm/ArborReclusteringAlgorithm.h"
 
 // monitoring
 #include "arborpfa/algorithm/ArborMonitoringAlgorithm.h"
@@ -151,9 +151,9 @@ pandora::StatusCode ArborApiImpl::RegisterArborAlgorithms(Arbor &arbor) const
 	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "ArborPfoMonitoring",
 				  new arbor::PfoMonitoringAlgorithm::Factory));
 
-	// reclustering
-	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "ArborReclustering",
-				  new arbor::ArborReclusteringAlgorithm::Factory));
+//	// reclustering
+//	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, this->RegisterAlgorithmFactory(arbor, "ArborReclustering",
+//				  new arbor::ArborReclusteringAlgorithm::Factory));
 
 	return pandora::STATUS_CODE_SUCCESS;
 }
