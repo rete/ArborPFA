@@ -259,6 +259,29 @@ pandora::StatusCode ArborContentApiImpl::DeleteCluster(arbor::Cluster *pCluster)
 
 //-----------------------------------------------------------------------------------------------------------------------
 
+pandora::StatusCode ArborContentApiImpl::MergeAndDeleteClusters(arbor::Cluster *pClusterToEnlarge, arbor::Cluster *pClusterToDelete) const
+{
+	if(NULL == pClusterToEnlarge || NULL == pClusterToDelete)
+		return pandora::STATUS_CODE_FAILURE;
+
+	if(pClusterToEnlarge == pClusterToDelete)
+		return pandora::STATUS_CODE_INVALID_PARAMETER;
+
+	// move all trees between clusters and delete
+	const TreeList treeList(pClusterToDelete->GetTreeList());
+
+	for(TreeList::const_iterator treeIter = treeList.begin() , treeEndIter = treeList.end() ;
+			treeEndIter != treeIter ; ++treeIter)
+	{
+		PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pArbor->m_pClusterManager->MoveTree(pClusterToDelete, pClusterToEnlarge, (*treeIter)));
+	}
+
+	return m_pArbor->m_pClusterManager->DeleteObject(pClusterToDelete);
+}
+
+//-----------------------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------------------------------------
+
 pandora::StatusCode ArborContentApiImpl::RemoveBranchFromTree(Tree *pTree, Branch *pBranch) const
 {
 	return m_pArbor->m_pClusterManager->RemoveBranchFromTree(pTree, pBranch);
@@ -383,6 +406,60 @@ pandora::StatusCode ArborContentApiImpl::GetEnergyResolution(float energy,		floa
 pandora::StatusCode ArborContentApiImpl::GetEnergyResolution(const std::string &energyFunctionName, float energy,		float &energyResolution) const
 {
 	return m_pArbor->m_pArborPluginManager->GetEnergyResolution(energyFunctionName, energy, energyResolution);
+}
+
+//-----------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborContentApiImpl::InitializeReclustering(const ArborAlgorithm &algorithm, const pandora::TrackList &trackList,
+		const arbor::ClusterList &clusterList, std::string &originalClusterListName) const
+{
+	std::string inputClusterListName;
+	PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pArbor->m_pClusterManager->GetAlgorithmInputListName((const pandora::Algorithm *)&algorithm, inputClusterListName));
+	PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pArbor->m_pClusterManager->MoveObjectsToTemporaryListAndSetCurrent((const pandora::Algorithm *)&algorithm, inputClusterListName,
+			originalClusterListName, clusterList));
+
+	// create a fake temporary track list for arbor re-clustering process
+	// It will be dropped at the end of the reclustering
+	PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraContentApi::SaveTrackList((const pandora::Algorithm &)algorithm, trackList, originalClusterListName));
+	PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraContentApi::ReplaceCurrentTrackList((const pandora::Algorithm &)algorithm, originalClusterListName));
+
+	// initialize reclustering for object list (recluster metadata)
+	PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pArbor->m_pObjectManager->InitializeReclustering(&algorithm, clusterList, originalClusterListName));
+
+	return pandora::STATUS_CODE_SUCCESS;
+}
+
+//-----------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborContentApiImpl::EndReclustering(const ArborAlgorithm &algorithm, const std::string &selectedClusterListName,
+		const std::string &originalTrackListName) const
+{
+	// save the selected clusters in the input list
+	std::string inputClusterListName;
+	arbor::ClusterList clustersToBeDeleted;
+	PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pArbor->m_pClusterManager->GetAlgorithmInputListName((const pandora::Algorithm *)&algorithm, inputClusterListName));
+	PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pArbor->m_pClusterManager->SaveObjects(inputClusterListName, selectedClusterListName));
+	PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pArbor->m_pClusterManager->GetResetDeletionObjects((const pandora::Algorithm *)&algorithm, clustersToBeDeleted));
+
+	// drop the reclustering track list
+	// and restore the original one
+	std::string currentTrackListName;
+	PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetCurrentTrackListName((const pandora::Algorithm &)algorithm, currentTrackListName));
+
+	if(currentTrackListName != originalTrackListName)
+	{
+		PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraContentApi::DropCurrentTrackList((const pandora::Algorithm &)algorithm));
+		PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraContentApi::ReplaceCurrentTrackList((const pandora::Algorithm &)algorithm, originalTrackListName));
+	}
+
+	// select the object meta data that corresponds to selected cluster list
+	PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pArbor->m_pObjectManager->EndReclustering(selectedClusterListName));
+
+	// clean the framework with temporary lists
+	PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pArbor->m_pObjectManager->ResetAlgorithmInfo((const pandora::Algorithm *)&algorithm, false));
+	PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pArbor->m_pClusterManager->ResetAlgorithmInfo((const pandora::Algorithm *)&algorithm, false));
+
+	return pandora::STATUS_CODE_SUCCESS;
 }
 
 //-----------------------------------------------------------------------------------------------------------------------

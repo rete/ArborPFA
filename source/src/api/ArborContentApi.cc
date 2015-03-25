@@ -237,6 +237,14 @@ pandora::StatusCode ArborContentApi::DeleteCluster(const ArborAlgorithm &algorit
 
 //---------------------------------------------------------------------------------------------------------------
 
+pandora::StatusCode ArborContentApi::MergeAndDeleteClusters(const ArborAlgorithm &algorithm, arbor::Cluster *pClusterToEnlarge, arbor::Cluster *pClusterToDelete)
+{
+	return algorithm.GetArborContentApiImpl()->MergeAndDeleteClusters(pClusterToEnlarge, pClusterToDelete);
+}
+
+//---------------------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------
+
 pandora::StatusCode ArborContentApi::RemoveBranchFromTree(const ArborAlgorithm &algorithm, arbor::Tree *pTree, arbor::Branch *pBranch)
 {
 	return algorithm.GetArborContentApiImpl()->RemoveBranchFromTree(pTree, pBranch);
@@ -351,6 +359,22 @@ pandora::StatusCode ArborContentApi::GetEnergyResolution(const ArborAlgorithm &a
 pandora::StatusCode ArborContentApi::GetEnergyResolution(const ArborAlgorithm &arborAlgorithm, const std::string &energyFunctionName, float energy,		float &energyResolution)
 {
 	return arborAlgorithm.GetArborContentApiImpl()->GetEnergyResolution(energyFunctionName, energy, energyResolution);
+}
+
+//---------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborContentApi::InitializeReclustering(const ArborAlgorithm &algorithm, const pandora::TrackList &trackList,
+		const arbor::ClusterList &clusterList, std::string &originalClusterListName)
+{
+	return algorithm.GetArborContentApiImpl()->InitializeReclustering(algorithm, trackList, clusterList, originalClusterListName);
+}
+
+//---------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborContentApi::EndReclustering(const ArborAlgorithm &algorithm, const std::string &selectedClusterListName,
+		const std::string &originalTrackListName)
+{
+	return algorithm.GetArborContentApiImpl()->EndReclustering(algorithm, selectedClusterListName, originalTrackListName);
 }
 
 //---------------------------------------------------------------------------------------------------------------

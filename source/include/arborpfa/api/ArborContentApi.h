@@ -161,6 +161,9 @@ class ArborContentApi
 
   static pandora::StatusCode DeleteCluster(const ArborAlgorithm &algorithm, arbor::Cluster *pCluster);
 
+
+  static pandora::StatusCode MergeAndDeleteClusters(const ArborAlgorithm &algorithm, arbor::Cluster *pClusterToEnlarge, arbor::Cluster *pClusterToDelete);
+
   /**
    * Branch related method
    */
@@ -276,6 +279,18 @@ class ArborContentApi
    *  @param  energyResolution  the energy resolution to get by reference
    */
   static pandora::StatusCode GetEnergyResolution(const ArborAlgorithm &arborAlgorithm, const std::string &energyFunctionName, float energy,		float &energyResolution);
+
+  /**
+   *
+   */
+  static pandora::StatusCode InitializeReclustering(const ArborAlgorithm &algorithm, const pandora::TrackList &trackList,
+  		const arbor::ClusterList &clusterList, std::string &originalClusterListName);
+
+  /**
+   *
+   */
+  static pandora::StatusCode EndReclustering(const ArborAlgorithm &algorithm, const std::string &selectedClusterListName,
+  		const std::string &originalTrackListName);
 
 }; 
 
