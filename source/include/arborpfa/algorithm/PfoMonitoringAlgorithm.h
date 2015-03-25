@@ -142,6 +142,10 @@ protected:
 	IntVector   m_pfoFlagType1;
 	IntVector   m_pfoFlagType2;
 	IntVector   m_pfoFlagType3;
+	float      m_chargedHitEfficiency;
+	float      m_chargedHitPurity;
+	float      m_neutralHitEfficiency;
+	float      m_neutralHitPurity;
 }; 
 
 //--------------------------------------------------------------------------------------------------------------------

@@ -242,41 +242,100 @@ pandora::StatusCode PfoMonitoringAlgorithm::RunSdhcalSinglePfoMonitoring(const p
 pandora::StatusCode PfoMonitoringAlgorithm::RunSdhcalOverlayPfoMonitoring(const pandora::PfoList *const pPfoList)
 {
 	int nChargedPfos = 0;
+	m_chargedHitEfficiency = 0;
+	m_chargedHitPurity = 0;
+	m_neutralHitEfficiency = 0;
+	m_neutralHitPurity = 0;
+
+	unsigned int totalHitType1 = 0;
+	unsigned int totalHitType2 = 0;
+	unsigned int totalHitType3 = 0;
+
+	float originalNHitCharged = 0;
+	float originalNHitNeutral = 0;
+
+	float reconstructedNHitCharged = 0;
+	float reconstructedNHitNeutral = 0;
+
+	float reconstructedNHitGoodCharged = 0;
+	float reconstructedNHitBadCharged = 0;
+	float reconstructedNHitGoodNeutral = 0;
+	float reconstructedNHitBadNeutral = 0;
 
 	// loop over the pfo list
- for(pandora::PfoList::const_iterator itPFO = pPfoList->begin(), itPFOEnd = pPfoList->end(); itPFO != itPFOEnd; ++itPFO)
- {
-  pandora::ParticleFlowObject *pPfo = *itPFO;
+	for(pandora::PfoList::const_iterator itPFO = pPfoList->begin(), itPFOEnd = pPfoList->end(); itPFO != itPFOEnd; ++itPFO)
+	{
+		pandora::ParticleFlowObject *pPfo = *itPFO;
 
-  if(pPfo->GetCharge() != 0)
-  	nChargedPfos ++;
+		bool isChargedParticle = false;
 
-  // grab the calo hit list address map
-  // and extract the type flag put on each calo hit
- 	const pandora::ClusterAddressList clusterAddressList(pPfo->GetClusterAddressList());
- 	m_pfoFlagType1.push_back(0);
- 	m_pfoFlagType2.push_back(0);
- 	m_pfoFlagType3.push_back(0);
+		if(pPfo->GetCharge() != 0)
+		{
+			isChargedParticle = true;
+			nChargedPfos ++;
+		}
 
-  for (pandora::ClusterAddressList::const_iterator itCluster = clusterAddressList.begin(), itClusterEnd = clusterAddressList.end();
-      itCluster != itClusterEnd; ++itCluster)
-  {
-  	unsigned int nHitsInCluster((*itCluster).size());
+		// grab the calo hit list address map
+		// and extract the type flag put on each calo hit
+		const pandora::ClusterAddressList clusterAddressList(pPfo->GetClusterAddressList());
 
-   for (unsigned int iHit = 0; iHit < nHitsInCluster; ++iHit)
-   {
-   	EVENT::CalorimeterHit *pCaloHit = (EVENT::CalorimeterHit *)((*itCluster).at(iHit));
+		unsigned int nHits = 0;
 
-   	if(1 == pCaloHit->getType())
-   		m_pfoFlagType1.back()++;
-   	else if(2 == pCaloHit->getType())
-   		m_pfoFlagType2.back()++;
-   	else if(3 == pCaloHit->getType())
-   		m_pfoFlagType3.back()++;
-   }
-  }
+		m_pfoFlagType1.push_back(0);
+		m_pfoFlagType2.push_back(0);
+		m_pfoFlagType3.push_back(0);
 
- } // pfo loop
+		for (pandora::ClusterAddressList::const_iterator itCluster = clusterAddressList.begin(), itClusterEnd = clusterAddressList.end();
+				itCluster != itClusterEnd; ++itCluster)
+		{
+			unsigned int nHitsInCluster((*itCluster).size());
+
+			for (unsigned int iHit = 0; iHit < nHitsInCluster; ++iHit)
+			{
+				EVENT::CalorimeterHit *pCaloHit = (EVENT::CalorimeterHit *)((*itCluster).at(iHit));
+
+				if(1 == pCaloHit->getType())
+				{
+					totalHitType1++;
+					m_pfoFlagType1.back()++;
+				}
+				else if(2 == pCaloHit->getType())
+				{
+					totalHitType2++;
+					m_pfoFlagType2.back()++;
+				}
+				else if(3 == pCaloHit->getType())
+				{
+					totalHitType3++;
+					m_pfoFlagType3.back()++;
+				}
+			}
+		}
+
+		if(isChargedParticle)
+		{
+			reconstructedNHitCharged += m_pfoFlagType1.back() + m_pfoFlagType2.back() + m_pfoFlagType3.back() / 2.f;
+			reconstructedNHitBadCharged += m_pfoFlagType1.back() + m_pfoFlagType3.back() / 2.f;
+			reconstructedNHitGoodCharged += m_pfoFlagType2.back() + m_pfoFlagType3.back() / 2.f;
+		}
+		else
+		{
+			reconstructedNHitNeutral += m_pfoFlagType1.back() + m_pfoFlagType2.back() + m_pfoFlagType3.back() / 2.f;
+			reconstructedNHitBadNeutral += m_pfoFlagType2.back() + m_pfoFlagType3.back()/2.f;
+			reconstructedNHitGoodNeutral += m_pfoFlagType1.back() + m_pfoFlagType3.back()/2.f;
+		}
+
+		originalNHitCharged += m_pfoFlagType2.back() + m_pfoFlagType3.back()/2.f;
+		originalNHitNeutral += m_pfoFlagType1.back() + m_pfoFlagType3.back()/2.f;
+	} // pfo loop
+
+	originalNHitNeutral = totalHitType1 + totalHitType3 / 2.f;
+	originalNHitCharged = totalHitType2 + totalHitType3 / 2.f;
+
+	m_chargedHitEfficiency = reconstructedNHitGoodCharged/originalNHitCharged;
+	m_chargedHitPurity = reconstructedNHitGoodCharged / (reconstructedNHitGoodCharged + reconstructedNHitBadCharged);
+	m_neutralHitEfficiency = reconstructedNHitGoodNeutral/originalNHitNeutral;
+	m_neutralHitPurity = reconstructedNHitGoodNeutral / (reconstructedNHitGoodNeutral + reconstructedNHitBadNeutral);
 
 	if(!m_energyFunctionName.empty())
 	{
@@ -315,22 +374,32 @@ pandora::StatusCode PfoMonitoringAlgorithm::RunSdhcalOverlayPfoMonitoring(const 
 			}
 		}
 
-	 // do not fill the tree if we have not enough charged particles (only for this study and overlay)
-	 if(nChargedPfos < m_nTrackMinimumCutForNoFill)
-	 	m_shouldFillTree = false;
+		// do not fill the tree if we have not enough charged particles (only for this study and overlay)
+		if(nChargedPfos < m_nTrackMinimumCutForNoFill)
+			m_shouldFillTree = false;
 
 		m_mcParticleEnergy1 = 0.f;
 		m_mcParticleEnergy2 = 0.f;
 		PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, ArborContentApi::GetEnergy(*this, &mcPfoCaloHitList1, m_mcParticleEnergy1));
 		PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, ArborContentApi::GetEnergy(*this, &mcPfoCaloHitList2, m_mcParticleEnergy2));
 
-	 ARBOR_MONITORING_API(SetTreeVariable(m_rootTreeName, "mcParticleEnergy1", m_mcParticleEnergy1));
-	 ARBOR_MONITORING_API(SetTreeVariable(m_rootTreeName, "mcParticleEnergy2", m_mcParticleEnergy2));
+		ARBOR_MONITORING_API(SetTreeVariable(m_rootTreeName, "mcParticleEnergy1", m_mcParticleEnergy1));
+		ARBOR_MONITORING_API(SetTreeVariable(m_rootTreeName, "mcParticleEnergy2", m_mcParticleEnergy2));
 	}
 
- ARBOR_MONITORING_API(SetTreeVariable(m_rootTreeName, "lcioFlagType1", &m_pfoFlagType1));
- ARBOR_MONITORING_API(SetTreeVariable(m_rootTreeName, "lcioFlagType2", &m_pfoFlagType2));
- ARBOR_MONITORING_API(SetTreeVariable(m_rootTreeName, "lcioFlagType3", &m_pfoFlagType3));
+	m_chargedHitEfficiency = reconstructedNHitGoodCharged/originalNHitCharged;
+	m_chargedHitPurity = reconstructedNHitGoodCharged / (reconstructedNHitGoodCharged + reconstructedNHitBadCharged);
+	m_neutralHitEfficiency = reconstructedNHitGoodNeutral/originalNHitNeutral;
+	m_neutralHitPurity = reconstructedNHitGoodNeutral / (reconstructedNHitGoodNeutral + reconstructedNHitBadNeutral);
+
+
+	ARBOR_MONITORING_API(SetTreeVariable(m_rootTreeName, "lcioFlagType1", &m_pfoFlagType1));
+	ARBOR_MONITORING_API(SetTreeVariable(m_rootTreeName, "lcioFlagType2", &m_pfoFlagType2));
+	ARBOR_MONITORING_API(SetTreeVariable(m_rootTreeName, "lcioFlagType3", &m_pfoFlagType3));
+	ARBOR_MONITORING_API(SetTreeVariable(m_rootTreeName, "chargedHitPurity", m_chargedHitPurity));
+	ARBOR_MONITORING_API(SetTreeVariable(m_rootTreeName, "chargedHitEfficiency", m_chargedHitEfficiency));
+	ARBOR_MONITORING_API(SetTreeVariable(m_rootTreeName, "neutralHitPurity", m_neutralHitPurity));
+	ARBOR_MONITORING_API(SetTreeVariable(m_rootTreeName, "neutralHitEfficiency", m_neutralHitEfficiency));
 
 	return pandora::STATUS_CODE_SUCCESS;
 }
