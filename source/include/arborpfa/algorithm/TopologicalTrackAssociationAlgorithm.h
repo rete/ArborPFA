@@ -70,23 +70,17 @@ protected:
 	/**
 	 *
 	 */
-	pandora::StatusCode RemoveCurrentTrackAssociations(const arbor::ClusterList *pClusterList) const;
-//	pandora::StatusCode MergeClusterWithSameTrack();
-
-
+	pandora::StatusCode MergeClusterWithSameTrack();
 
 	// algorithm tools
 	typedef std::map<pandora::Track*, arbor::ClusterList> TrackToClusterListMap;
 	TrackToClusterListMap      m_trackToClusterListMap;
 
 	// algorithm parameters
-	std::string         m_energyFunctionName;
 	std::string         m_trackListName;
 	bool                m_shouldMergeChargedTrees;
 	unsigned int       m_trackToClusterNLayersCut;
 	float               m_trackToClusterDistanceCut;
-	float               m_chi2SigmaFactor;
-	float               m_trackClusterChi2Cut;
 
 }; 
 

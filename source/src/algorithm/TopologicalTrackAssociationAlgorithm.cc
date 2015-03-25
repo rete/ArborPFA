@@ -40,16 +40,6 @@ namespace arbor
 
 pandora::StatusCode TopologicalTrackAssociationAlgorithm::RunArborAlgorithm()
 {
-	// set the energy function to use for this algorithm
-	std::string currentEnergyFunctionName;
-	PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, ArborContentApi::GetCurrentEnergyFunctionName(*this, currentEnergyFunctionName));
-
-	if(currentEnergyFunctionName != m_energyFunctionName)
-	{
-		PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, ArborContentApi::SetCurrentEnergyFunction(*this, m_energyFunctionName));
-	}
-
-	// grab the current track list
 	const pandora::TrackList *pTrackList = NULL;
 
 	if(m_trackListName.empty())
@@ -62,143 +52,108 @@ pandora::StatusCode TopologicalTrackAssociationAlgorithm::RunArborAlgorithm()
 	}
 
 	if(pTrackList->empty())
+	{
 		return pandora::STATUS_CODE_SUCCESS;
+	}
 
 	// grab the current cluster list
 	const arbor::ClusterList *pClusterList = NULL;
 	PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, ArborContentApi::GetCurrentClusterList(*this, pClusterList));
 
-	// reset the current track associations before to start
-	PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->RemoveCurrentTrackAssociations(pClusterList));
-
-
-
-
-	// loop over tracks and find a close-by cluster to associate
-	for(pandora::TrackList::const_iterator trackIter = pTrackList->begin() , trackEndIter = pTrackList->end() ; trackEndIter != trackIter ; ++trackIter)
+	for(arbor::ClusterList::iterator iter = pClusterList->begin() , endIter = pClusterList->end() ; endIter != iter ; ++iter)
 	{
-		pandora::Track *pTrack = *trackIter;
+		arbor::Cluster *pCluster = *iter;
 
-		if(!pTrack->CanFormPfo() || pTrack->CanFormClusterlessPfo() || !pTrack->ReachesCalorimeter() || !pTrack->IsAvailable())
+		// re-initialize the track association
+		PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, pCluster->SetAssociatedTrack(NULL));
+
+		const pandora::PseudoLayer seedPseudoLayer = pCluster->GetFirstPseudoLayer();
+
+		// look in the first layers
+		if(seedPseudoLayer > m_trackToClusterNLayersCut)
 			continue;
 
-		const pandora::TrackState& trackState = pTrack->GetTrackStateAtCalorimeter();
-		std::map<float, arbor::Cluster*> closebyClusterMap;
+		const pandora::CartesianVector& seedPosition = pCluster->GetSeedPosition();
+		pandora::Track *pBestTrack = NULL;
 
-		for(arbor::ClusterList::iterator iter = pClusterList->begin() , endIter = pClusterList->end() ; endIter != iter ; ++iter)
+		for(pandora::TrackList::const_iterator trackIter = pTrackList->begin() , trackEndIter = pTrackList->end() ; trackEndIter != trackIter ; ++trackIter)
 		{
-			arbor::Cluster *pCluster = *iter;
-			const pandora::Track *pAssociatedTrack = NULL;
-
-			PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, pCluster->GetAssociatedTrack(pAssociatedTrack));
-
-			// if an association is already done for
-			// this cluster, continue
-			if(NULL != pAssociatedTrack)
-				continue;
-
-			const pandora::PseudoLayer seedPseudoLayer = pCluster->GetSeedPseudoLayer();
-			const pandora::CartesianVector& seedPosition = pCluster->GetSeedPosition();
+			pandora::Track *pTrack = *trackIter;
+			const pandora::TrackState& trackState = pTrack->GetTrackStateAtCalorimeter();
 			const pandora::CartesianVector &trackProjectionPosition = trackState.GetPosition();
 			const float trackClusterDistance((trackProjectionPosition - seedPosition).GetMagnitude());
 
-			// look in the first layers only and in a short distance to track extrapolation
-			if(seedPseudoLayer <= m_trackToClusterNLayersCut && trackClusterDistance < m_trackToClusterDistanceCut)
-				closebyClusterMap.insert(std::make_pair<float, arbor::Cluster*>(trackClusterDistance, pCluster));
-		}
-
-		float currentChi2 = std::numeric_limits<float>::max();
-		arbor::ClusterVector associationClusterVector;
-		pandora::CaloHitList associationCaloHitList;
-		float totalClusterEnergy = 0.f;
-		float energyResolution = 0.f;
-		const float trackMomemtum = trackState.GetMomentum().GetMagnitude();
-
-		// get the energy resolution at the track momentum
-		PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, ArborContentApi::GetEnergyResolution(*this, trackMomemtum, energyResolution));
-
-		// cluster (second) are automatically sorted by track-to-cluster distance (first)
-		for(std::map<float, arbor::Cluster*>::iterator iter = closebyClusterMap.begin() , endIter = closebyClusterMap.end() ;
-				endIter != iter ; ++iter)
-		{
-			arbor::Cluster *pCluster = iter->second;
-
-			// add the calo hit list of this cluster to the total one
-			pandora::CaloHitList clusterCaloHitList(pCluster->GetCaloHitList());
-			associationCaloHitList.insert(clusterCaloHitList.begin(), clusterCaloHitList.end());
-
-			// get the total cluster energy
-			PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, ArborContentApi::GetEnergy(*this, &associationCaloHitList, totalClusterEnergy));
-
-			// compute a chi2 like variable to estimate the track-cluster association goodness
-			const float chi2 = std::pow((trackMomemtum - totalClusterEnergy) / (m_chi2SigmaFactor*energyResolution*trackMomemtum), 2);
-
-			if(chi2 < currentChi2)
+			if(m_trackToClusterDistanceCut > trackClusterDistance)
 			{
-				currentChi2 = chi2;
-				associationClusterVector.push_back(pCluster);
-			}
-		}
-
-
-		// at this point a list of cluster is built and we
-		// need to merge them in the same charged cluster
-
-		// if no cluster, no association
-		if(associationClusterVector.empty())
-		{
-			continue;
-		}
-		// 1 cluster case, no need to merge. Only association
-		else if(associationClusterVector.size() == 1)
-		{
-			arbor::Cluster *pCluster = *associationClusterVector.begin();
-			PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, pCluster->SetAssociatedTrack(pTrack));
-		}
-		// many clusters case, need to merge and associate
-		else
-		{
-			// merge all the other cluster in the first one
-			arbor::Cluster *pClusterToEnlarge = *associationClusterVector.begin();
-
-			// loop, merge and delete
-			for(arbor::ClusterVector::iterator clusterIter = associationClusterVector.begin()+1 , clusterEndIter = associationClusterVector.end() ;
-					clusterEndIter != clusterIter ; ++clusterIter)
-			{
-				arbor::Cluster *pClusterToDelete = *clusterIter;
-
-				if(pClusterToDelete == pClusterToEnlarge)
-					continue;
-
-				const TreeList &treeList = pClusterToDelete->GetTreeList();
-				std::vector<Tree*> treeVector(treeList.begin(), treeList.end());
-
-				for(std::vector<Tree*>::const_iterator treeIter = treeVector.begin() , treeEndIter = treeVector.end() ; treeEndIter != treeIter ; ++treeIter)
+				if(NULL == pBestTrack)
 				{
-					Tree *pTree = *treeIter;
-					PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, ArborContentApi::MoveTree(*this, pClusterToDelete, pClusterToEnlarge, pTree));
+					pBestTrack = pTrack;
+					continue;
 				}
 
-				PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, ArborContentApi::DeleteCluster(*this, pClusterToDelete));
-			}
+				const pandora::TrackState& bestTrackState = pBestTrack->GetTrackStateAtCalorimeter();
+				const pandora::CartesianVector &bestTrackProjectionPosition = bestTrackState.GetPosition();
 
-			PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, pClusterToEnlarge->SetAssociatedTrack(pTrack));
+				if(trackClusterDistance < (bestTrackProjectionPosition - seedPosition).GetMagnitude())
+				{
+					pBestTrack = pTrack;
+				}
+			}
+		}
+
+		if(NULL != pBestTrack)
+		{
+			PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, pCluster->SetAssociatedTrack(pBestTrack));
+
+			if(m_shouldMergeChargedTrees)
+				m_trackToClusterListMap[pBestTrack].insert(pCluster);
+		}
+		else
+		{
+			PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, pCluster->SetAssociatedTrack(NULL));
 		}
 	}
+
+	PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->MergeClusterWithSameTrack());
 
 	return pandora::STATUS_CODE_SUCCESS;
 }
 
 //-------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode TopologicalTrackAssociationAlgorithm::RemoveCurrentTrackAssociations(const arbor::ClusterList *pClusterList) const
+pandora::StatusCode TopologicalTrackAssociationAlgorithm::MergeClusterWithSameTrack()
 {
-	for(arbor::ClusterList::iterator iter = pClusterList->begin(), endIter = pClusterList->end() ;
-			endIter != iter ; ++iter)
+	if(!m_shouldMergeChargedTrees)
+		return pandora::STATUS_CODE_SUCCESS;
+
+	if(m_trackToClusterListMap.empty())
+		return pandora::STATUS_CODE_SUCCESS;
+
+	for(TrackToClusterListMap::iterator iter = m_trackToClusterListMap.begin() , endIter = m_trackToClusterListMap.end() ; endIter != iter ; ++iter)
 	{
-		arbor::Cluster *pCluster = *iter;
-		PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, pCluster->SetAssociatedTrack(NULL));
+		pandora::Track *pTrack = iter->first;
+		arbor::ClusterList clusterList = iter->second;
+
+		if(NULL == pTrack)
+			continue;
+
+		if(1 <= clusterList.size())
+			continue;
+
+		arbor::Cluster *pClusterToEnlarge = *clusterList.begin();
+
+		for(arbor::ClusterList::iterator clusterIter = clusterList.begin() , clusterEndIter = clusterList.end() ; clusterEndIter != clusterIter ; ++clusterIter)
+		{
+			arbor::Cluster *pClusterToDelete = *clusterIter;
+
+			if(pClusterToDelete == pClusterToEnlarge)
+				continue;
+
+			PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, ArborContentApi::MergeAndDeleteClusters(*this, pClusterToEnlarge, pClusterToDelete));
+		}
 	}
+
+	m_trackToClusterListMap.clear();
 
 	return pandora::STATUS_CODE_SUCCESS;
 }
@@ -207,18 +162,6 @@ pandora::StatusCode TopologicalTrackAssociationAlgorithm::RemoveCurrentTrackAsso
 
 pandora::StatusCode TopologicalTrackAssociationAlgorithm::ReadSettings(const pandora::TiXmlHandle xmlHandle)
 {
- m_energyFunctionName = "SdhcalEnergyFunction";
- PANDORA_RETURN_RESULT_IF_AND_IF(pandora::STATUS_CODE_SUCCESS, pandora::STATUS_CODE_NOT_FOUND, !=, pandora::XmlHelper::ReadValue(xmlHandle,
-     "EnergyFunctionName", m_energyFunctionName));
-
- m_chi2SigmaFactor = 2.f;
- PANDORA_RETURN_RESULT_IF_AND_IF(pandora::STATUS_CODE_SUCCESS, pandora::STATUS_CODE_NOT_FOUND, !=, pandora::XmlHelper::ReadValue(xmlHandle,
-     "Chi2SigmaFactor", m_chi2SigmaFactor));
-
- m_trackClusterChi2Cut = 1.f;
- PANDORA_RETURN_RESULT_IF_AND_IF(pandora::STATUS_CODE_SUCCESS, pandora::STATUS_CODE_NOT_FOUND, !=, pandora::XmlHelper::ReadValue(xmlHandle,
-     "TrackClusterChi2Cut", m_trackClusterChi2Cut));
-
  m_trackListName = "";
  PANDORA_RETURN_RESULT_IF_AND_IF(pandora::STATUS_CODE_SUCCESS, pandora::STATUS_CODE_NOT_FOUND, !=, pandora::XmlHelper::ReadValue(xmlHandle,
      "TrackListName", m_trackListName));
