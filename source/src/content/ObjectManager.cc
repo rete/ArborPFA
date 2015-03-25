@@ -735,29 +735,33 @@ pandora::StatusCode ObjectManager::EndReclustering(const std::string &finalMetaD
 	if(!m_reclusteringInitialized)
 	 return STATUS_CODE_NOT_INITIALIZED;
 
-	// save the previous state
-	if(!m_firstReclusteringProcess)
-	 PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pCurrentReclusterMetaData->SaveMetaData());
+//	// save the previous state
+//	if(!m_firstReclusteringProcess)
+//	 PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pCurrentReclusterMetaData->SaveMetaData());
 
 	ReclusterMetaDataMap::iterator findIter = m_reclusterMetaDataMap.find(finalMetaDataName);
 
 	if(m_reclusterMetaDataMap.end() == findIter)
 		return STATUS_CODE_NOT_FOUND;
 
+	// load the final meta data and remove this meta data from the list
+	// that will be deeply cleaned
 	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, findIter->second->LoadMetaData());
+	m_reclusterMetaDataMap.erase(findIter);
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, findIter->second->Clear(false));
+	delete findIter->second;
 
 	for(ReclusterMetaDataMap::const_iterator iter = m_reclusterMetaDataMap.begin() , endIter = m_reclusterMetaDataMap.end() ; endIter != iter ; ++iter)
 	{
-		bool shouldDelete = iter->first != findIter->first;
-		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, iter->second->Clear(shouldDelete));
+		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, iter->second->Clear(true));
 		delete iter->second;
 	}
+	m_reclusterMetaDataMap.clear();
 
 	m_pReclusteringObjectList->clear();
 	delete m_pReclusteringObjectList;
 	m_pReclusteringObjectList = NULL;
 
-	m_reclusterMetaDataMap.clear();
 	m_reclusteringInitialized = false;
 	m_firstReclusteringProcess = true;
 
