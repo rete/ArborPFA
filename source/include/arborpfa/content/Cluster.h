@@ -36,6 +36,7 @@
 
 // arbor
 #include "arborpfa/arbor/ArborTypes.h"
+#include "arborpfa/content/ArborHelper.h"
 
 namespace pandora
 {
@@ -65,11 +66,6 @@ class Cluster
 	/**
 	 *
 	 */
-	const pandora::PseudoLayer &GetSeedPseudoLayer() const;
-
-	/**
-	 *
-	 */
 	ObjectList GetObjectList() const;
 
 	/**
@@ -90,6 +86,11 @@ class Cluster
 	/**
 	 *
 	 */
+	bool HasAssociatedTrack() const;
+
+	/**
+	 *
+	 */
 	unsigned int GetNObjects() const;
 
 	/**
@@ -100,7 +101,27 @@ class Cluster
 	/**
 	 *
 	 */
- static bool SORT_BY_SEED_PSEUDO_LAYER(const Cluster *pCluster1, const Cluster *pCluster2);
+	pandora::PseudoLayer GetFirstPseudoLayer() const;
+
+	/**
+	 *
+	 */
+	pandora::PseudoLayer GetLastPseudoLayer() const;
+
+	/**
+	 *
+	 */
+ static bool SORT_BY_PSEUDO_LAYER(const Cluster *pCluster1, const Cluster *pCluster2);
+
+ /**
+  *
+  */
+ pandora::StatusCode SetCurrentPCA(const ArborHelper::PCA &pca);
+
+ /**
+  *
+  */
+ const ArborHelper::PCA &GetCurrentPCA() const;
 
 
  protected:
@@ -127,8 +148,10 @@ class Cluster
 
  TreeList                       m_treeList;
  pandora::CartesianVector       m_seedPosition;
- pandora::PseudoLayer           m_seedPseudoLayer;
  pandora::Track                *m_pAssociatedTrack;
+ pandora::PseudoLayer           m_firstPseudoLayer;
+ pandora::PseudoLayer           m_lastPseudoLayer;
+ ArborHelper::PCA               m_currentPCA;
 
 
  friend class pandora::AlgorithmObjectManager<arbor::Cluster>;
@@ -137,9 +160,9 @@ class Cluster
 
 //--------------------------------------------------------------------------------------------------------------------
 
-inline bool Cluster::SORT_BY_SEED_PSEUDO_LAYER(const Cluster *pCluster1, const Cluster *pCluster2)
+inline bool Cluster::SORT_BY_PSEUDO_LAYER(const Cluster *pCluster1, const Cluster *pCluster2)
 {
-	return pCluster1->GetSeedPseudoLayer() < pCluster2->GetSeedPseudoLayer();
+	return pCluster1->GetFirstPseudoLayer() < pCluster2->GetFirstPseudoLayer();
 }
 
 } 

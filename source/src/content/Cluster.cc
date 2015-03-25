@@ -41,8 +41,9 @@ namespace arbor
 
 Cluster::Cluster() :
 		m_seedPosition(0.f, 0.f, 0.f),
-		m_seedPseudoLayer(std::numeric_limits<pandora::PseudoLayer>::max()),
-		m_pAssociatedTrack(NULL)
+		m_pAssociatedTrack(NULL),
+		m_firstPseudoLayer(std::numeric_limits<pandora::PseudoLayer>::max()),
+		m_lastPseudoLayer(std::numeric_limits<pandora::PseudoLayer>::min())
 {
 
 }
@@ -74,13 +75,6 @@ const pandora::CartesianVector &Cluster::GetSeedPosition() const
 
 //------------------------------------------------------------------------------------------------------
 
-const pandora::PseudoLayer &Cluster::GetSeedPseudoLayer() const
-{
-	return m_seedPseudoLayer;
-}
-
-//------------------------------------------------------------------------------------------------------
-
 pandora::StatusCode Cluster::AddTree(Tree *pTree)
 {
 	if(NULL == pTree)
@@ -92,21 +86,40 @@ pandora::StatusCode Cluster::AddTree(Tree *pTree)
 	if(!m_treeList.insert(pTree).second)
 		return pandora::STATUS_CODE_FAILURE;
 
-	if(pTree->GetSeedObject()->GetPseudoLayer() < m_seedPseudoLayer)
-		m_seedPseudoLayer = pTree->GetSeedObject()->GetPseudoLayer();
+	pandora::PseudoLayer firstPseudoLayer = pTree->GetFirstPseudoLayer();
+	pandora::PseudoLayer lastPseudoLayer = pTree->GetLastPseudoLayer();
 
-	if(pTree->GetSeedObject()->GetPseudoLayer() == m_seedPseudoLayer)
+	// if the same first pseudo layer, update the seed properties
+	if(firstPseudoLayer == m_firstPseudoLayer)
 	{
 		pandora::CartesianVector newSeedPosition(0.f, 0.f, 0.f);
+		float norm(0.f);
+
 		for(TreeList::iterator iter = m_treeList.begin() , endIter = m_treeList.end() ; endIter != iter ; ++iter)
 		{
 			Tree *pTree = *iter;
-			if((*iter)->GetSeedObject()->GetPseudoLayer() == m_seedPseudoLayer)
+
+			if((*iter)->GetFirstPseudoLayer() == m_firstPseudoLayer)
+			{
 				newSeedPosition += (*iter)->GetSeedObject()->GetPosition();
+				norm++;
+			}
 		}
 
-		m_seedPosition = newSeedPosition;
+		m_seedPosition = newSeedPosition*(1/norm);
 	}
+	// if same pseudo layer, set the seed properties according to this tree
+	else if(firstPseudoLayer < m_firstPseudoLayer)
+	{
+		m_seedPosition = pTree->GetSeedPosition();
+	}
+
+	// update first and last layer
+	if(firstPseudoLayer < m_firstPseudoLayer)
+		m_firstPseudoLayer = firstPseudoLayer;
+
+	if(lastPseudoLayer > m_lastPseudoLayer)
+		m_lastPseudoLayer = lastPseudoLayer;
 
 	return pandora::STATUS_CODE_SUCCESS;
 }
@@ -124,38 +137,61 @@ pandora::StatusCode Cluster::RemoveTree(Tree *pTree)
 	if(1 != m_treeList.erase(pTree))
 		return pandora::STATUS_CODE_FAILURE;
 
+	// if no tree remains, reset the properties
 	if(m_treeList.empty())
 	{
 		m_seedPosition = pandora::CartesianVector(0.f, 0.f, 0.f);
-		m_seedPseudoLayer = std::numeric_limits<pandora::PseudoLayer>::max();
+		m_firstPseudoLayer = std::numeric_limits<pandora::PseudoLayer>::max();
+		m_lastPseudoLayer = std::numeric_limits<pandora::PseudoLayer>::min();
+
 		return pandora::STATUS_CODE_SUCCESS;
 	}
 
-	if(m_seedPseudoLayer < pTree->GetSeedObject()->GetPseudoLayer())
-		return pandora::STATUS_CODE_SUCCESS;
+	pandora::PseudoLayer firstPseudoLayer = pTree->GetFirstPseudoLayer();
+	pandora::PseudoLayer lastPseudoLayer = pTree->GetLastPseudoLayer();
 
-	// Then upate the cluster seed position and pseudolayer
-	pandora::CartesianVector newSeedPosition(0.f, 0.f, 0.f);
-	pandora::PseudoLayer innermostPseudoLayer(std::numeric_limits<pandora::PseudoLayer>::max());
+	// easier to read code ...
+	bool updateLastPseudoLayer = lastPseudoLayer < m_lastPseudoLayer;
+	bool updateFirstPseudoLayer = firstPseudoLayer < m_firstPseudoLayer;
+	bool updateSeedPosition = firstPseudoLayer <= m_firstPseudoLayer;
 
-	for(TreeList::iterator iter = m_treeList.begin() , endIter = m_treeList.end() ; endIter != iter ; ++iter)
+	if(updateLastPseudoLayer || updateFirstPseudoLayer || updateSeedPosition)
 	{
-		Tree *pTree = *iter;
+		// Then update the cluster seed position and pseudolayer
+		pandora::CartesianVector newSeedPosition(0.f, 0.f, 0.f);
+		pandora::PseudoLayer newLastPseudoLayer(std::numeric_limits<pandora::PseudoLayer>::min());
+		pandora::PseudoLayer newFirstPseudoLayer(std::numeric_limits<pandora::PseudoLayer>::max());
 
-		if((*iter)->GetSeedObject()->GetPseudoLayer() < innermostPseudoLayer)
+		for(TreeList::iterator iter = m_treeList.begin() , endIter = m_treeList.end() ; endIter != iter ; ++iter)
 		{
-			innermostPseudoLayer = (*iter)->GetSeedObject()->GetPseudoLayer();
-			newSeedPosition = (*iter)->GetSeedObject()->GetPosition();
+			Tree *pTree = *iter;
+
+			if(updateLastPseudoLayer && (*iter)->GetLastPseudoLayer() > newLastPseudoLayer)
+			{
+				newLastPseudoLayer = (*iter)->GetLastPseudoLayer();
+			}
+
+			if(updateFirstPseudoLayer && (*iter)->GetFirstPseudoLayer() < newFirstPseudoLayer)
+			{
+				newFirstPseudoLayer = (*iter)->GetFirstPseudoLayer();
+			}
+
+			if(updateSeedPosition)
+			{
+				if((*iter)->GetFirstPseudoLayer() <= newFirstPseudoLayer)
+					newSeedPosition = (*iter)->GetSeedPosition();
+				else
+					newSeedPosition += (*iter)->GetSeedPosition();
+			}
 		}
 
-		if((*iter)->GetSeedObject()->GetPseudoLayer() == innermostPseudoLayer)
-		{
-			newSeedPosition += (*iter)->GetSeedObject()->GetPosition();
-		}
+		if(updateLastPseudoLayer)
+			m_lastPseudoLayer = newLastPseudoLayer;
+		if(updateFirstPseudoLayer)
+			m_firstPseudoLayer = newFirstPseudoLayer;
+		if(updateSeedPosition)
+			m_seedPosition = newSeedPosition;
 	}
-
-	m_seedPseudoLayer = innermostPseudoLayer;
-	m_seedPosition = newSeedPosition;
 
 	return pandora::STATUS_CODE_SUCCESS;
 }
@@ -209,6 +245,13 @@ pandora::StatusCode Cluster::SetAssociatedTrack(pandora::Track *pTrack)
 
 //------------------------------------------------------------------------------------------------------
 
+bool Cluster::HasAssociatedTrack() const
+{
+	return (NULL != m_pAssociatedTrack);
+}
+
+//------------------------------------------------------------------------------------------------------
+
 unsigned int Cluster::GetNObjects() const
 {
 	unsigned int nObjects = 0;
@@ -234,6 +277,41 @@ unsigned int Cluster::GetNCaloHits() const
 
 	return nCaloHits;
 }
+
+//------------------------------------------------------------------------------------------------------
+
+pandora::PseudoLayer Cluster::GetFirstPseudoLayer() const
+{
+	return m_firstPseudoLayer;
+}
+
+//------------------------------------------------------------------------------------------------------
+
+pandora::PseudoLayer Cluster::GetLastPseudoLayer() const
+{
+	return m_lastPseudoLayer;
+}
+
+//------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode Cluster::SetCurrentPCA(const ArborHelper::PCA &pca)
+{
+	if(pca.HasBeenProcessed())
+		m_currentPCA = pca;
+	else
+		return pandora::STATUS_CODE_NOT_INITIALIZED;
+
+	return pandora::STATUS_CODE_SUCCESS;
+}
+
+//------------------------------------------------------------------------------------------------------
+
+const ArborHelper::PCA &Cluster::GetCurrentPCA() const
+{
+	return m_currentPCA;
+}
+
+//------------------------------------------------------------------------------------------------------
 
 } 
 
