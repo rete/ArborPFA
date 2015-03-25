@@ -155,7 +155,8 @@ pandora::StatusCode ReclusterMetaData::Clear(bool shouldDelete)
 	{
 		for(ObjectMetaDataMap::iterator iter = m_objectMetaDataMap.begin() , endIter = m_objectMetaDataMap.end() ; endIter != iter ; ++iter)
 		{
-			delete iter->second;
+			if(NULL != iter->second)
+				delete iter->second;
 		}
 	}
 
