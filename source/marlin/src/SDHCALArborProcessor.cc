@@ -462,7 +462,7 @@ pandora::StatusCode SDHCALArborProcessor::CreateCaloHits(EVENT::LCEvent *pLCEven
 
 														caloHitParameters.m_mipEquivalentEnergy = 0.0406459;
 														caloHitParameters.m_hadronicEnergy = caloHitParameters.m_inputEnergy.Get();
-														caloHitParameters.m_electromagneticEnergy = caloHitParameters.m_inputEnergy.Get();
+														caloHitParameters.m_electromagneticEnergy = 0.f;//caloHitParameters.m_inputEnergy.Get();
 
 														if(pCaloHit->getType() == 1 || pCaloHit->getType() == 3)
 														{
