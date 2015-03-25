@@ -35,11 +35,418 @@
 #include "arborpfa/content/Cluster.h"
 #include "arborpfa/content/Connector.h"
 
+#include "TMatrixT.h"
+#include "TMatrixDEigen.h"
+#include "TVectorD.h"
+
 using namespace pandora;
 
 namespace arbor
 {
 
+//-----------------------------------------------------------------------------------------------------------------------------
+
+ArborHelper::LinearFit3D::LinearFit3D() :
+		m_fitProcessed(false),
+		m_chi2(0.f)
+{
+	m_fitParameters[0] = m_fitParameters[1] = m_fitParameters[2] = m_fitParameters[3] = 0;
+	m_fitParameterErrors[0] = m_fitParameterErrors[1] = m_fitParameterErrors[2] = m_fitParameterErrors[3] = 0;
+}
+
+//-----------------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborHelper::LinearFit3D::Fit(const pandora::CartesianPointList &pointList)
+{
+	m_fitProcessed = false;
+	m_chi2 = 0.f;
+	m_fitParameters[0] = m_fitParameters[1] = m_fitParameters[2] = m_fitParameters[3] = 0;
+	m_fitParameterErrors[0] = m_fitParameterErrors[1] = m_fitParameterErrors[2] = m_fitParameterErrors[3] = 0;
+
+	if(pointList.empty())
+		return STATUS_CODE_INVALID_PARAMETER;
+
+	float xsum = 0.0;
+	float ysum = 0.0;
+	float zsum = 0.0;
+	float zzsum = 0.0;
+	float xzsum = 0.0;
+	float yzsum = 0.0;
+
+	for ( unsigned int i=0 ; i<pointList.size() ; i++ )
+	{
+		//for equation 1
+		zsum = zsum + pointList.at(i).GetZ();
+		xsum = xsum + pointList.at(i).GetX();
+		zzsum = zzsum + (pointList.at(i).GetZ()*pointList.at(i).GetZ());
+		xzsum = xzsum + pointList.at(i).GetX()*pointList.at(i).GetZ();
+
+		//for equation 2
+		ysum = ysum + pointList.at(i).GetY();
+		yzsum = yzsum + pointList.at(i).GetY()*pointList.at(i).GetZ();
+	}
+
+	float A1 = zsum;
+	float B1 = pointList.size();
+	float C1 = xsum;
+	float D1 = zzsum;
+	float E1 = xzsum;
+	float C2 = ysum;
+	float E2 = yzsum;
+
+	m_fitParameters[0] = (D1*C1-E1*A1)/(B1*D1-A1*A1);
+	m_fitParameters[1] = (E1*B1-C1*A1)/(B1*D1-A1*A1);
+	m_fitParameters[2] = (D1*C2-E2*A1)/(B1*D1-A1*A1);
+	m_fitParameters[3] = (E2*B1-C2*A1)/(B1*D1-A1*A1);
+
+	m_fitParameterErrors[0] = sqrt(D1/(B1*D1-A1*A1));
+	m_fitParameterErrors[1] = sqrt(B1/(B1*D1-A1*A1));
+	m_fitParameterErrors[2] = sqrt(D1/(B1*D1-A1*A1));
+	m_fitParameterErrors[3] = sqrt(B1/(B1*D1-A1*A1));
+
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, ComputeChi2(pointList));
+	m_fitProcessed = true;
+
+	return STATUS_CODE_SUCCESS;
+}
+
+//-----------------------------------------------------------------------------------------------------------------------------
+
+float ArborHelper::LinearFit3D::GetChi2() const
+{
+	return m_chi2;
+}
+
+//-----------------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborHelper::LinearFit3D::GetProjectionOnLine(const pandora::CartesianVector &point, pandora::CartesianVector &projectionPosition) const
+{
+	if(!m_fitProcessed)
+		return STATUS_CODE_FAILURE;
+
+	try
+	{
+			pandora::CartesianVector x0(m_fitParameters[0], m_fitParameters[2], 0.);
+			pandora::CartesianVector x1(m_fitParameters[0]+m_fitParameters[1], m_fitParameters[2]+m_fitParameters[3], 1.);
+			pandora::CartesianVector u = (x1-x0);
+			u = u.GetUnitVector() *( (point-x1).GetMagnitude() * cos( u.GetOpeningAngle( point-x1 ) ) );
+			projectionPosition = x1 + u;
+	}
+	catch(pandora::StatusCodeException &e)
+	{
+		return e.GetStatusCode();
+	}
+
+	return STATUS_CODE_SUCCESS;
+}
+
+//-----------------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborHelper::LinearFit3D::GetNormaleToLine(const pandora::CartesianVector &point, pandora::CartesianVector &normale) const
+{
+	if(!m_fitProcessed)
+		return STATUS_CODE_FAILURE;
+
+	try
+	{
+		CartesianVector projection(0.f, 0.f, 0.f);
+		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, GetProjectionOnLine(point, projection));
+		normale = point - projection;
+	}
+	catch(pandora::StatusCodeException &e)
+	{
+		return e.GetStatusCode();
+	}
+
+	return STATUS_CODE_SUCCESS;
+}
+
+//-----------------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborHelper::LinearFit3D::GetFitParameter(unsigned int i, float &parameter) const
+{
+	if(!m_fitProcessed)
+		return STATUS_CODE_FAILURE;
+
+	if(i > 3)
+		return STATUS_CODE_OUT_OF_RANGE;
+
+	parameter = m_fitParameters[i];
+
+	return STATUS_CODE_SUCCESS;
+}
+
+//-----------------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborHelper::LinearFit3D::GetFitParameterError(unsigned int i, float &parameterError) const
+{
+	if(!m_fitProcessed)
+		return STATUS_CODE_FAILURE;
+
+	if(i > 3)
+		return STATUS_CODE_OUT_OF_RANGE;
+
+	parameterError = m_fitParameterErrors[i];
+
+	return STATUS_CODE_SUCCESS;
+}
+
+//-----------------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborHelper::LinearFit3D::ComputeChi2(const pandora::CartesianPointList &pointList)
+{
+	m_chi2 = 0;
+
+	try
+	{
+		for(unsigned int i=0 ; i<pointList.size() ; i++)
+		{
+			CartesianVector normale(0.f, 0.f, 0.f);
+			PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, GetNormaleToLine(pointList.at(i), normale));
+
+			float distance = normale.GetMagnitude();
+			m_chi2 += distance*distance;
+		}
+
+		if(0 != m_chi2 && 1 < pointList.size())
+			m_chi2 = m_chi2/(pointList.size()-1);
+	}
+	catch(pandora::StatusCodeException &e)
+	{
+		m_chi2 = 0.f;
+		return e.GetStatusCode();
+	}
+
+	return STATUS_CODE_SUCCESS;
+}
+
+//-----------------------------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------------------------------------------
+
+ArborHelper::PCA::PCA() :
+	m_eigenValues(0.f, 0.f, 0.f),
+	m_eigenVector1(0.f, 0.f, 0.f),
+	m_eigenVector2(0.f, 0.f, 0.f),
+	m_eigenVector3(0.f, 0.f, 0.f),
+	m_barycentre(0.f, 0.f, 0.f),
+	m_hasBeenProcessed(false)
+{
+	/* nop */
+}
+
+//-----------------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborHelper::PCA::Process(const pandora::CartesianPointList &pointList)
+{
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, Reset());
+
+	TMatrixD covarianceMatrix(3, 3);
+
+	// compute the mean position for each direction
+	for(pandora::CartesianPointList::const_iterator iter = pointList.begin(), endIter = pointList.end() ;
+			endIter != iter ; ++iter)
+	{
+		m_barycentre += *iter;
+	}
+
+	m_barycentre *= (1.f/pointList.size());
+
+
+	for(pandora::CartesianPointList::const_iterator iter = pointList.begin(), endIter = pointList.end() ;
+			endIter != iter ; ++iter)
+	{
+		pandora::CartesianVector point = *iter;
+
+		covarianceMatrix(0, 0) += std::pow(point.GetX() - m_barycentre.GetX(), 2);
+		covarianceMatrix(1, 1) += std::pow(point.GetY() - m_barycentre.GetY(), 2);
+		covarianceMatrix(2, 2) += std::pow(point.GetZ() - m_barycentre.GetZ(), 2);
+
+		// covariance matrix is symetric
+		covarianceMatrix(1, 0) += (point.GetX() - m_barycentre.GetX())*(point.GetY() - m_barycentre.GetY());
+		covarianceMatrix(0, 1) = covarianceMatrix(1, 0);
+		covarianceMatrix(2, 0) += (point.GetX() - m_barycentre.GetX())*(point.GetZ() - m_barycentre.GetZ());
+		covarianceMatrix(0, 2) = covarianceMatrix(2, 0);
+		covarianceMatrix(2, 1) += (point.GetY() - m_barycentre.GetY())*(point.GetZ() - m_barycentre.GetZ());
+		covarianceMatrix(1, 2) = covarianceMatrix(2, 1);
+	}
+
+	// normalize the covariance matrix
+	for(unsigned int i=0 ; i<3 ; i++)
+		for(unsigned int j=0 ; j<3 ; j++)
+			covarianceMatrix(i, j) /= pointList.size();
+
+	TMatrixDEigen matrixEigen(covarianceMatrix);
+
+	m_eigenValues.SetValues(
+			matrixEigen.GetEigenValuesRe()[0],
+			matrixEigen.GetEigenValuesRe()[1],
+			matrixEigen.GetEigenValuesRe()[2] );
+
+	m_eigenVector1.SetValues(matrixEigen.GetEigenVectors()(0, 0),  matrixEigen.GetEigenVectors()(1, 0), matrixEigen.GetEigenVectors()(2, 0));
+	m_eigenVector2.SetValues(matrixEigen.GetEigenVectors()(0, 1),  matrixEigen.GetEigenVectors()(1, 1), matrixEigen.GetEigenVectors()(2, 1));
+	m_eigenVector3.SetValues(matrixEigen.GetEigenVectors()(0, 2),  matrixEigen.GetEigenVectors()(1, 2), matrixEigen.GetEigenVectors()(2, 2));
+
+	m_hasBeenProcessed = true;
+
+	return pandora::STATUS_CODE_SUCCESS;
+}
+
+//----------------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborHelper::PCA::Reset()
+{
+	try
+	{
+		m_hasBeenProcessed = false;
+		m_eigenValues.SetValues(0.f, 0.f, 0.f);
+		m_eigenVector1.SetValues(0.f, 0.f, 0.f);
+		m_eigenVector2.SetValues(0.f, 0.f, 0.f);
+		m_eigenVector3.SetValues(0.f, 0.f, 0.f);
+		m_barycentre.SetValues(0.f, 0.f, 0.f);
+	}
+	catch(pandora::StatusCodeException &e)
+	{
+		return e.GetStatusCode();
+	}
+
+	return pandora::STATUS_CODE_SUCCESS;
+}
+
+//-----------------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborHelper::PCA::GetEigenVectors(pandora::CartesianVector &eigenVector1,
+		pandora::CartesianVector &eigenVector2, pandora::CartesianVector &eigenVector3) const
+{
+	eigenVector1 = m_eigenVector1;
+	eigenVector2 = m_eigenVector2;
+	eigenVector3 = m_eigenVector3;
+
+	return pandora::STATUS_CODE_SUCCESS;
+}
+
+//-----------------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborHelper::PCA::GetEigenValues(float &eigenValue1, float &eigenValue2, float &eigenValue3) const
+{
+	eigenValue1 = m_eigenValues.GetX();
+	eigenValue2 = m_eigenValues.GetY();
+	eigenValue3 = m_eigenValues.GetZ();
+
+	return pandora::STATUS_CODE_SUCCESS;
+}
+
+//-----------------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborHelper::PCA::GetBarycentre(pandora::CartesianVector &barycentre) const
+{
+	barycentre = m_barycentre;
+	return STATUS_CODE_SUCCESS;
+}
+
+//-----------------------------------------------------------------------------------------------------------------------------
+
+ArborHelper::PCA &ArborHelper::PCA::operator=(const ArborHelper::PCA &pca)
+{
+	m_eigenValues  = pca.m_eigenValues;
+	m_eigenVector1 = pca.m_eigenVector1;
+	m_eigenVector2 = pca.m_eigenVector2;
+	m_eigenVector3 = pca.m_eigenVector3;
+	m_barycentre   = pca.m_barycentre;
+	m_hasBeenProcessed = pca.m_hasBeenProcessed;
+
+	return *this;
+}
+
+//-----------------------------------------------------------------------------------------------------------------------------
+
+bool ArborHelper::PCA::HasBeenProcessed() const
+{
+	return m_hasBeenProcessed;
+}
+
+//-----------------------------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------------------------------------------
+
+ArborHelper::Ellipsoid::Ellipsoid(const pandora::CartesianVector &centerPosition, const pandora::CartesianVector &axis1,
+		const pandora::CartesianVector &axis2, const pandora::CartesianVector &axis3) :
+			m_centerPosition(centerPosition),
+			m_axis1(axis1),
+			m_axis2(axis2),
+			m_axis3(axis3)
+{
+	/* nop */
+}
+
+//-----------------------------------------------------------------------------------------------------------------------------
+
+const pandora::CartesianVector &ArborHelper::Ellipsoid::GetAxis1() const
+{
+	return m_axis1;
+}
+
+//-----------------------------------------------------------------------------------------------------------------------------
+
+const pandora::CartesianVector &ArborHelper::Ellipsoid::GetAxis2() const
+{
+	return m_axis2;
+}
+
+//-----------------------------------------------------------------------------------------------------------------------------
+
+const pandora::CartesianVector &ArborHelper::Ellipsoid::GetAxis3() const
+{
+	return m_axis3;
+}
+
+//-----------------------------------------------------------------------------------------------------------------------------
+
+const pandora::CartesianVector &ArborHelper::Ellipsoid::GetCenterPosition() const
+{
+	return m_centerPosition;
+}
+
+//-----------------------------------------------------------------------------------------------------------------------------
+
+bool ArborHelper::Ellipsoid::Contains(const pandora::CartesianVector &point) const
+{
+	try
+	{
+		// translation to the center of the ellipsoid
+		const pandora::CartesianVector translatedPoint = point - m_centerPosition;
+
+		const pandora::CartesianVector normalizedAxis1 = m_axis1.GetUnitVector();
+		const pandora::CartesianVector normalizedAxis2 = m_axis2.GetUnitVector();
+		const pandora::CartesianVector normalizedAxis3 = m_axis3.GetUnitVector();
+
+		// change the reference frame of the point
+		const float newX = translatedPoint.GetX()*normalizedAxis1.GetX()
+				+ translatedPoint.GetY()*normalizedAxis1.GetY()
+				+ translatedPoint.GetZ()*normalizedAxis1.GetZ();
+		const float newY = translatedPoint.GetX()*normalizedAxis2.GetX()
+				+ translatedPoint.GetY()*normalizedAxis2.GetY()
+				+ translatedPoint.GetZ()*normalizedAxis2.GetZ();
+		const float newZ = translatedPoint.GetX()*normalizedAxis3.GetX()
+				+ translatedPoint.GetY()*normalizedAxis3.GetY()
+				+ translatedPoint.GetZ()*normalizedAxis3.GetZ();
+
+		// check that the point is inside the ellipsoid surface
+		const float axis1Lenght(m_axis1.GetMagnitude());
+		const float axis2Lenght(m_axis2.GetMagnitude());
+		const float axis3Lenght(m_axis3.GetMagnitude());
+
+		const float ellipsoidDistance = (newX*newX)/(axis1Lenght*axis1Lenght)
+				+ (newY*newY)/(axis2Lenght*axis2Lenght)
+				+ (newZ*newZ)/(axis3Lenght*axis3Lenght);
+
+		return (ellipsoidDistance <= 1.f);
+	}
+	catch(pandora::StatusCodeException &e)
+	{
+		return false;
+	}
+}
+
+//-----------------------------------------------------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------------------------------------------------
 
 pandora::StatusCode ArborHelper::GetCentroid(const arbor::Cluster *pCluster, pandora::CartesianVector &centroid)
@@ -105,6 +512,35 @@ pandora::StatusCode ArborHelper::GetClosestDistanceApproach(const arbor::Cluster
 			{
 				closestDistance = distance;
 			}
+		}
+	}
+
+	return STATUS_CODE_SUCCESS;
+}
+
+//-----------------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborHelper::GetClosestDistanceApproach(const arbor::Cluster *pCluster, const pandora::CartesianVector &point, float &closestDistance)
+{
+	if(NULL == pCluster)
+		return STATUS_CODE_INVALID_PARAMETER;
+
+	if(0 == pCluster->GetNObjects())
+		return STATUS_CODE_FAILURE;
+
+	const ObjectList objectList = pCluster->GetObjectList();
+
+	closestDistance = std::numeric_limits<float>::max();
+
+	for(arbor::ObjectList::const_iterator iter = objectList.begin() , endIter = objectList.end() ; endIter != iter ; ++iter)
+	{
+		Object *pObject = *iter;
+
+		float distance = (pObject->GetPosition() - point).GetMagnitude();
+
+		if(closestDistance > distance)
+		{
+			closestDistance = distance;
 		}
 	}
 
@@ -437,6 +873,140 @@ pandora::StatusCode ArborHelper::GetMeanDirection(const Object *pObject, Connect
 		direction += (otherObjectPosition - objectPosition);
 
 		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, ArborHelper::RecursiveDirection(pOtherObject, connectorDirection, direction, connectorDepth-1, maxPseudoLayer));
+	}
+
+	return STATUS_CODE_SUCCESS;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborHelper::ExtractPositionList(const ObjectList &objectList, pandora::CartesianPointList &pointList)
+{
+	for(ObjectList::const_iterator iter = objectList.begin(), endIter = objectList.end() ;
+			endIter != iter ; ++iter)
+	{
+		pointList.push_back((*iter)->GetPosition());
+	}
+
+	return STATUS_CODE_SUCCESS;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborHelper::BuildObjectListWithFlag(const ObjectList &objectList, ObjectList &tagObjectList, ObjectTagFlag tagFlag)
+{
+	for(ObjectList::const_iterator iter = objectList.begin(), endIter = objectList.end() ;
+			endIter != iter ; ++iter)
+	{
+		if((*iter)->GetFlag(tagFlag))
+			tagObjectList.insert(*iter);
+	}
+
+	return STATUS_CODE_SUCCESS;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborHelper::GetImpactParameter(const pandora::CartesianVector &point1, const pandora::CartesianVector &direction1,
+		const pandora::CartesianVector &point2, const pandora::CartesianVector &direction2, float &impactParameter)
+{
+	impactParameter = 0.f;
+
+	try
+	{
+		const CartesianVector unitDirection1 = direction1.GetUnitVector();
+		const CartesianVector unitDirection2 = direction2.GetUnitVector();
+		const CartesianVector w0 = point1 - point2;
+		const float b = unitDirection1.GetCosOpeningAngle(unitDirection2);
+		const float d = unitDirection1.GetDotProduct(w0);
+		const float e = unitDirection2.GetDotProduct(w0);
+		const float denom = 1 - b*b;
+
+		// parallel lines
+		if(unitDirection1 == unitDirection2)
+		{
+			// compute the distance from point2 to line1
+			return ArborHelper::GetImpactParameter(point1 ,unitDirection1, point2, impactParameter);
+		}
+		else
+		{
+			// compute the real impact parameter between the two lines
+			const CartesianVector impactParameterVector = w0 + ( unitDirection1*((b*e - d)/denom) - unitDirection2*((e - b*d)/denom) );
+			impactParameter = impactParameterVector.GetMagnitude();
+		}
+	}
+	catch(pandora::StatusCodeException &e)
+	{
+		return e.GetStatusCode();
+	}
+
+	return STATUS_CODE_SUCCESS;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborHelper::GetImpactParameter(const pandora::CartesianVector &point1, const pandora::CartesianVector &direction1,
+		const pandora::CartesianVector &point2, float &impactParameter)
+{
+	try
+	{
+		// compute the distance from point2 to line1
+		const CartesianVector unitDirection1 = direction1.GetUnitVector();
+		float k = unitDirection1.GetDotProduct(point2-point1);
+		const CartesianVector normale = point1 + unitDirection1*k - point2;
+		impactParameter = normale.GetMagnitude();
+	}
+	catch(pandora::StatusCodeException &e)
+	{
+		return e.GetStatusCode();
+	}
+
+	return STATUS_CODE_SUCCESS;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborHelper::GetProjectionOnLine(const pandora::CartesianVector &linePoint, const pandora::CartesianVector &direction,
+		const pandora::CartesianVector &point, pandora::CartesianVector &projection)
+{
+	try
+	{
+		projection = linePoint + direction.GetUnitVector() * ((point-linePoint).GetMagnitude() * direction.GetCosOpeningAngle(point-linePoint));
+	}
+	catch(pandora::StatusCodeException &e)
+	{
+		return e.GetStatusCode();
+	}
+
+	return STATUS_CODE_SUCCESS;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+pandora::StatusCode ArborHelper::GetCrossingPointsBetweenLines(const pandora::CartesianVector &point1, const pandora::CartesianVector &direction1,
+		const pandora::CartesianVector &point2, const pandora::CartesianVector &direction2,
+		pandora::CartesianVector &crossingPoint1, pandora::CartesianVector &crossingPoint2)
+{
+	try
+	{
+		// parallel lines never cross
+		if(direction1.GetUnitVector() == direction2.GetUnitVector())
+			return pandora::STATUS_CODE_INVALID_PARAMETER;
+
+		const CartesianVector unitDirection1 = direction1.GetUnitVector();
+		const CartesianVector unitDirection2 = direction2.GetUnitVector();
+		const CartesianVector w0 = point1 - point2;
+		const float b = unitDirection1.GetCosOpeningAngle(unitDirection2);
+		const float d = unitDirection1.GetDotProduct(w0);
+		const float e = unitDirection2.GetDotProduct(w0);
+		const float denom = 1 - b*b;
+
+		crossingPoint1 = point1 + unitDirection1*(b*e-d)*(1.f/denom);
+		crossingPoint2 = point2 + unitDirection2*(e - b*d)*(1.f/denom);
+	}
+	catch(pandora::StatusCodeException &e)
+	{
+		return e.GetStatusCode();
 	}
 
 	return STATUS_CODE_SUCCESS;

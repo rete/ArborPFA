@@ -53,12 +53,176 @@ class Object;
 class Connector;
 
 /** 
- * @brief ArborHelper class. </br>
+ * @brief ArborHelper class. <br/>
  * Provide helpful tools for the arbor algorithm
  */ 
 class ArborHelper 
 {
  public:
+
+	/**
+	 * @brief LinearFit3D class
+	 */
+	class LinearFit3D
+	{
+	public:
+
+		/**
+		 * @brief Constructor
+		 */
+		LinearFit3D();
+
+		/**
+		 * @brief Fit the point list
+		 */
+		pandora::StatusCode Fit(const pandora::CartesianPointList &pointList);
+
+		/**
+		 * @brief Get the chi2 of the linear fit
+		 */
+		float GetChi2() const;
+
+		/**
+		 * @brief Get the projection of the given point on the fitted line.
+		 * This suppose that the fit has been processed
+		 */
+		pandora::StatusCode GetProjectionOnLine(const pandora::CartesianVector &point, pandora::CartesianVector &projectionPosition) const;
+
+		/**
+		 *	@brief Get the normale vector from the given point to the fitted line.
+		 * This suppose that the fit has been processed
+		 */
+		pandora::StatusCode GetNormaleToLine(const pandora::CartesianVector &point, pandora::CartesianVector &normale) const;
+
+		/**
+		 * @brief Get the parameter number i (from 0 to 3) of the fitted line equation.
+		 * This suppose that the fit has been processed
+		 */
+		pandora::StatusCode GetFitParameter(unsigned int i, float &parameter) const;
+
+		/**
+		 * @brief Get the fit parameter error number if (from 0 to 3) of the fitted line equation.
+		 * This suppose that the fit has been processed
+		 */
+		pandora::StatusCode GetFitParameterError(unsigned int i, float &parameterError) const;
+
+	private:
+
+		/**
+		 * @brief Compute the chi2 of the fitted line (processed at the end of the fit)
+		 */
+		pandora::StatusCode ComputeChi2(const pandora::CartesianPointList &pointList);
+
+
+		float       m_fitParameters[4];
+		float       m_fitParameterErrors[4];
+		bool        m_fitProcessed;
+		float       m_chi2;
+	};
+
+	/**
+	 * @brief PCA class
+	 */
+	class PCA
+	{
+	public:
+
+		/**
+		 * @brief Constructor
+		 */
+		PCA();
+
+		/**
+		 *
+		 */
+		pandora::StatusCode Process(const pandora::CartesianPointList &pointList);
+
+		/**
+		 *
+		 */
+		pandora::StatusCode Reset();
+
+		/**
+		 *
+		 */
+		pandora::StatusCode GetEigenVectors(pandora::CartesianVector &eigenVector1,
+				pandora::CartesianVector &eigenVector2, pandora::CartesianVector &eigenVector3) const;
+
+		/**
+		 *
+		 */
+		pandora::StatusCode GetEigenValues(float &eigenValue1, float &eigenValue2, float &eigenValue3) const;
+
+		/**
+		 *
+		 */
+		pandora::StatusCode GetBarycentre(pandora::CartesianVector &barycentre) const;
+
+		/**
+		 *
+		 */
+		PCA &operator=(const PCA &pca);
+
+		/**
+		 *
+		 */
+		bool HasBeenProcessed() const;
+
+	private:
+
+		pandora::CartesianVector     m_barycentre;
+		pandora::CartesianVector     m_eigenValues;
+		pandora::CartesianVector     m_eigenVector1;
+		pandora::CartesianVector     m_eigenVector2;
+		pandora::CartesianVector     m_eigenVector3;
+		bool                        m_hasBeenProcessed;
+	};
+
+
+	/**
+	 * @brief Ellipsoid class
+	 */
+	class Ellipsoid
+	{
+	public:
+
+		/**
+		 * @brief Constructor with ellipsoid center and non-normalized ellipsoid axis
+		 */
+		Ellipsoid(const pandora::CartesianVector &centerPosition, const pandora::CartesianVector &axis1, const pandora::CartesianVector &axis2, const pandora::CartesianVector &axis3);
+
+		/**
+		 * @brief Get the axis no 1 (non normalized)
+		 */
+		const pandora::CartesianVector &GetAxis1() const;
+
+		/**
+		 * @brief Get the axis no 2 (non normalized)
+		 */
+		const pandora::CartesianVector &GetAxis2() const;
+
+		/**
+		 * @brief Get the axis no 3 (non normalized)
+		 */
+		const pandora::CartesianVector &GetAxis3() const;
+
+		/**
+		 * @brief Get the the center position
+		 */
+		const pandora::CartesianVector &GetCenterPosition() const;
+
+		/**
+		 * @brief Whether the ellipsoid contains the given point
+		 */
+		bool Contains(const pandora::CartesianVector &point) const;
+
+	private:
+
+		pandora::CartesianVector       m_centerPosition;
+		pandora::CartesianVector       m_axis1;
+		pandora::CartesianVector       m_axis2;
+		pandora::CartesianVector       m_axis3;
+	};
 
 		/**
 			* @brief Compute the centroid (barycenter) of the cluster.
@@ -86,6 +250,11 @@ class ArborHelper
 	  * @param distance the distance of closest approach to receive (by reference)
 	  */
 	 static pandora::StatusCode GetClosestDistanceApproach(const arbor::Cluster *pCluster1, const arbor::Cluster *pCluster2, float &distance);
+
+	 /**
+	  *
+	  */
+	 static pandora::StatusCode GetClosestDistanceApproach(const arbor::Cluster *pCluster1, const pandora::CartesianVector &point, float &distance);
 
 	 /**
 	  *
@@ -119,6 +288,42 @@ class ArborHelper
 	  */
 	 static pandora::StatusCode GetMeanDirection(const Object *pObject, ConnectorDirection connectorDirection, pandora::CartesianVector &direction,
 	 		unsigned int connectorDepth = 1, unsigned int pseudoLayerDepth = std::numeric_limits<unsigned int>::max());
+
+	 /**
+	  *
+	  */
+	 static pandora::StatusCode ExtractPositionList(const ObjectList &objectList, pandora::CartesianPointList &pointList);
+
+	 /**
+	  *
+	  */
+	 static pandora::StatusCode BuildObjectListWithFlag(const ObjectList &objectList, ObjectList &tagObjectList, ObjectTagFlag tagFlag);
+
+	 /**
+	  * @brief Get the impact parameter between two line (distance between two lines) defined
+	  *        by a point on the line and the line direction.
+	  */
+	 static pandora::StatusCode GetImpactParameter(const pandora::CartesianVector &point1, const pandora::CartesianVector &direction1,
+	 		const pandora::CartesianVector &point2, const pandora::CartesianVector &direction2, float &impactParameter);
+
+	 /**
+	  * @brief Get the impact parameter between a line defined by a point a direction vector
+	  */
+	 static pandora::StatusCode GetImpactParameter(const pandora::CartesianVector &point1, const pandora::CartesianVector &direction1,
+	 		const pandora::CartesianVector &point2, float &impactParameter);
+
+	 /**
+	  * @brief Get the projection of a given point on a line defined by one point and a direction
+	  */
+	 static pandora::StatusCode GetProjectionOnLine(const pandora::CartesianVector &linePoint, const pandora::CartesianVector &direction,
+	 		const pandora::CartesianVector &point, pandora::CartesianVector &projection);
+
+	 /**
+	  * @brief Get the crossing point of the two lines where the impact parameter is defined
+	  */
+	 static pandora::StatusCode GetCrossingPointsBetweenLines(const pandora::CartesianVector &point1, const pandora::CartesianVector &direction1,
+	 		const pandora::CartesianVector &point2, const pandora::CartesianVector &direction2,
+	 		pandora::CartesianVector &crossingPoint1, pandora::CartesianVector &crossingPoint2);
 
  private:
 
