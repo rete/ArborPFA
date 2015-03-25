@@ -59,10 +59,11 @@ Object::Object(pandora::CaloHit *pCaloHit) :
 	m_pseudoLayer = pCaloHit->GetPseudoLayer();
 	m_objectType = pCaloHit->GetHitType();
 
-	m_tagFlagMap[CORE_OBJECT]     = false;
-	m_tagFlagMap[ISOLATED_OBJECT] = false;
-	m_tagFlagMap[MIP_OBJECT]      = false;
-	m_tagFlagMap[NOISE_OBJECT]    = false;
+	m_tagFlagMap[CORE_OBJECT]            = false;
+	m_tagFlagMap[ISOLATED_OBJECT]        = false;
+	m_tagFlagMap[MIP_OBJECT]             = false;
+	m_tagFlagMap[NOISE_OBJECT]           = false;
+	m_tagFlagMap[SPLIT_FROM_BIG_CLUSTER] = false;
 
 	m_pMetaData = new ObjectMetaData();
 
@@ -405,6 +406,13 @@ pandora::StatusCode Object::RemoveCaloHit(pandora::CaloHit *pCaloHit)
 bool Object::Contains(const pandora::CaloHit *pCaloHit) const
 {
 	return (m_caloHitList.end() == std::find(m_caloHitList.begin(), m_caloHitList.end(), pCaloHit));
+}
+
+//--------------------------------------------------------------------------------------------------------------------
+
+unsigned int Object::GetNCaloHits() const
+{
+	return m_caloHitList.size();
 }
 
 //--------------------------------------------------------------------------------------------------------------------

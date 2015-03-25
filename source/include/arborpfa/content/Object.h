@@ -117,6 +117,11 @@ public:
 	/**
 	 *
 	 */
+	virtual unsigned int GetNCaloHits() const;
+
+	/**
+	 *
+	 */
 	virtual pandora::StatusCode SetFlag(ObjectTagFlag tagFlag, bool flag);
 
 	/**
