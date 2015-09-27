@@ -635,7 +635,7 @@ pandora::StatusCode SDHCALArborProcessor::CreateTracks(EVENT::LCEvent *pLCEvent)
 	}
 	catch (EVENT::Exception &exception)
 	{
-					streamlog_out(MESSAGE) << "Failed to extract tracks: " << m_hCalCaloHitCollection << ", " << exception.what() << std::endl;
+					streamlog_out(MESSAGE) << "Failed to extract tracks: " << m_genericObjectTrackInfoCollection << ", " << exception.what() << std::endl;
 	}
 
 	return pandora::STATUS_CODE_SUCCESS;
