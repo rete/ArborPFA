@@ -638,6 +638,26 @@ pandora::StatusCode	ObjectManager::ReplaceCurrentAndAlgorithmInputLists(const Ar
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
+//pandora::StatusCode ObjectManager::MoveObjectsToTemporaryListAndSetCurrent(const Algorithm *const pAlgorithm, const std::string &originalListName,
+//		    std::string &temporaryListName, const ClusterList &clustersToMove)
+//{
+//	if(clusterToMove.empty())
+//		return STATUS_CODE_NOT_INITIALIZED;
+//
+//	ObjectList objectsToMove;
+//
+//	for(arbor::ClusterList::iterator iter = clustersToMove.begin(), endIter = clustersToMove.end() ;
+//			endIter != iter ; ++iter)
+//	{
+//		ObjectList clusterObjectList((*iter)->GetObjectList());
+//		objectsToMove.insert(clusterObjectList.begin(), clusterObjectList.end());
+//	}
+//
+//	return this->MoveObjectsToTemporaryListAndSetCurrent(pAlgorithm, originalListName, temporaryListName, objectsToMove);
+//}
+
+//------------------------------------------------------------------------------------------------------------------------------------------
+
 pandora::StatusCode ObjectManager::CreateObject(Object *&pObject, CaloHit *pInputCaloHit)
 {
 	pObject = NULL;
@@ -676,7 +696,7 @@ pandora::StatusCode ObjectManager::InitializeReclustering(const ArborAlgorithm *
 		const std::string &initialMetaName)
 {
 	if(m_reclusteringInitialized || NULL != m_pReclusteringObjectList)
-	 return STATUS_CODE_ALREADY_INITIALIZED;
+		return STATUS_CODE_ALREADY_INITIALIZED;
 
 	if(clusterList.empty())
 		return STATUS_CODE_NOT_INITIALIZED;
@@ -690,13 +710,14 @@ pandora::StatusCode ObjectManager::InitializeReclustering(const ArborAlgorithm *
 		m_pReclusteringObjectList->insert(clusterObjectList.begin(), clusterObjectList.end());
 	}
 
- // copy the initial state
- m_pCurrentReclusterMetaData = new ReclusterMetaData(m_pReclusteringObjectList);
- m_reclusterMetaDataMap[initialMetaName] = m_pCurrentReclusterMetaData;
+	// copy the initial state
+	m_pCurrentReclusterMetaData = new ReclusterMetaData(m_pReclusteringObjectList);
+	m_reclusterMetaDataMap[initialMetaName] = m_pCurrentReclusterMetaData;
+	m_currentReclusterMetaDataName = initialMetaName;
 
- PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pCurrentReclusterMetaData->SaveMetaData());
+	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pCurrentReclusterMetaData->SaveMetaData());
 
- m_pInitialReclusterMetaData = m_pCurrentReclusterMetaData;
+	m_pInitialReclusterMetaData = m_pCurrentReclusterMetaData;
 
 	m_reclusteringInitialized = true;
 	m_firstReclusteringProcess = true;
@@ -709,24 +730,68 @@ pandora::StatusCode ObjectManager::InitializeReclustering(const ArborAlgorithm *
 pandora::StatusCode ObjectManager::PrepareReclusterMetaData(const ArborAlgorithm *pAlgorithm, const std::string &newReclusterMetaData, bool copyInitialMetaData)
 {
 	if(!m_reclusteringInitialized)
-	 return pandora::STATUS_CODE_NOT_INITIALIZED;
+		return pandora::STATUS_CODE_NOT_INITIALIZED;
 
 	// save the previous state
 	if(!m_firstReclusteringProcess)
-	 PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pCurrentReclusterMetaData->SaveMetaData());
-
-	if(copyInitialMetaData)
-		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pInitialReclusterMetaData->LoadMetaData());
+		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pCurrentReclusterMetaData->SaveMetaData());
 
 	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, m_pCurrentReclusterMetaData->CreateMetaData(copyInitialMetaData));
 
- m_pCurrentReclusterMetaData = new ReclusterMetaData(m_pReclusteringObjectList);
- m_reclusterMetaDataMap[newReclusterMetaData] = m_pCurrentReclusterMetaData;
+	m_pCurrentReclusterMetaData = new ReclusterMetaData(m_pReclusteringObjectList);
+	m_reclusterMetaDataMap[newReclusterMetaData] = m_pCurrentReclusterMetaData;
 
- m_firstReclusteringProcess = false;
+	m_firstReclusteringProcess = false;
 
 	return STATUS_CODE_SUCCESS;
 }
+
+pandora::StatusCode ObjectManager::CreateReclusterMetaData(const std::string &metaDataName, bool keepPrevious)
+{
+	if(!m_reclusteringInitialized)
+		return pandora::STATUS_CODE_NOT_INITIALIZED;
+
+	ReclusterMetaDataMap::iterator findIter = m_reclusterMetaDataMap.find(m_currentReclusterMetaDataName);
+
+	if(m_reclusterMetaDataMap.end() == findIter)
+		return STATUS_CODE_FAILURE;
+
+	if(keepPrevious)
+	{
+
+	}
+	else
+	{
+		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, findIter->second->Clear(true));
+		m_reclusterMetaDataMap.erase(findIter);
+	}
+
+
+
+
+	return STATUS_CODE_SUCCESS;
+
+}
+
+
+//pandora::StatusCode ObjectManager::RemoveCurrentReclusterMetaData()
+//{
+//	if(!m_reclusteringInitialized)
+//		return pandora::STATUS_CODE_NOT_INITIALIZED;
+//
+//	ReclusterMetaDataMap::iterator findIter = m_reclusterMetaDataMap.find(m_currentReclusterMetaDataName);
+//
+//	if(m_reclusterMetaDataMap.end() == findIter)
+//		return STATUS_CODE_FAILURE;
+//
+//	m_reclusterMetaDataMap.erase(findIter);
+//	PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, findIter->second->Clear(true));
+//
+//	m_pCurrentReclusterMetaData = NULL;
+//	m_currentReclusterMetaDataName = "";
+//
+//	return STATUS_CODE_SUCCESS;
+//}
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 

@@ -145,6 +145,14 @@ pandora::StatusCode ArborContentApi::DropCurrentObjectList(const ArborAlgorithm 
 
 //---------------------------------------------------------------------------------------------------------------
 
+pandora::StatusCode ArborContentApi::RemoveAllConnections(const ArborAlgorithm &algorithm, const ObjectList &objectList)
+{
+	return algorithm.GetArborContentApiImpl()->RemoveAllConnections(objectList);
+}
+
+//---------------------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------
+
 pandora::StatusCode ArborContentApi::GetCurrentClusterList(const ArborAlgorithm &algorithm, const ClusterList *&pClusterList)
 {
 	std::string arborClusterListName;

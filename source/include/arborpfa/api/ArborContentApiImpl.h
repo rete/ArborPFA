@@ -120,6 +120,11 @@ class ArborContentApiImpl
    */
   pandora::StatusCode DropCurrentObjectList() const;
 
+  /**
+   *
+   */
+  pandora::StatusCode RemoveAllConnections(const ObjectList &objectList) const;
+
 //-----------------------------------------------------------------------------------------------------------------------
 
 		/**

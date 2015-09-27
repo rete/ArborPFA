@@ -161,6 +161,20 @@ pandora::StatusCode ArborContentApiImpl::DropCurrentObjectList() const
 
 //-----------------------------------------------------------------------------------------------------------------------
 
+pandora::StatusCode ArborContentApiImpl::RemoveAllConnections(const ObjectList &objectList) const
+{
+	for(ObjectList::const_iterator iter = objectList.begin(), endIter = objectList.end() ;
+			endIter != iter ; ++iter)
+	{
+		PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, (*iter)->RemoveAllConnections());
+	}
+
+	return pandora::STATUS_CODE_SUCCESS;
+}
+
+//-----------------------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------------------------------------
+
 pandora::StatusCode ArborContentApiImpl::GetCurrentClusterList(const ClusterList *&pClusterList, std::string &listName) const
 {
 	return m_pArbor->m_pClusterManager->GetCurrentList(pClusterList, listName);
@@ -391,7 +405,7 @@ pandora::StatusCode ArborContentApiImpl::GetEnergy(const std::string &energyFunc
 
 //-----------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode ArborContentApiImpl::GetEnergyResolution(float energy,		float &energyResolution) const
+pandora::StatusCode ArborContentApiImpl::GetEnergyResolution(float energy, float &energyResolution) const
 {
 	std::string currentEnergyFunctionName;
 
@@ -403,7 +417,7 @@ pandora::StatusCode ArborContentApiImpl::GetEnergyResolution(float energy,		floa
 
 //-----------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode ArborContentApiImpl::GetEnergyResolution(const std::string &energyFunctionName, float energy,		float &energyResolution) const
+pandora::StatusCode ArborContentApiImpl::GetEnergyResolution(const std::string &energyFunctionName, float energy, float &energyResolution) const
 {
 	return m_pArbor->m_pArborPluginManager->GetEnergyResolution(energyFunctionName, energy, energyResolution);
 }
@@ -423,8 +437,11 @@ pandora::StatusCode ArborContentApiImpl::InitializeReclustering(const ArborAlgor
 	PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraContentApi::SaveTrackList((const pandora::Algorithm &)algorithm, trackList, originalClusterListName));
 	PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraContentApi::ReplaceCurrentTrackList((const pandora::Algorithm &)algorithm, originalClusterListName));
 
-	// initialize reclustering for object list (recluster metadata)
-	PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pArbor->m_pObjectManager->InitializeReclustering(&algorithm, clusterList, originalClusterListName));
+//	std::string inputObjectListName;
+//	std::string originalObjectListName;
+//	PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pArbor->m_pObjectManager->GetAlgorithmInputListName((const pandora::Algorithm *)&algorithm, inputObjectListName));
+//	PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pArbor->m_pObjectManager->MoveObjectsToTemporaryListAndSetCurrent((const pandora::Algorithm *)&algorithm,
+//			inputObjectListName, originalObjectListName, clusterList));
 
 	return pandora::STATUS_CODE_SUCCESS;
 }

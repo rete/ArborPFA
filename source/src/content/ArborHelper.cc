@@ -1065,5 +1065,13 @@ pandora::StatusCode ArborHelper::RecursiveDirection(const Object *pObject, Conne
 	return STATUS_CODE_SUCCESS;
 }
 
+
+pandora::StatusCode ArborHelper::GetForwardObjectList(const Object *pObject, ObjectList &forwardObjectList)
+{
+	const Object *pCurrentObject = pObject;
+
+	return STATUS_CODE_SUCCESS;
+}
+
 } 
 
