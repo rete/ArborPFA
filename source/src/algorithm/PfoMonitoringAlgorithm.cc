@@ -47,7 +47,9 @@ PfoMonitoringAlgorithm::~PfoMonitoringAlgorithm()
 {
 	std::cout << m_nonFilledCounter << " non filled event for Pfo Monitoring" << std::endl;
 	ARBOR_MONITORING_API(PrintTree(m_rootTreeName));
-	ARBOR_MONITORING_API(SaveTree(m_rootTreeName, m_rootFileName, m_rootFileOptions));
+
+	if(!m_rootFileName.empty())
+		ARBOR_MONITORING_API(SaveTree(m_rootTreeName, m_rootFileName, m_rootFileOptions));
 }
 
 //-----------------------------------------------------------------------------------------------------------------
@@ -194,6 +196,9 @@ pandora::StatusCode PfoMonitoringAlgorithm::RunGlobalPfoMonitoring(const pandora
   m_pfoParticleIds.push_back(pPfo->GetParticleId());
   m_pfoNHits.push_back(pfoCaloHitList.size());
  }
+
+ if(m_chargedEnergy < 10.f && !m_monitoringAlgorithmName.empty())
+	 PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraContentApi::RunDaughterAlgorithm(*this, m_monitoringAlgorithmName));
 
  ARBOR_MONITORING_API(SetTreeVariable(m_rootTreeName, "nPfos", m_nPfos));
  ARBOR_MONITORING_API(SetTreeVariable(m_rootTreeName, "nNeutralPfos", m_nNeutralPfos));
@@ -437,9 +442,12 @@ pandora::StatusCode PfoMonitoringAlgorithm::Reset()
 
 pandora::StatusCode PfoMonitoringAlgorithm::ReadSettings(const pandora::TiXmlHandle xmlHandle)
 {
+	PANDORA_RETURN_RESULT_IF_AND_IF(pandora::STATUS_CODE_SUCCESS, pandora::STATUS_CODE_NOT_FOUND, !=, pandora::XmlHelper::ProcessFirstAlgorithm(*this, xmlHandle,
+			m_monitoringAlgorithmName));
+
 	m_rootFileName = "PfoMonitoring.root";
- PANDORA_RETURN_RESULT_IF_AND_IF(pandora::STATUS_CODE_SUCCESS, pandora::STATUS_CODE_NOT_FOUND, !=, pandora::XmlHelper::ReadValue(xmlHandle,
-     "RootFileName", m_rootFileName));
+	PANDORA_RETURN_RESULT_IF_AND_IF(pandora::STATUS_CODE_SUCCESS, pandora::STATUS_CODE_NOT_FOUND, !=, pandora::XmlHelper::ReadValue(xmlHandle,
+			"RootFileName", m_rootFileName));
 
  m_rootTreeName = "PfoMonitoring";
  PANDORA_RETURN_RESULT_IF_AND_IF(pandora::STATUS_CODE_SUCCESS, pandora::STATUS_CODE_NOT_FOUND, !=, pandora::XmlHelper::ReadValue(xmlHandle,

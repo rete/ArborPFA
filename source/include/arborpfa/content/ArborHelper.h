@@ -325,6 +325,11 @@ class ArborHelper
 	 		const pandora::CartesianVector &point2, const pandora::CartesianVector &direction2,
 	 		pandora::CartesianVector &crossingPoint1, pandora::CartesianVector &crossingPoint2);
 
+	 /**
+	  *
+	  */
+	 static pandora::StatusCode GetForwardObjectList(const Object *pObject, ObjectList &forwardObjectList);
+
  private:
 
 	 /**

@@ -106,7 +106,6 @@ pandora::StatusCode EnergyDrivenTrackAssociationAlgorithm::RunArborAlgorithm()
 			projectionCut = m_trackToClusterProjectionCut;
 		}
 
-
 		arbor::ClusterVector reducedClusterVector;
 
 		for(DistanceToClusterMap::iterator iter = closebyClusterMap.begin(), endIter = closebyClusterMap.end() ;
@@ -116,7 +115,7 @@ pandora::StatusCode EnergyDrivenTrackAssociationAlgorithm::RunArborAlgorithm()
 			const pandora::CartesianVector differenceVector(iter->second->GetSeedPosition() - trackProjectionPosition);
 			const float projectionDistance(distance*std::sin(differenceVector.GetOpeningAngle(differenceVector)));
 
-			if(distanceCut > distance && projectionDistance <m_trackToClusterProjectionCut)
+			if(distanceCut > distance && projectionDistance < m_trackToClusterProjectionCut)
 			{
 				reducedClusterVector.push_back(iter->second);
 			}

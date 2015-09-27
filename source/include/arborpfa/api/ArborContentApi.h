@@ -119,6 +119,9 @@ class ArborContentApi
 
   static pandora::StatusCode DropCurrentObjectList(const ArborAlgorithm &algorithm);
 
+
+  static pandora::StatusCode RemoveAllConnections(const ArborAlgorithm &algorithm, const ObjectList &objectList);
+
 	 /*
 	  * Cluster related methods
 	  */

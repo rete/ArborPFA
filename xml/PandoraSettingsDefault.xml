@@ -3,7 +3,7 @@
 <pandora>
     <!-- HELPER CLASS SETTINGS -->
     <IsMonitoringEnabled> true </IsMonitoringEnabled>
-    <ShouldDisplayAlgorithmInfo> false </ShouldDisplayAlgorithmInfo>
+    <ShouldDisplayAlgorithmInfo> true </ShouldDisplayAlgorithmInfo>
 
     <!-- Plugin helper functions -->
     
@@ -83,10 +83,10 @@
     <!-- Clustering parent algorithm runs a daughter clustering algorithm -->
     <algorithm type = "ClusteringParent">
         <algorithm type = "ConeClustering" description = "ClusterFormation"/>
-        <algorithm type = "TopologicalAssociationParent" description = "ClusterAssociation">
+  <!--      <algorithm type = "TopologicalAssociationParent" description = "ClusterAssociation">
             <associationAlgorithms>
                 <algorithm type = "LoopingTracks"/>
-                <algorithm type = "BrokenTracks"/>
+                  <algorithm type = "BrokenTracks"/>
                 <algorithm type = "ShowerMipMerging"/>
                 <algorithm type = "ShowerMipMerging2"/>
                 <algorithm type = "BackscatteredTracks"/>
@@ -94,28 +94,30 @@
                 <algorithm type = "ShowerMipMerging3"/>
                 <algorithm type = "ShowerMipMerging4"/>
                 <algorithm type = "ProximityBasedMerging">
-                    <algorithm type = "TrackClusterAssociation"/>
+                  <algorithm type = "TrackClusterAssociation"/>
                 </algorithm>
                 <algorithm type = "ConeBasedMerging">
                     <algorithm type = "TrackClusterAssociation"/>
                 </algorithm>
                 <algorithm type = "MipPhotonSeparation">
                     <algorithm type = "TrackClusterAssociation"/>
-                </algorithm>
+                </algorithm> 
                 <algorithm type = "SoftClusterMerging">
                     <algorithm type = "TrackClusterAssociation"/>
-<!--                     <AdditionalClusterListNames>PhotonClusters</AdditionalClusterListNames> -->
+                    <AdditionalClusterListNames>PhotonClusters</AdditionalClusterListNames>
                 </algorithm>
                 <algorithm type = "IsolatedHitMerging">
-<!--                     <AdditionalClusterListNames>PhotonClusters</AdditionalClusterListNames> -->
+                    <AdditionalClusterListNames>PhotonClusters</AdditionalClusterListNames>
                 </algorithm>
             </associationAlgorithms>
-        </algorithm>
+        </algorithm> -->
         <ClusterListName> PrimaryClusterList </ClusterListName>
     </algorithm>
+    
+
 
     <!-- Reclustering algorithms run multiple clustering algorithms -->
-    <algorithm type = "ReclusteringParent">
+<!--     <algorithm type = "ReclusteringParent">
         <reclusteringAlgorithms>
             <algorithm type = "SplitTrackAssociations" instance = "SplitTrackAssociations1">
                 <clusteringAlgorithms>
@@ -374,7 +376,7 @@
                 <algorithm type = "ForcedClustering" description = "ForcedClustering"/>
             </algorithm>
         </reclusteringAlgorithms>
-    </algorithm>
+    </algorithm> -->
 
     <!-- Muon clustering -->
 <!--     <algorithm type = "ClusteringParent">
@@ -447,17 +449,66 @@
     <!-- Particle flow object modification algorithms -->
     <algorithm type = "FinalParticleId"/>
     <algorithm type = "V0PfoCreation"/>
+    <algorithm type = "EnergyMonitoring">
+      <ClusterListNames>  PrimaryClusterList   </ClusterListNames>
+    </algorithm>
+<!--     <algorithm type = "CaloHitMonitoring">
+      <MonitoringFileName> pouette.root </MonitoringFileName>
+    </algorithm> -->
+    
+<!--     <algorithm type = "DumpPfosMonitoring"/> -->
+    
+    <algorithm type = "ArborMonitoring" description = "display all">
+       
+       <DisplayEvent>true</DisplayEvent>
+       
+       <ShowMCParticles>            false    </ShowMCParticles>
+       <ShowCurrentCaloHits>        true    </ShowCurrentCaloHits>
+       <ShowCurrentTracks>          true     </ShowCurrentTracks> 
+       <ShowCurrentClusters>        true    </ShowCurrentClusters> 
+       <ShowCurrentPfos>            true     </ShowCurrentPfos>
+       <ShowConnectors>             false     </ShowConnectors>
+       <HitColors>                  iterate  </HitColors>
+       <ShowOnlyAvailable>          false    </ShowOnlyAvailable>
+       
+       <TransparencyThresholdE>   -1   </TransparencyThresholdE>
+       <EnergyScaleThresholdE>    1.0  </EnergyScaleThresholdE>
+       <BlackBackground>        true  </BlackBackground>
+       <ShowDetector>           true  </ShowDetector>
+          
+    </algorithm>
     
     <!-- Monitor pfos. Save some variables in a root file -->
-   <algorithm type = "ArborPfoMonitoring">
+<!--     <algorithm type = "ArborPfoMonitoring">
       <RootFileName> PandoraPFAOutput.root </RootFileName>
       <RootTreeName> PfoMonitoring </RootTreeName>
       <EnergyFunctionName> SdhcalEnergyFunction </EnergyFunctionName>
       <EnergyThresholdValues> 0.0406459 0.101952 0.258078 </EnergyThresholdValues>
-      <!-- 0 for no additional analysis, 1 for single particle and 2 for overlay particles -->
+      0 for no additional analysis, 1 for single particle and 2 for overlay particles
       <AnalysisType> 2 </AnalysisType>
-      <!-- Minimum N tracks required in the event in order to fill an entry -->
+      Minimum N tracks required in the event in order to fill an entry
       <NTrackMinimumCutForNoFill> 1 </NTrackMinimumCutForNoFill>
-    </algorithm> 
+    </algorithm> -->
+    
+        <!-- EVE Monitoring -->
+<!--      <algorithm type = "ArborMonitoring" description = "display all">
+       
+       <DisplayEvent>true</DisplayEvent>
+       
+       <ShowMCParticles>            false    </ShowMCParticles>
+       <ShowCurrentCaloHits>        true    </ShowCurrentCaloHits>
+       <ShowCurrentTracks>          true     </ShowCurrentTracks> 
+       <ShowCurrentClusters>        false    </ShowCurrentClusters> 
+       <ShowCurrentPfos>            true     </ShowCurrentPfos>
+       <ShowConnectors>             false     </ShowConnectors>
+       <HitColors>                  iterate  </HitColors>
+       <ShowOnlyAvailable>          false    </ShowOnlyAvailable>
+       
+       <TransparencyThresholdE>   -1   </TransparencyThresholdE>
+       <EnergyScaleThresholdE>    1.0  </EnergyScaleThresholdE>
+       <BlackBackground>        true  </BlackBackground>
+       <ShowDetector>           false  </ShowDetector>
+          
+    </algorithm> -->
     
 </pandora>

@@ -30,9 +30,9 @@
         <ShouldUseOnlyCaloHitsForObjectsInEcal> true </ShouldUseOnlyCaloHitsForObjectsInEcal>
         <ShouldUseReadoutLayerInEcal> false </ShouldUseReadoutLayerInEcal>
         <ShouldUseOnlyCaloHitsForObjectsInHcal> false </ShouldUseOnlyCaloHitsForObjectsInHcal>
-        <MaximumSizeForClusterSplittingInHcal> 5 </MaximumSizeForClusterSplittingInHcal>
+        <MaximumSizeForClusterSplittingInHcal> 4 </MaximumSizeForClusterSplittingInHcal>
         <IntraLayerMaxDistanceInHcal> 11.f </IntraLayerMaxDistanceInHcal>
-        <ShouldUseReadoutLayerInHcal> false </ShouldUseReadoutLayerInHcal>
+        <ShouldUseReadoutLayerInHcal> true </ShouldUseReadoutLayerInHcal>
         <ShouldSplitClusterInSingleCaloHitClustersInHcal> true </ShouldSplitClusterInSingleCaloHitClustersInHcal>
       </algorithm>
       <ObjectListName>   InputObjects   </ObjectListName>
@@ -41,18 +41,26 @@
     
     
     <!-- Tag some objects as isolated -->
-    <algorithm type = "IsolationTagging">
+<!--     <algorithm type = "IsolationTagging">
        <MaxNObjectsInSamePseudoLayer> 3 </MaxNObjectsInSamePseudoLayer>
        <MaxNObjects> 1 </MaxNObjects> 
        <MaxNeighborDistance> 80.f </MaxNeighborDistance>
        <MaxIntraLayerNeighborDistance> 18.f </MaxIntraLayerNeighborDistance>
+    </algorithm> -->
+    
+    <algorithm type = "MipTrackCandidateTagging">
+    
+        <MaxNHitTrackCandidate> 4 </MaxNHitTrackCandidate>
+        <MaxNNeighbors> 6 </MaxNNeighbors>
+        <MaxNBigNeighbors> 5 </MaxNBigNeighbors>
+        <IntraLayerNeighborDistance> 50 </IntraLayerNeighborDistance>
     </algorithm>
     
     <algorithm type = "ClusteringParent">
       <algorithm type = "DummyClustering" description = "ClusterFormation">
       </algorithm>
-      <ClusterListName> IsolatedClusters </ClusterListName>
-      <ReplaceCurrentClusterList>true</ReplaceCurrentClusterList>
+      <ClusterListName> TestClusters </ClusterListName>
+      <ReplaceCurrentClusterList> true </ReplaceCurrentClusterList>
     </algorithm>
 
 

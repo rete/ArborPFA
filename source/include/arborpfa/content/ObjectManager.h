@@ -67,7 +67,13 @@ protected:
  /**
   *
   */
- pandora::StatusCode	ReplaceCurrentAndAlgorithmInputLists(const ArborAlgorithm *pAlgorithm, const std::string &newListName);
+ pandora::StatusCode ReplaceCurrentAndAlgorithmInputLists(const ArborAlgorithm *pAlgorithm, const std::string &newListName);
+
+ /**
+  *
+  */
+// pandora::StatusCode MoveObjectsToTemporaryListAndSetCurrent(const Algorithm *const pAlgorithm, const std::string &originalListName,
+//		    std::string &temporaryListName, const ClusterList &clustersToMove);
 
  /**
   *
@@ -95,11 +101,22 @@ protected:
  /**
   *
   */
+ pandora::StatusCode CreateReclusterMetaData(const std::string &metaDataName, bool keepPrevious = true);
+
+ /**
+  *
+  */
+// pandora::StatusCode RemoveCurrentReclusterMetaData();
+
+ /**
+  *
+  */
  pandora::StatusCode GetReclusteringObjectList(const ObjectList *&pObjectList, std::string &listName) const;
 
 
  ReclusterMetaData                  *m_pInitialReclusterMetaData;
  ReclusterMetaData                  *m_pCurrentReclusterMetaData;
+ std::string                         m_currentReclusterMetaDataName;
  ReclusterMetaDataMap                m_reclusterMetaDataMap;
  ObjectList                         *m_pReclusteringObjectList;
  bool                               m_reclusteringInitialized;

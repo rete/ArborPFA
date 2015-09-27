@@ -32,30 +32,30 @@
    //   0.002026826};
 
    double arborData[] = 
-    {0.9717774391,
-     0.9662850499,
-     0.952231884,
-     0.9623627067,
-     0.9473950863,
-     0.9742635489,
-     0.9696269631,
-     0.9399886727};
+     {0.975407,
+      0.967591,
+      0.962257,
+      0.96736,
+      0.962902,
+      0.969566,
+      0.970436,
+      0.961919};
 
-   // double arborDataError[] =
-   //   {0.004139075,
-   //    0.001143327,
-   //    0.001862598,
-   //    0.002497137,
-   //    0.002020139,
-   //    0.002900492,
-   //    0.00202452,
-   //    0.001838915};
+   double arborDataError[] =
+     {0.004139075,
+      0.001143327,
+      0.001862598,
+      0.002497137,
+      0.002020139,
+      0.002900492,
+      0.00202452,
+      0.001838915};
 
-   std::string graphXTitle = "E_{beam}";
-   std::string graphYTitle = "Efficiency";
+   std::string graphXTitle = "E_{beam} [GeV]";
+   std::string graphYTitle = "Hit clustering efficiency #epsilon_{s}";
    double rangeUserXMin = 0;
    double rangeUserXMax = 90;
-   double rangeUserYMin = 0;
+   double rangeUserYMin = 0.9;
    double rangeUserYMax = 1;
 
    gStyle->SetOptStat(0);
@@ -79,65 +79,44 @@
    pH->Draw();
    pH->GetXaxis()->SetTitle(graphXTitle.c_str());
    pH->GetXaxis()->SetLabelFont(42);
-   pH->GetXaxis()->SetTitleSize(0.035);
-   pH->GetXaxis()->SetTitleOffset(1.5);
+   pH->GetXaxis()->SetTitleSize(0.05);
+   pH->GetXaxis()->SetTitleOffset(1.);
    pH->GetXaxis()->SetTitleFont(42);
    pH->GetYaxis()->SetTitle(graphYTitle.c_str());
    pH->GetYaxis()->SetLabelFont(42);
-   pH->GetYaxis()->SetTitleSize(0.035);
-   pH->GetYaxis()->SetTitleOffset(1.5);
+   pH->GetYaxis()->SetTitleSize(0.045);
+   pH->GetYaxis()->SetTitleOffset(1.3);
    pH->GetYaxis()->SetTitleFont(42);
    pH->GetYaxis()->SetLabelSize(0.035);
    
-   TGraphErrors *gre = new TGraphErrors(nPoints, energies, pandoraData, zero, zero);
-   gre->SetName("Graph_pandora");
-   gre->SetTitle("PandoraPFA - CERN SPS Aug 2012");
-   gre->SetLineStyle(7);
-   gre->SetLineWidth(2);
-   gre->SetLineColor(kBlack);
-   gre->SetMarkerColor(kBlack);
-   gre->SetMarkerStyle(21);
-   gre->SetMarkerSize(1.2);
-   gre->Draw("p same");
-   //   multigraph->Add(gre,"");
-   
-   gre = new TGraphErrors(nPoints, energies, arborData, zero, zero);
+   gre = new TGraphErrors(nPoints, energies, arborData, zero, arborDataError);
    gre->SetName("Graph_arbor");
    gre->SetTitle("ArborPFA - CERN SPS Aug 2012");
    gre->SetLineColor(kRed);
    gre->SetMarkerColor(kRed);
    gre->SetMarkerStyle(23);
-   gre->SetMarkerSize(1.2);
+   gre->SetMarkerSize(1.6);
    gre->Draw("p same");
-   //   multigraph->Add(gre,"");
 
-   TPaveText *pt = new TPaveText(0.55, 0.2, 0.93, 0.3, "tbNDC");
+   TPaveText *pt = new TPaveText(0.3, 0.2, 0.93, 0.3, "tbNDC");
    pt->SetTextSize(0.05);
    pt->SetTextColor(kGray+2);
    pt->SetFillColor(0);
    pt->SetLineWidth(0);
    pt->SetBorderSize(0);
-   pt->AddText("CALICE Preliminary");
+   pt->AddText("CALICE SDHCAL Preliminary");
    pt->SetTextFont(62);
    pt->Draw();
    
-   TLegend *leg = new TLegend(0.3,0.67,0.88,0.8,NULL,"brNDC");
+   TLegend *leg = new TLegend(0.3,0.8,0.88,0.9,NULL,"brNDC");
    leg->SetBorderSize(0);
    leg->SetLineColor(0);
    leg->SetLineStyle(1);
    leg->SetLineWidth(1);
    leg->SetFillColor(0);
-   leg->SetTextSize(0.03);
+   leg->SetTextSize(0.04);
 
-   TLegendEntry *entry=leg->AddEntry("Graph_pandora","PandoraPFA - CERN SPS Aug 2012", "p");
-   entry->SetFillStyle(1001);
-   entry->SetLineColor(1);
-   entry->SetLineStyle(7);
-   entry->SetLineWidth(2);
-   entry->SetMarkerColor(1);
-   entry->SetMarkerStyle(21);
-   entry->SetMarkerSize(1);
-
+   TLegendEntry *entry=0;
    entry=leg->AddEntry("Graph_arbor","ArborPFA - CERN SPS Aug 2012","p");
    entry->SetFillStyle(1001);
    entry->SetMarkerColor(kRed);

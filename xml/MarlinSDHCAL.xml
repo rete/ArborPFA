@@ -14,14 +14,16 @@
   new data with last cuts are here : 
   /home/remi/sdhcaldata/testbeam/SPS_AugSep2012/single/TDHCAL_715751_cut.slcio
   /home/remi/sdhcaldata/testbeam/SPS_AugSep2012/overlayevent/OverlayEvent_pi-_715693_neutral_715693_charged_5cm_cut.slcio
+      /home/remi/ilcsoft/SDHCAL/Baboon/OverlayEventTest.slcio
+      /home/remi/git/tmp/SDHCAL/output/TBCut/TDHCAL_715751_cut.slcio
   -->
 
 	<global>
 	  <parameter name="LCIOInputFiles">
-	  /home/remi/sdhcaldata/testbeam/SPS_AugSep2012/overlayevent/OverlayEvent_pi-_715693_neutral_715693_charged_5cm_cut.slcio
+  /home/remi/sdhcaldata/testbeam/SPS_AugSep2012/overlayevent/OverlayEvent_pi-_715693_neutral_715747_charged_20cm_cut.slcio
 	  </parameter>
 	  <parameter name="GearXMLFile" value="/home/remi/git/ArborPFA/xml/SDHCALGearFile.xml"/>
-	  <parameter name="MaxRecordNumber" value="5000"/>
+	  <parameter name="MaxRecordNumber" value="0"/>
 	  <parameter name="SkipNEvents" value="0"/>
 	  <parameter name="SupressCheck" value="false"/>
 	  <parameter name="Verbosity" options="DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT"> MESSAGE </parameter>
@@ -40,7 +42,7 @@
 	  <parameter name="PFOCollectionName" type="String">SDHCALArborProcessorPFOs</parameter>
 	  
 	  <parameter name="AbsorberRadiationLength" type="float">0.2857</parameter>
-	  <parameter name="SDHCALEnergyFactors" type="FloatVec"> 
+	  <parameter name="SDHCALEnergyFactors" type="FloatVec">
 	    0.0406459 
 	    0.101952
 	    0.258078

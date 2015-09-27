@@ -146,6 +146,9 @@ protected:
 	float      m_chargedHitPurity;
 	float      m_neutralHitEfficiency;
 	float      m_neutralHitPurity;
+
+
+	std::string m_monitoringAlgorithmName;
 }; 
 
 //--------------------------------------------------------------------------------------------------------------------
