@@ -13,6 +13,9 @@ void OverlayPurityAnalysis::Loop()
 	Long64_t nentries = fChain->GetEntriesFast();
 	Long64_t nbytes = 0, nb = 0;
 
+	neutralRecPercentage = 0.f;
+	unsigned int nProcessedEvents = 0;
+
 	for (Long64_t jentry=0; jentry<nentries;jentry++)
 	{
 		Long64_t ientry = LoadTree(jentry);
@@ -23,7 +26,12 @@ void OverlayPurityAnalysis::Loop()
 		nb = fChain->GetEntry(jentry);
 		nbytes += nb;
 
+		nProcessedEvents++;
+
 		nPfosDistribution.distribution.push_back(nPfos);
+
+		if(nNeutralPfos > 0)
+			neutralRecPercentage++;
 
 		unsigned int totalHitType1 = 0;
 		unsigned int totalHitType2 = 0;
@@ -48,11 +56,12 @@ void OverlayPurityAnalysis::Loop()
 
 		// fill energy information
 		neutralEnergyDifferenceDistribution.distribution.push_back(neutralEnergy-mcParticleEnergy1);
-	 neutralEnergyDistribution.distribution.push_back(neutralEnergy);
-	 chargedEnergyDifferenceDistribution.distribution.push_back(chargedEnergy-mcParticleEnergy2);
-	 chargedEnergyDistribution.distribution.push_back(chargedEnergy);
+		neutralEnergyDistribution.distribution.push_back(neutralEnergy);
+		neutralMCEnergyDistribution.distribution.push_back(mcParticleEnergy2);
+		chargedEnergyDifferenceDistribution.distribution.push_back(chargedEnergy-mcParticleEnergy2);
+		chargedEnergyDistribution.distribution.push_back(chargedEnergy);
 
-	 // analyze pfos and extract the purity/efficiency
+		// analyze pfos and extract the purity/efficiency
 		for(int p=0 ; p<nPfos ; p++)
 		{
 			totalHitType1 += lcioFlagType1->at(p);
@@ -93,17 +102,27 @@ void OverlayPurityAnalysis::Loop()
 		neutralPurityDistribution.distribution.push_back(neutralFound ? neutralPurity : 0.f);
 		neutralEfficiencyDistribution.distribution.push_back(neutralFound ? neutralEfficiency : 0.f);
 
+		if(neutralFound)
+		{
+			neutralEnergyEfficientDistribution.distribution.push_back(neutralEnergy);
+			neutralEnergyDifferenceEfficientDistribution.distribution.push_back(neutralEnergy-mcParticleEnergy1);
+		}
+
 	} // end of loop
 
 	chargedPurityDistribution.mean = Mean<float>(chargedPurityDistribution.distribution);
 	chargedEfficiencyDistribution.mean = Mean<float>(chargedEfficiencyDistribution.distribution);
- chargedEnergyDifferenceDistribution.mean = Mean<float>(chargedEnergyDifferenceDistribution.distribution);
- chargedEnergyDistribution.mean = Mean<float>(chargedEnergyDistribution.distribution);
+	chargedEnergyDifferenceDistribution.mean = Mean<float>(chargedEnergyDifferenceDistribution.distribution);
+	chargedEnergyDistribution.mean = Mean<float>(chargedEnergyDistribution.distribution);
 
 	neutralPurityDistribution.mean = Mean<float>(neutralPurityDistribution.distribution);
 	neutralEfficiencyDistribution.mean = Mean<float>(neutralEfficiencyDistribution.distribution);
- neutralEnergyDifferenceDistribution.mean = Mean<float>(neutralEnergyDifferenceDistribution.distribution);
- neutralEnergyDistribution.mean = Mean<float>(neutralEnergyDistribution.distribution);
+	neutralEnergyDifferenceDistribution.mean = Mean<float>(neutralEnergyDifferenceDistribution.distribution);
+	neutralEnergyDistribution.mean = Mean<float>(neutralEnergyDistribution.distribution);
+	neutralEnergyEfficientDistribution.mean = Mean<float>(neutralEnergyEfficientDistribution.distribution);
+	neutralEnergyDifferenceEfficientDistribution.mean = Mean<float>(neutralEnergyDifferenceEfficientDistribution.distribution);
 
 	nPfosDistribution.mean = Mean<float>(nPfosDistribution.distribution);
+
+	neutralRecPercentage /= nProcessedEvents;
 }

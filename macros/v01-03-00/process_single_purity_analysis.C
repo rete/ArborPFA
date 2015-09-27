@@ -21,7 +21,7 @@
 
 void process_single_purity_analysis()
 {
-	std::string fileDirectory = "/home/remi/git/ArborPFA/output/v01-03-00/SingleParticle/newCuts/";
+	std::string fileDirectory = "/home/remi/git/ArborPFA/output/v01-04-00/SingleParticle/newFiles/";
 	std::string physicsList = "FTFP_BERT_HP";
 
 	std::map<AlgorithmType, std::string> algorithmToTreeNameMap;
@@ -30,7 +30,7 @@ void process_single_purity_analysis()
 
 	std::vector< std::pair<AlgorithmType, DataType> > algorithmAndDataToProcess;
 //	algorithmAndDataToProcess.push_back( std::pair<AlgorithmType, DataType>(PANDORA_PFA, SIMULATION) );
-	algorithmAndDataToProcess.push_back( std::pair<AlgorithmType, DataType>(PANDORA_PFA, TEST_BEAM) );
+//	algorithmAndDataToProcess.push_back( std::pair<AlgorithmType, DataType>(PANDORA_PFA, TEST_BEAM) );
 //	algorithmAndDataToProcess.push_back( std::pair<AlgorithmType, DataType>(ARBOR_PFA, SIMULATION) );
 	algorithmAndDataToProcess.push_back( std::pair<AlgorithmType, DataType>(ARBOR_PFA, TEST_BEAM) );
 

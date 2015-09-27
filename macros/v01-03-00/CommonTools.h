@@ -132,6 +132,34 @@ TH1 *createHistogram(const char *name, const char *title,
 
 //-----------------------------------------------------------------------------------------------------
 
+template <typename T>
+unsigned int count(const Distribution<T> &distribution, T min, T max)
+{
+	if(min > max)
+		return 0;
+
+	unsigned int counter = 0;
+
+	for(unsigned int i=0 ; i<distribution.distribution.size() ; i++)
+	{
+		if(distribution.distribution.at(i) > min && distribution.distribution.at(i) < max)
+			counter++;
+	}
+
+	return counter;
+}
+
+//-----------------------------------------------------------------------------------------------------
+
+template <typename T>
+float integral(const Distribution<T> &distribution, T min, T max)
+{
+	unsigned int counter = count(distribution, min, max);
+	return static_cast<float>(counter)/static_cast<float>(distribution.distribution.size());
+}
+
+//-----------------------------------------------------------------------------------------------------
+
 enum DrawAttributeType
 {
  MARKER_STYLE,
@@ -155,7 +183,7 @@ public:
 
  DrawAttributeMapping(AlgorithmType algorithmType, DataType dataType)
  {
- 	m_drawAttributeMap[LINE_STYLE] = 0;
+ 	m_drawAttributeMap[LINE_STYLE] = 1;
 
  	if(algorithmType == ARBOR_PFA)
  	{
@@ -255,7 +283,7 @@ void drawOverlayMultiGraph(TMultiGraph *pMultiGraph, const std::string &yAxisTit
 	if(NULL == pMultiGraph)
 		return;
 
-	pMultiGraph->Draw("ap");
+	pMultiGraph->Draw("alp");
 	pMultiGraph->GetXaxis()->SetTitle("Distance between showers [cm]");
 	pMultiGraph->GetXaxis()->SetRangeUser(-1, 31);
 	pMultiGraph->GetYaxis()->SetTitle(yAxisTitle.c_str());

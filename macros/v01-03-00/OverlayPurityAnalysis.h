@@ -85,7 +85,10 @@ public :
    Distribution<float> neutralPurityDistribution;
    Distribution<float> neutralEfficiencyDistribution;
    Distribution<float> neutralEnergyDifferenceDistribution;
+   Distribution<float> neutralEnergyDifferenceEfficientDistribution;
    Distribution<float> neutralEnergyDistribution;
+   Distribution<float> neutralMCEnergyDistribution;
+   Distribution<float> neutralEnergyEfficientDistribution;
 
    // for charged particle
    Distribution<float> chargedPurityDistribution;
@@ -95,6 +98,8 @@ public :
 
    // global
    Distribution<float> nPfosDistribution;
+
+   float neutralRecPercentage;
 };
 
 #endif
@@ -104,11 +109,11 @@ OverlayPurityAnalysis::OverlayPurityAnalysis(TTree *tree) : fChain(0)
 {
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
-			if (tree == 0)
-			{
-				throw std::invalid_argument("Tree is NULL !");
-			}
-   Init(tree);
+	if (tree == 0)
+	{
+		throw std::invalid_argument("Tree is NULL !");
+	}
+	Init(tree);
 }
 
 OverlayPurityAnalysis::~OverlayPurityAnalysis()
