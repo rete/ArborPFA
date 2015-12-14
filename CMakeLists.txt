@@ -17,10 +17,10 @@ SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
 # versions of ArborPFA subpackages
 # don't forget to update when releasing ArborPFA
 # e.g. SET( PandoraSDK_version "v01-00-00" )
-SET( PandoraSDK_version "v02-00-01" )
-SET( PandoraMonitoring_version "v02-00-00" )
-SET( ArborContent_version "v00-00-00" )
-#SET( ArborContent_version "master" )
+SET( PandoraSDK_version           "v02-00-01" )
+SET( PandoraMonitoring_version    "v02-00-00" )
+SET( ArborContent_version         "v00-00-00" )
+SET( MarlinArbor_version          "master" )
 
 
 ### DEPENDENCIES ############################################################
@@ -36,10 +36,14 @@ MESSAGE( STATUS "PANDORA_MONITORING: ${PANDORA_MONITORING}" )
 
 OPTION( INSTALL_DOC "Set to OFF to skip build/install Documentation" OFF )
 
+OPTION( MARLIN_ARBOR "Build MarlinArbor library (lcio and marlin)" OFF )
+MESSAGE( STATUS "MARLIN_ARBOR: ${MARLIN_ARBOR}" )
+
 # ----- download settings ----------------------------------------------------
-SET( PandoraSDK_repository "https://github.com/johnmarshall80/PandoraSDK.git" )
-SET( PandoraMonitoring_repository "https://github.com/johnmarshall80/PandoraMonitoring.git" )
-SET( ArborContent_repository "https://github.com/rete/ArborContent.git" )
+SET( PandoraSDK_repository          "https://github.com/PandoraPFA/PandoraSDK.git" )
+SET( PandoraMonitoring_repository   "https://github.com/PandoraPFA/PandoraMonitoring.git" )
+SET( ArborContent_repository        "https://github.com/ArborPFA/ArborContent.git" )
+SET( MarlinArbor_repository         "https://github.com/ArborPFA/MarlinArbor.git" )
 # ----------------------------------------------------------------------------
 
 # In order to pass semicolon-separated lists over the command line to all packages,
@@ -86,6 +90,16 @@ IF( PANDORA_MONITORING )
         CMAKE_ARGS ${common_cmake_args} -DPANDORA_MONITORING=1
         LIST_SEPARATOR %
     )
+    
+    IF( MARLIN_ARBOR )
+        ExternalProject_Add( MarlinArbor
+        DEPENDS PandoraSDK PandoraMonitoring ArborContent
+        GIT_REPOSITORY ${MarlinArbor_repository}
+        GIT_TAG ${MarlinArbor_version}
+        CMAKE_ARGS ${common_cmake_args} -DPANDORA_MONITORING=1
+        LIST_SEPARATOR %
+    )
+    ENDIF()
 ELSE()
     ExternalProject_Add( ArborContent
         DEPENDS PandoraSDK
@@ -94,7 +108,19 @@ ELSE()
         CMAKE_ARGS ${common_cmake_args}
         LIST_SEPARATOR %
     )
+    
+    IF( MARLIN_ARBOR )
+        ExternalProject_Add( MarlinArbor
+        DEPENDS PandoraSDK ArborContent
+        GIT_REPOSITORY ${MarlinArbor_repository}
+        GIT_TAG ${MarlinArbor_version}
+        CMAKE_ARGS ${common_cmake_args}
+        LIST_SEPARATOR %
+    )
+    ENDIF()
 ENDIF()
+
+
 
 # display some variables and write them to cache
 DISPLAY_STD_VARIABLES()
